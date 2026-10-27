@@ -58,3 +58,6 @@ The earlier “What works” and “Demonstration limitations” sections descri
 
 ### Hosted verification progress
 The owner has confirmed successful sign-in, client/project creation and milestone updates through the deployed app. The first automatic hosted account/isolation check also returned Passed. The expanded automatic check now covers actual private PDF uploads and downloads; its hosted result is still pending. The separate owner-only test-email button requests a sign-in message to the verified account address, with inbox and callback confirmation required before reporting delivery as working. Client invitation emails are not automatic; invitation links are shared manually.
+
+### Outstanding hosted checks
+The expanded owner-run test reported a generic revoked-client file failure. Cache-bypassing transport and more precise diagnostics are implemented, but a hosted rerun is required before considering file revocation verified. The owner received the test email; its link opened localhost. Supabase Auth URL Configuration must use `https://aba-iota.vercel.app` as Site URL and allow `https://aba-iota.vercel.app/auth/callback`; request a fresh email after saving. Delivery is observed, but successful email-link sign-in remains unverified.

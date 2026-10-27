@@ -13,12 +13,21 @@ export async function GET(
       .eq("id", id)
       .single();
     if (error || !data)
-      return new Response("Document not found.", { status: 404 });
+      return new Response("Document not found.", {
+        status: 404,
+        headers: { "Cache-Control": "private, no-store" },
+      });
     const signed = await db.storage
       .from("project-files")
-      .createSignedUrl(data.object_path, 60, { download: data.name });
+      .createSignedUrl(data.object_path, 60, {
+        download: data.name,
+        cacheNonce: crypto.randomUUID(),
+      });
     if (signed.error || !signed.data)
-      return new Response("Document unavailable.", { status: 404 });
+      return new Response("Document unavailable.", {
+        status: 404,
+        headers: { "Cache-Control": "private, no-store" },
+      });
     return new Response(null, {
       status: 303,
       headers: {

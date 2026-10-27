@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { privateFetch } from "./lib/supabase/private-fetch";
 import { supabaseSettings } from "./lib/supabase/config";
 import { NextResponse, type NextRequest } from "next/server";
 // Refresh cookies only. Every protected page/action also validates identity and database policies.
@@ -7,6 +8,7 @@ export async function proxy(request: NextRequest) {
   const { url, key } = supabaseSettings();
   if (url && key) {
     const db = createServerClient(url, key, {
+      global: { fetch: privateFetch },
       cookieOptions: {
         httpOnly: true,
         sameSite: "lax",

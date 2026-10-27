@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { supabaseSettings } from "./config";
+import { privateFetch } from "./private-fetch";
 import { checkPrivateStorage, assertStorageDenied } from "./storage-check";
 
 type CheckResult = { ok: boolean; message: string };
@@ -116,6 +117,7 @@ export async function checkClientPortals(
         "Temporary invitation setup",
       );
       const session = createClient(url, key, {
+        global: { fetch: privateFetch },
         auth: { persistSession: false, autoRefreshToken: false },
       });
       sessions.push(session);
@@ -200,6 +202,7 @@ export async function checkClientPortals(
     verify(otherDocuments.data?.length === 0, "Cross-client document privacy");
     storageAttempted = true;
     const anonymous = createClient(url, key, {
+      global: { fetch: privateFetch },
       auth: { persistSession: false, autoRefreshToken: false },
     });
     await checkPrivateStorage(

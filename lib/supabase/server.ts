@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { supabaseSettings } from "./config";
+import { privateFetch } from "./private-fetch";
 export function configured() {
   const { url, key } = supabaseSettings();
   return Boolean(url && key);
@@ -13,6 +14,7 @@ export async function database() {
   const { url, key } = supabaseSettings();
   const store = await cookies();
   return createServerClient(url, key, {
+    global: { fetch: privateFetch },
     cookieOptions: {
       httpOnly: true,
       sameSite: "lax",
@@ -40,6 +42,7 @@ export function invitationAdmin() {
       "Client invitations need the server-only Supabase service key. Add it securely in hosting settings.",
     );
   return createClient(supabaseSettings().url, secret, {
+    global: { fetch: privateFetch },
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

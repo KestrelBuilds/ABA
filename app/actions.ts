@@ -278,7 +278,11 @@ export async function uploadDocument(form: FormData) {
     );
     const { error } = await db.storage
       .from("project-files")
-      .upload(path, file, { contentType: file.type, upsert: false });
+      .upload(path, file, {
+        contentType: file.type,
+        cacheControl: "0",
+        upsert: false,
+      });
     if (error) {
       await db.from("documents").delete().eq("id", id);
       throw Error(

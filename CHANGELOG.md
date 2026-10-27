@@ -37,3 +37,10 @@
 - Checks anonymous/other-client/unpublished/final-delivery restrictions and file access after revocation; removes temporary files before metadata cleanup.
 - Added a separate owner-only email test using the verified owner's account address, with provider rejection/rate-limit feedback. Accepted email requests are explicitly distinguished from confirmed delivery.
 - Use the platform's production hostname as an email/invitation origin fallback when APP_ORIGIN is absent; reject insecure or credential-bearing redirect configuration.
+
+### File revocation investigation
+- Hosted owner diagnostics reported an unresolved revoked-client file check; no readiness claim is made from that failure.
+- Added no-store transport with explicit abort signals for all server Supabase clients, avoiding Next.js request memoization for permission-sensitive reads.
+- Storage probes use fresh cache nonces; new private uploads use zero-second cache lifetime and generated download links include a nonce.
+- Denial checks distinguish unexpected file bytes, unexpected signed-link issuance and network/provider failures, and recognise nonnumeric Storage error codes using the actual HTTP status.
+- Owner confirmed test-email delivery; its destination was localhost. The required Supabase Site URL/redirect allowlist correction is documented; successful callback remains pending.

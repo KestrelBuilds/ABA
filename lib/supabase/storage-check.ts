@@ -5,21 +5,52 @@ export function storageWasDenied(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const e = error as { status?: number; statusCode?: string };
   // Network failures, timeouts and provider 5xx responses must never count as access protection.
-  return [400, 401, 403, 404].includes(Number(e.statusCode ?? e.status));
+  const status = e.status ?? Number(e.statusCode);
+  return [400, 401, 403, 404].includes(status);
+}
+function safeStorageStatus(error: unknown): string {
+  if (!error || typeof error !== "object") return "unavailable";
+  const e = error as { status?: number; statusCode?: string };
+  const status = e.status ?? Number(e.statusCode);
+  return Number.isFinite(status)
+    ? String(status)
+    : "network or unrecognised provider error";
 }
 export async function assertStorageDenied(
   client: SupabaseClient,
   path: string,
   step: string,
 ) {
-  const downloaded = await client.storage.from("project-files").download(path);
-  if (downloaded.data || !storageWasDenied(downloaded.error))
-    throw new Error(step + " did not pass.");
+  const downloaded = await client.storage
+    .from("project-files")
+    .download(
+      path,
+      { cacheNonce: crypto.randomUUID() },
+      { cache: "no-store", signal: AbortSignal.timeout(15000) },
+    );
+  if (downloaded.data)
+    throw new Error(
+      step + ": a fresh download returned file bytes unexpectedly.",
+    );
+  if (!storageWasDenied(downloaded.error))
+    throw new Error(
+      step +
+        ": fresh download returned an unexpected HTTP status (" +
+        safeStorageStatus(downloaded.error) +
+        "). This is not a passed denial check.",
+    );
   const signed = await client.storage
     .from("project-files")
     .createSignedUrl(path, 60);
-  if (signed.data || !storageWasDenied(signed.error))
-    throw new Error(step + " (signed link) did not pass.");
+  if (signed.data)
+    throw new Error(step + ": a new signed link was issued unexpectedly.");
+  if (!storageWasDenied(signed.error))
+    throw new Error(
+      step +
+        ": signed-link request returned an unexpected HTTP status (" +
+        safeStorageStatus(signed.error) +
+        "). This is not a passed denial check.",
+    );
 }
 export function fictionalPdf(): string {
   const content =
@@ -53,7 +84,13 @@ export async function assertStoredBytes(
   path: string,
   expected: string,
 ) {
-  const file = await client.storage.from("project-files").download(path);
+  const file = await client.storage
+    .from("project-files")
+    .download(
+      path,
+      { cacheNonce: crypto.randomUUID() },
+      { cache: "no-store", signal: AbortSignal.timeout(15000) },
+    );
   if (file.error || !file.data || (await file.data.text()) !== expected)
     throw new Error("Private file download/content verification did not pass.");
 }
@@ -95,6 +132,7 @@ export async function checkPrivateStorage(
       .from("project-files")
       .upload(path, new TextEncoder().encode(pdf), {
         contentType: "application/pdf",
+        cacheControl: "0",
         upsert: false,
       });
     if (upload.error)
