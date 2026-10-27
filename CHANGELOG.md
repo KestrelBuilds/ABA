@@ -48,3 +48,11 @@
 
 ### Hosted checks confirmed — 27 October 2026
 Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: client isolation, actual PDF/signed downloads, protected/final files and access revocation all passed; temporary records/accounts/files were removed. Owner separately confirmed test-email receipt and successful dashboard return after correcting Supabase Auth URL settings. These checks ran on the deployed Vercel app, not from this credential-free coding workspace. Earlier pending/failure notes are superseded for these specific checks. Full production security/privacy review remains outstanding; automatic client-invitation emails remain unimplemented. The original generic revoked-file failure's cause is not independently proven.
+
+## 0.3.0 — Everyday workspace improvements
+- Compact expandable milestone editors and mobile shortcuts to project sections.
+- Added validated owner editing for client contact details and project name, budget and deadline. Client email changes are blocked after invitation/account creation to avoid mismatched identity.
+- Shared questionnaire prompts between UI and required-answer validation.
+- Expanded hosted checks to submit/review branding and website questionnaires, revision requests and creative approvals, and confirm approvals do not bypass payment/delivery controls.
+- Added owner-requested Supabase invitation emails behind an explicit email-template readiness flag; private links remain the default. Hosted email invitation testing is pending configuration.
+- Validation: 23 local tests, strict type checks and production build passed. Browser regression checks passed for demo interactions, mobile overflow and unauthenticated route/file protection. Newly expanded hosted questionnaire/approval checks await an owner-run result; invitation-email delivery awaits template configuration.

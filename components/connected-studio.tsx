@@ -15,6 +15,8 @@ import {
 import type { WorkspaceData, DbProject } from "@/lib/workspace";
 import {
   addClient,
+  editClient,
+  editProject,
   addProject,
   saveStage,
   saveProject,
@@ -95,27 +97,10 @@ function ActionForm({
     </form>
   );
 }
-const prompts = {
-  brand: [
-    ["business", "Tell me about your business and what makes it different."],
-    ["audience", "Who would you like to reach?"],
-    ["direction", "What should your new identity communicate?"],
-  ],
-  website: [
-    ["goals", "What should your website help your business achieve?"],
-    ["pages", "Which pages and features do you need?"],
-    ["content", "What content and branding assets are ready?"],
-    ["references", "Which websites inspire you and why?"],
-  ],
-  goodbye: [
-    ["experience", "How was your experience working with me?"],
-    ["improve", "What could I improve?"],
-    ["next", "What are your next steps?"],
-  ],
-} as const;
+import { prompts } from "@/lib/questionnaires";
 export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
   const admin = data.role === "admin";
-  const [view, setView] = useState("Overview");
+  const [view, setView] = useState(admin ? "Overview" : "Projects");
   const [projectId, setProjectId] = useState(data.projects[0]?.id ?? "");
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState<"client" | "project" | null>(null);
@@ -200,7 +185,11 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
               </div>
               <h1>
                 {admin
-                  ? "Good things take shape."
+                  ? view === "Overview"
+                    ? "Good things take shape."
+                    : view === "Clients"
+                      ? "Good people. Great possibilities."
+                      : "Every project, in perspective."
                   : `Hello${currentClient ? ", " + currentClient.contact.split(" ")[0] : ""}.`}
               </h1>
               <p>
@@ -441,15 +430,53 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                         }{" "}
                         projects
                       </p>
+                      <details>
+                        <summary>Edit client details</summary>
+                        <ActionForm action={editClient} label="Save client">
+                          <input type="hidden" name="id" value={c.id} />
+                          {(
+                            [
+                              ["name", "Business name"],
+                              ["contact", "Contact name"],
+                              ["email", "Email address"],
+                              ["sector", "Sector"],
+                            ] as const
+                          ).map(([name, label]) => (
+                            <label key={name}>
+                              {label}
+                              <input
+                                name={name}
+                                defaultValue={c[name]}
+                                required={name !== "sector"}
+                                type={name === "email" ? "email" : "text"}
+                                maxLength={name === "email" ? 254 : 120}
+                              />
+                            </label>
+                          ))}
+                        </ActionForm>
+                      </details>
                       <ActionForm
                         action={inviteClient}
-                        label="Create private invitation"
+                        label="Create invitation"
                       >
                         <input type="hidden" name="clientId" value={c.id} />
+                        <label>
+                          Invitation delivery
+                          <select name="delivery">
+                            <option value="link">Create a private link</option>
+                            <option
+                              value="email"
+                              disabled={!data.emailInvitesReady}
+                            >
+                              Send invitation email
+                              {!data.emailInvitesReady ? " (setup needed)" : ""}
+                            </option>
+                          </select>
+                        </label>
                         <p>
                           Requires a signed contract and recorded deposit.
-                          Creates a single-use Supabase link; no email is sent
-                          automatically.
+                          Choose a private link or, after email-template setup,
+                          a Supabase invitation email.
                         </p>
                       </ActionForm>
                       <details>
@@ -540,15 +567,34 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                           );
                         })}
                       </div>
+                      <div className="project-jumps">
+                        <a href="#journey">Milestones</a>
+                        <a href="#questionnaires">Questionnaires</a>
+                        <a href="#documents">Documents & feedback</a>
+                        {admin && <a href="#controls">Project settings</a>}
+                      </div>
                       <div className="two-col detail">
                         <div>
                           <section className="panel">
-                            <h2>Your project journey</h2>
+                            <h2 id="journey">Your project journey</h2>
                             {data.stages
                               .filter((s) => s.project_id === project.id)
                               .map((s) =>
                                 admin ? (
-                                  <div key={s.id}>
+                                  <details
+                                    className="milestone-disclosure"
+                                    key={s.id}
+                                  >
+                                    <summary>
+                                      <span>
+                                        {s.name}
+                                        <small>
+                                          {s.stream}
+                                          {!s.visible ? " · Internal only" : ""}
+                                        </small>
+                                      </span>
+                                      <span className="pill">{s.status}</span>
+                                    </summary>
                                     <ActionForm
                                       action={saveStage}
                                       label="Save milestone"
@@ -641,7 +687,7 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                                         </ActionForm>
                                       </details>
                                     </div>
-                                  </div>
+                                  </details>
                                 ) : (
                                   <div className="portal-stage" key={s.id}>
                                     <span
@@ -690,7 +736,7 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                             )}
                           </section>
                           <section className="panel">
-                            <h2>Creative questionnaires</h2>
+                            <h2 id="questionnaires">Creative questionnaires</h2>
                             {(["brand", "website", "goodbye"] as const)
                               .filter((kind) =>
                                 kind === "brand"
@@ -804,7 +850,55 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                         <div>
                           {admin && (
                             <section className="panel">
-                              <h2>Project controls</h2>
+                              <h2 id="controls">Project controls</h2>
+                              <details>
+                                <summary>Edit project details</summary>
+                                <ActionForm
+                                  action={editProject}
+                                  label="Save project details"
+                                >
+                                  <input
+                                    type="hidden"
+                                    name="id"
+                                    value={project.id}
+                                  />
+                                  <label>
+                                    Project name
+                                    <input
+                                      name="name"
+                                      defaultValue={project.name}
+                                      required
+                                      maxLength={120}
+                                    />
+                                  </label>
+                                  <label>
+                                    Estimated completion
+                                    <input
+                                      name="due"
+                                      type="date"
+                                      defaultValue={project.due}
+                                      required
+                                    />
+                                  </label>
+                                  <label>
+                                    Project value (£)
+                                    <input
+                                      name="budget"
+                                      type="number"
+                                      min="0"
+                                      max="10000000"
+                                      step="0.01"
+                                      defaultValue={project.budget}
+                                      required
+                                    />
+                                  </label>
+                                  <p>
+                                    Workflow type stays fixed to protect
+                                    existing milestones and questionnaire
+                                    responses.
+                                  </p>
+                                </ActionForm>
+                              </details>
                               <ActionForm
                                 action={saveProject}
                                 label="Save project controls"
@@ -867,7 +961,8 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                           )}
                           <section className="panel">
                             <h2>
-                              <Files size={18} /> Project documents
+                              <Files size={18} />{" "}
+                              <span id="documents">Project documents</span>
                             </h2>
                             {admin && (
                               <ActionForm

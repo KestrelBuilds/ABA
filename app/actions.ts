@@ -1,4 +1,5 @@
 "use server";
+import { requireCompleteAnswers } from "@/lib/questionnaires";
 import { revalidatePath } from "next/cache";
 import { resolveAppOrigin } from "@/lib/app-origin";
 import { redirect } from "next/navigation";
@@ -221,6 +222,7 @@ export async function submitQuestionnaire(form: FormData) {
       kind: form.get("kind"),
       answers,
     });
+    requireCompleteAnswers(v.kind, v.answers);
     checked(
       (
         await db.from("questionnaires").insert({
@@ -331,11 +333,28 @@ export async function inviteClient(form: FormData): Promise<Result> {
         "Record the signed contract and 50% deposit on a project before inviting this client.",
       );
     const service = invitationAdmin();
-    const { data, error: inviteError } = await service.auth.admin.generateLink({
-      type: "invite",
-      email: client.email,
-    });
-    if (inviteError || !data.user || !data.properties)
+    const delivery = z
+      .enum(["link", "email"])
+      .parse(form.get("delivery") ?? "link");
+    if (
+      delivery === "email" &&
+      process.env.SUPABASE_INVITE_EMAIL_READY !== "true"
+    )
+      throw Error(
+        "Invitation emails need the Supabase invite template configured first. Use a private invitation link for now.",
+      );
+    const invitation =
+      delivery === "email"
+        ? await service.auth.admin.inviteUserByEmail(client.email, {
+            redirectTo: origin + "/auth/confirm",
+          })
+        : await service.auth.admin.generateLink({
+            type: "invite",
+            email: client.email,
+          });
+    const { data, error: inviteError } = invitation;
+
+    if (inviteError || !data.user)
       throw Error(
         "An invitation could not be created. The email may already have an account; manage existing users in Supabase.",
       );
@@ -347,6 +366,16 @@ export async function inviteClient(form: FormData): Promise<Result> {
       throw Error("Invitation could not be saved. No access was granted.");
     }
     refresh();
+    if (delivery === "email")
+      return {
+        ok: true,
+        message:
+          "Supabase accepted the invitation email request. Confirm receipt with the client; acceptance does not guarantee delivery.",
+      };
+    if (!("properties" in data) || !data.properties)
+      throw Error(
+        "The private invitation link is unavailable. Manage this account in Supabase.",
+      );
     return {
       ok: true,
       message:
@@ -354,7 +383,10 @@ export async function inviteClient(form: FormData): Promise<Result> {
       link:
         origin +
         "/auth/confirm?token_hash=" +
-        encodeURIComponent(data.properties.hashed_token),
+        encodeURIComponent(
+          z.object({ hashed_token: z.string().min(1) }).parse(data.properties)
+            .hashed_token,
+        ),
     };
   } catch (e) {
     return {
@@ -503,4 +535,56 @@ export async function sendOwnerTestEmail(): Promise<Result> {
         "Sign in as the owner to send a test email. If already signed in, check the Supabase connection.",
     };
   }
+}
+
+export async function editClient(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const id = uuid.parse(form.get("id"));
+    const values = clientInput.parse(Object.fromEntries(form));
+    const existing = await db
+      .from("clients")
+      .select("email")
+      .eq("id", id)
+      .single();
+    checked(existing.error);
+    if (existing.data?.email.toLowerCase() !== values.email.toLowerCase()) {
+      const invitations = await db
+        .from("invitations")
+        .select("id")
+        .eq("client_id", id)
+        .limit(1);
+      checked(invitations.error);
+      if (invitations.data?.length)
+        throw Error(
+          "This client already has an invitation or account. Email changes need an account review; other details can still be updated.",
+        );
+    }
+    const result = await db
+      .from("clients")
+      .update(values)
+      .eq("id", id)
+      .select("id")
+      .single();
+    checked(result.error);
+  });
+}
+export async function editProject(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const id = uuid.parse(form.get("id"));
+    const values = projectInput
+      .pick({ name: true, due: true, budget: true })
+      .parse(Object.fromEntries(form));
+    checked(
+      (
+        await db
+          .from("projects")
+          .update(values)
+          .eq("id", id)
+          .select("id")
+          .single()
+      ).error,
+    );
+  });
 }

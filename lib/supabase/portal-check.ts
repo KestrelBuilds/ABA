@@ -2,6 +2,7 @@ import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { supabaseSettings } from "./config";
 import { privateFetch } from "./private-fetch";
+import { checkCreativeJourney } from "./journey-check";
 import { checkPrivateStorage, assertStorageDenied } from "./storage-check";
 
 type CheckResult = { ok: boolean; message: string };
@@ -200,6 +201,7 @@ export async function checkClientPortals(
       .in("id", documents);
     requireSuccess(otherDocuments.error, "Cross-client document check");
     verify(otherDocuments.data?.length === 0, "Cross-client document privacy");
+    await checkCreativeJourney(owner, sessions, projects, users, documents[0]);
     storageAttempted = true;
     const anonymous = createClient(url, key, {
       global: { fetch: privateFetch },
@@ -229,7 +231,7 @@ export async function checkClientPortals(
     result = {
       ok: true,
       message:
-        "Passed: two client sign-ins, invitation acceptance, separate project access, hidden milestones, internal-note privacy, payment protection, document visibility, real PDF uploads/downloads, signed downloads, private-file access, final-payment/approval file gates and access revocation. Email delivery has not been tested by this check.",
+        "Passed: two client sign-ins, invitation acceptance, separate project access, hidden milestones, internal-note privacy, payment protection, document visibility, questionnaire submission/review, revision requests and creative approvals, real PDF uploads/downloads, signed downloads, private-file access, final-payment/approval file gates and access revocation. Email delivery has not been tested by this check.",
     };
   } catch (error) {
     result = {

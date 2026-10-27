@@ -31,3 +31,6 @@ Required next: connect a Supabase development project, provision owner, configur
 
 ### Hosted checks confirmed — 27 October 2026
 Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: client isolation, actual PDF/signed downloads, protected/final files and access revocation all passed; temporary records/accounts/files were removed. Owner separately confirmed test-email receipt and successful dashboard return after correcting Supabase Auth URL settings. These checks ran on the deployed Vercel app, not from this credential-free coding workspace. Earlier pending/failure notes are superseded for these specific checks. Full production security/privacy review remains outstanding; automatic client-invitation emails remain unimplemented. The original generic revoked-file failure's cause is not independently proven.
+
+## Everyday workspace update
+Implemented compact editable workflows, mobile project-section navigation, client/project edits, shared questionnaire completeness validation and expanded hosted creative-journey tests. Supabase invitation-email API support is gated on explicit email-template setup; delivery testing is pending. Remaining launch work is tracked in docs/LAUNCH-CHECKLIST.md, including owner MFA enforcement, recovery, backups/restore, privacy/retention and full client browser acceptance.

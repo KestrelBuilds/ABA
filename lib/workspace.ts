@@ -51,6 +51,7 @@ export type DbQuestionnaire = {
 };
 export type WorkspaceData = {
   role: "admin" | "client";
+  emailInvitesReady: boolean;
   clients: DbClient[];
   projects: DbProject[];
   stages: DbStage[];
@@ -103,6 +104,9 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
     );
   return {
     role: profile.role,
+    emailInvitesReady:
+      profile.role === "admin" &&
+      process.env.SUPABASE_INVITE_EMAIL_READY === "true",
     clients: results[0].data ?? [],
     projects: results[1].data ?? [],
     stages: results[2].data ?? [],

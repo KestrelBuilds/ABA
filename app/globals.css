@@ -1563,3 +1563,83 @@ details summary {
 .email-check h3 {
   font-size: 15px;
 }
+.milestone-disclosure {
+  border-top: 1px solid var(--line);
+}
+.milestone-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 0;
+  list-style: none;
+  font-size: 12px;
+}
+.milestone-disclosure > summary:after {
+  content: "+";
+  font-size: 18px;
+  color: var(--muted);
+}
+.milestone-disclosure[open] > summary:after {
+  content: "−";
+}
+.milestone-disclosure > summary small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.connected .milestone-disclosure .milestone-form {
+  border: 0;
+  padding-top: 0;
+}
+.project-jumps {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.project-jumps a {
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 20px;
+  font-size: 11px;
+}
+.project-jumps a:hover {
+  background: var(--accent);
+}
+[id="journey"],
+[id="documents"],
+[id="questionnaires"],
+[id="controls"] {
+  scroll-margin-top: 20px;
+}
+.milestone-disclosure > summary .pill {
+  margin-left: auto;
+}
+.client-card > details {
+  padding: 15px 0;
+}
+.connected details > summary {
+  min-height: 28px;
+}
+.connected .form-result {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 520px) {
+  .milestone-disclosure > summary {
+    font-size: 12px;
+  }
+  .project-jumps {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: 10px 0;
+    z-index: 5;
+  }
+  .project-jumps a {
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+}
