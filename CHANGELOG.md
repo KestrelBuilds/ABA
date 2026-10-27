@@ -22,3 +22,7 @@
 - Added private PDF/image uploads, controlled publication and short-lived download URLs with final-payment/approval gates.
 - Added local PostgreSQL isolation tests, validation tests, protected-route browser checks, connection instructions and security review documentation.
 - Hosted Supabase Auth/email/Storage operation remains unverified until a development project is connected. No public deployment or real client use is approved.
+
+### Connection compatibility fix
+- Accept Vercel's `NEXT_PUBLIC_SUPABASE_ANON_KEY` alongside the newer publishable key name, and `SUPABASE_URL` as a server-side URL fallback.
+- Share connection resolution between authentication and session refresh; service-role keys remain excluded from user-session configuration.

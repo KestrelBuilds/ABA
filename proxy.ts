@@ -1,10 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
+import { supabaseSettings } from "./lib/supabase/config";
 import { NextResponse, type NextRequest } from "next/server";
 // Refresh cookies only. Every protected page/action also validates identity and database policies.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL,
-    key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const { url, key } = supabaseSettings();
   if (url && key) {
     const db = createServerClient(url, key, {
       cookieOptions: {

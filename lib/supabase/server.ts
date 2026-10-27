@@ -2,40 +2,36 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { supabaseSettings } from "./config";
 export function configured() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  );
+  const { url, key } = supabaseSettings();
+  return Boolean(url && key);
 }
 export async function database() {
   if (!configured())
     throw Error("Supabase is not connected. Follow the setup guide.");
+  const { url, key } = supabaseSettings();
   const store = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      cookieOptions: {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-      },
-      cookies: {
-        getAll: () => store.getAll(),
-        setAll(items) {
-          try {
-            items.forEach(({ name, value, options }) =>
-              store.set(name, value, options),
-            );
-          } catch {
-            /* Server Components cannot write cookies. Proxy and auth handlers persist refreshes. */
-          }
-        },
+  return createServerClient(url, key, {
+    cookieOptions: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    },
+    cookies: {
+      getAll: () => store.getAll(),
+      setAll(items) {
+        try {
+          items.forEach(({ name, value, options }) =>
+            store.set(name, value, options),
+          );
+        } catch {
+          /* Server Components cannot write cookies. Proxy and auth handlers persist refreshes. */
+        }
       },
     },
-  );
+  });
 }
 export function invitationAdmin() {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -43,7 +39,7 @@ export function invitationAdmin() {
     throw Error(
       "Client invitations need the server-only Supabase service key. Add it securely in hosting settings.",
     );
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, secret, {
+  return createClient(supabaseSettings().url, secret, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

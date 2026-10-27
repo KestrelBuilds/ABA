@@ -74,3 +74,6 @@ Configure verified email delivery/SMTP before sending to clients; Supabase's def
 `npm test` includes real PostgreSQL execution using PGlite with fictional auth users and Storage metadata. This verifies the migration's actual row-level rules and SQL functions. Auth and Storage API behaviour still require the hosted checks above.
 
 Run `npm run dev`, then `node tests/browser.cjs` for the fictional demo and `node tests/phase2-browser.cjs` for missing-connection/fail-closed screens (the latter assumes no Supabase environment settings). Production server: `npm run build && npm start`. Local HTTP development should use `npm run dev`; production authentication cookies require HTTPS.
+
+### Vercel integration variable names
+The application also accepts `NEXT_PUBLIC_SUPABASE_ANON_KEY` (legacy anonymous key) instead of `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_URL` as a URL fallback. The newer publishable key takes precedence when both exist. Connection variables must be assigned to the ABA Vercel project and the Production environment. After adding them, redeploy; earlier deployments do not receive new build settings automatically. Never use a service-role key as either public key.
