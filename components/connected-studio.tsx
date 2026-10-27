@@ -30,6 +30,7 @@ import {
   signOut,
   type Result,
 } from "@/app/actions";
+import { PortalCheck } from "./portal-check";
 import { PasswordForm } from "./auth-forms";
 import { statuses } from "@/lib/projects";
 const money = (n: number) =>
@@ -1049,6 +1050,7 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
           <section className="panel account-panel">
             <h2>My account</h2>
             <PasswordForm />
+            {admin && <PortalCheck />}
           </section>
           <footer>
             <span>ABA STUDIO / ALEX BELL ARTS</span>

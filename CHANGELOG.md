@@ -26,3 +26,8 @@
 ### Connection compatibility fix
 - Accept Vercel's `NEXT_PUBLIC_SUPABASE_ANON_KEY` alongside the newer publishable key name, and `SUPABASE_URL` as a server-side URL fallback.
 - Share connection resolution between authentication and session refresh; service-role keys remain excluded from user-session configuration.
+
+### Owner-run hosted portal checks
+- Added My account → Check client portal access, which creates two temporary confirmed test accounts without sending email.
+- Checks real hosted client sessions, invitation acceptance, separate projects, hidden notes/milestones, protected payment writes, document metadata visibility and access revocation.
+- Automatically removes this run's temporary records/accounts and retains audit history; reports cleanup failures explicitly. Requires the existing server-only service key. Does not claim to test email delivery or actual file downloads.

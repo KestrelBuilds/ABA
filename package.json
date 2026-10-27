@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "tsx --test tests/*.test.ts && npm run test:portal-check",
     "format": "prettier --write app components lib tests proxy.ts next.config.ts",
-    "format:check": "prettier --check app components lib tests proxy.ts next.config.ts"
+    "format:check": "prettier --check app components lib tests proxy.ts next.config.ts",
+    "test:portal-check": "node --conditions=react-server --import tsx --test tests/portal-check.test.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

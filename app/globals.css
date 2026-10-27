@@ -1550,3 +1550,8 @@ details summary {
 .stream-progress b {
   font-weight: 500;
 }
+.portal-check {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}

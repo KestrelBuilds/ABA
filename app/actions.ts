@@ -438,3 +438,20 @@ export async function removeStage(form: FormData) {
     );
   });
 }
+
+export async function runPortalChecks(): Promise<Result> {
+  // Validate owner privileges before constructing a service-role client.
+  try {
+    const { db } = await identity(true);
+    const { checkClientPortals } = await import("@/lib/supabase/portal-check");
+    const result = await checkClientPortals(db, invitationAdmin());
+    refresh();
+    return result;
+  } catch {
+    return {
+      ok: false,
+      message:
+        "The automatic check needs your owner sign-in and the server-only Supabase service key in Vercel settings. No client email address is needed. Never paste the key in chat.",
+    };
+  }
+}

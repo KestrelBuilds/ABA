@@ -20,7 +20,7 @@ In the hosting/environment settings, or in an ignored `.env.local` for local dev
 - `NEXT_PUBLIC_SUPABASE_URL`: the project's HTTPS URL.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: the project's publishable key (public by design; access still depends on database policies).
 - `APP_ORIGIN`: the exact origin of this application, e.g. an approved HTTPS preview domain. For local `npm run dev` only, `http://localhost:3000`.
-- `SUPABASE_SERVICE_ROLE_KEY`: the server-only legacy service_role key. Used only to generate client invitation links. Never put it in a `NEXT_PUBLIC_` variable or paste it in chat. Regular data reads/writes use the signed-in user's session and database policies, not this key.
+- `SUPABASE_SERVICE_ROLE_KEY`: the server-only legacy service_role key. Used to generate client invitation links and scaffold/clean up owner-requested automatic portal checks. Never put it in a `NEXT_PUBLIC_` variable or paste it in chat. Regular data reads/writes use the signed-in user's session and database policies, not this key.
 
 The optional invitation key can remain absent while testing existing users. It must be a real server-side credential in the app's secure hosting settings, not a browser key. Proxy-held credentials are not a general-purpose replacement for Supabase Auth's bearer token.
 
@@ -77,3 +77,6 @@ Run `npm run dev`, then `node tests/browser.cjs` for the fictional demo and `nod
 
 ### Vercel integration variable names
 The application also accepts `NEXT_PUBLIC_SUPABASE_ANON_KEY` (legacy anonymous key) instead of `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_URL` as a URL fallback. The newer publishable key takes precedence when both exist. Connection variables must be assigned to the ABA Vercel project and the Production environment. After adding them, redeploy; earlier deployments do not receive new build settings automatically. Never use a service-role key as either public key.
+
+### Automatic account-isolation check
+As the owner, open **My account → Check client portal access → Run automatic portal checks**. This requires `SUPABASE_SERVICE_ROLE_KEY` in Vercel's server environment. It creates two temporary confirmed Supabase users directly (no email), signs them in using the regular public client, accepts pending invitations and exercises hosted row-level permissions. Test records are scoped to random IDs and cleaned up in a finally block; audit history is retained with temporary actor references cleared. A failure or interrupted server execution may leave records prefixed **Automatic portal check**; inspect these and the reported run ID before retrying. A successful result does not replace email, real Storage API, browser-session and launch security checks. The owner session remains separate from test sessions.
