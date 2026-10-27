@@ -44,3 +44,7 @@
 - Storage probes use fresh cache nonces; new private uploads use zero-second cache lifetime and generated download links include a nonce.
 - Denial checks distinguish unexpected file bytes, unexpected signed-link issuance and network/provider failures, and recognise nonnumeric Storage error codes using the actual HTTP status.
 - Owner confirmed test-email delivery; its destination was localhost. The required Supabase Site URL/redirect allowlist correction is documented; successful callback remains pending.
+
+
+### Hosted checks confirmed — 27 October 2026
+Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: client isolation, actual PDF/signed downloads, protected/final files and access revocation all passed; temporary records/accounts/files were removed. Owner separately confirmed test-email receipt and successful dashboard return after correcting Supabase Auth URL settings. These checks ran on the deployed Vercel app, not from this credential-free coding workspace. Earlier pending/failure notes are superseded for these specific checks. Full production security/privacy review remains outstanding; automatic client-invitation emails remain unimplemented. The original generic revoked-file failure's cause is not independently proven.

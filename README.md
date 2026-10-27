@@ -43,7 +43,7 @@ Run `npm test`, `npm run typecheck`, and `npm run build`. Phase 2 will move stat
 
 With the app running on port 3000 and system Chromium installed, run `node tests/browser.cjs`. This uses an isolated browser session and fictional test records; screenshots are written under `/tmp`.
 
-## Phase 2 — Private workspace (connection pending)
+## Phase 2 — Private workspace (hosted development checks passed)
 
 The secure workspace is now implemented separately from the fictional demo:
 
@@ -56,8 +56,9 @@ Follow [the connection guide](docs/PHASE2-SETUP.md) to create a Supabase develop
 
 The earlier “What works” and “Demonstration limitations” sections describe `/demo`. Phase 2 is persisted in Supabase once connected; it does not import or write private records to demo browser storage. Production build/type checks and local SQL policies can be validated now; hosted sign-in, email and Storage require the acceptance checklist. See [security notes](docs/SECURITY.md). Do not use real client data or publish until that review passes.
 
-### Hosted verification progress
-The owner has confirmed successful sign-in, client/project creation and milestone updates through the deployed app. The first automatic hosted account/isolation check also returned Passed. The expanded automatic check now covers actual private PDF uploads and downloads; its hosted result is still pending. The separate owner-only test-email button requests a sign-in message to the verified account address, with inbox and callback confirmation required before reporting delivery as working. Client invitation emails are not automatic; invitation links are shared manually.
+### Hosted verification — 27 October 2026
+The owner confirmed successful password sign-in, saved client/project creation and milestone updates on the deployed app. The expanded owner-run automatic check returned Passed (screenshot provided): two client sign-ins, invitation acceptance, project isolation, hidden milestones/internal notes, payment protection, document visibility, actual PDF uploads/downloads, signed downloads, private-file restrictions, final-payment/approval gates and access revocation. Temporary accounts/files/records were removed and audit history retained.
 
-### Outstanding hosted checks
-The expanded owner-run test reported a generic revoked-client file failure. Cache-bypassing transport and more precise diagnostics are implemented, but a hosted rerun is required before considering file revocation verified. The owner received the test email; its link opened localhost. Supabase Auth URL Configuration must use `https://aba-iota.vercel.app` as Site URL and allow `https://aba-iota.vercel.app/auth/callback`; request a fresh email after saving. Delivery is observed, but successful email-link sign-in remains unverified.
+The owner separately confirmed receipt of a fresh test sign-in email and successful return to the dashboard after correcting Supabase Auth URL settings. The earlier generic revoked-file failure no longer reproduces in the hosted check after the uncached transport changes; this does not independently prove which caching/error condition caused the original result. No additional SQL rerun is required for that code change.
+
+These are development checks, not full launch approval. Client invitation links are still manually shared; automated invitation email delivery is not implemented. MFA enforcement, backup/restore, privacy/retention, upload scanning and the remaining hosted acceptance checklist still require review before real client use. The coding workspace has no Supabase credentials; hosted validation ran through the owner's signed-in Vercel app.
