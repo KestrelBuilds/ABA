@@ -31,3 +31,9 @@
 - Added My account → Check client portal access, which creates two temporary confirmed test accounts without sending email.
 - Checks real hosted client sessions, invitation acceptance, separate projects, hidden notes/milestones, protected payment writes, document metadata visibility and access revocation.
 - Automatically removes this run's temporary records/accounts and retains audit history; reports cleanup failures explicitly. Requires the existing server-only service key. Does not claim to test email delivery or actual file downloads.
+
+### Live storage and owner email checks
+- Extended owner diagnostics with actual temporary PDF uploads, byte-checked downloads and signed-link requests under regular client sessions.
+- Checks anonymous/other-client/unpublished/final-delivery restrictions and file access after revocation; removes temporary files before metadata cleanup.
+- Added a separate owner-only email test using the verified owner's account address, with provider rejection/rate-limit feedback. Accepted email requests are explicitly distinguished from confirmed delivery.
+- Use the platform's production hostname as an email/invitation origin fallback when APP_ORIGIN is absent; reject insecure or credential-bearing redirect configuration.

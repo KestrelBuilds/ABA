@@ -66,11 +66,14 @@ test("failed fixture setup still deletes the temporary account and only scoped r
   ))
     assert.ok(c.ids.every((id) => /^[0-9a-f-]{36}$/.test(id)));
 });
-test("cleanup failure is reported instead of claiming accounts and records were removed", async () => {
+test("cleanup failure is reported instead of claiming accounts, files and records were removed", async () => {
   const f = fixtures(true);
   const result = await checkClientPortals(f.owner, f.service);
   assert.equal(result.ok, false);
   assert.match(result.message, /cleanup needs attention/);
-  assert.doesNotMatch(result.message, /accounts and records were removed/);
+  assert.doesNotMatch(
+    result.message,
+    /accounts, files and records were removed/,
+  );
   assert.deepEqual(f.deleted, ["temporary-user-only"]);
 });

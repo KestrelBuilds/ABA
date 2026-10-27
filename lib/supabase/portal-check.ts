@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { supabaseSettings } from "./config";
+import { checkPrivateStorage, assertStorageDenied } from "./storage-check";
 
 type CheckResult = { ok: boolean; message: string };
 function requireSuccess(error: unknown, step: string) {
@@ -24,6 +25,8 @@ export async function checkClientPortals(
     crypto.randomUUID(),
     crypto.randomUUID(),
   ];
+  const paths = documents.map((id) => projects[0] + "/" + id);
+  let storageAttempted = false;
   const users: string[] = [];
   const sessions: SupabaseClient[] = [];
   const { url, key } = supabaseSettings();
@@ -195,6 +198,19 @@ export async function checkClientPortals(
       .in("id", documents);
     requireSuccess(otherDocuments.error, "Cross-client document check");
     verify(otherDocuments.data?.length === 0, "Cross-client document privacy");
+    storageAttempted = true;
+    const anonymous = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    await checkPrivateStorage(
+      owner,
+      sessions[0],
+      sessions[1],
+      anonymous,
+      projects[0],
+      documents,
+      url,
+    );
     requireSuccess(
       (await owner.rpc("revoke_client_access", { target: clients[0] })).error,
       "Access revocation",
@@ -202,10 +218,15 @@ export async function checkClientPortals(
     const revoked = await sessions[0].from("projects").select("id");
     requireSuccess(revoked.error, "Revoked-session check");
     verify(revoked.data?.length === 0, "Immediate access revocation");
+    await assertStorageDenied(
+      sessions[0],
+      paths[0],
+      "Revoked-client file protection",
+    );
     result = {
       ok: true,
       message:
-        "Passed: two client sign-ins, invitation acceptance, separate project access, hidden milestones, internal-note privacy, payment protection, document visibility and access revocation. Email delivery and actual file downloads still need separate checks.",
+        "Passed: two client sign-ins, invitation acceptance, separate project access, hidden milestones, internal-note privacy, payment protection, document visibility, real PDF uploads/downloads, signed downloads, private-file access, final-payment/approval file gates and access revocation. Email delivery has not been tested by this check.",
     };
   } catch (error) {
     result = {
@@ -234,6 +255,12 @@ export async function checkClientPortals(
         cleanupProblems.push(label);
       }
     };
+    if (storageAttempted) {
+      await clean(
+        "temporary files",
+        service.storage.from("project-files").remove(paths),
+      );
+    }
     await clean(
       "projects",
       service.from("projects").delete().in("id", projects),
@@ -271,6 +298,6 @@ export async function checkClientPortals(
     ...result,
     message:
       result.message +
-      " Temporary accounts and records were removed; the audit history was retained.",
+      " Temporary accounts, files and records were removed; the audit history was retained.",
   };
 }

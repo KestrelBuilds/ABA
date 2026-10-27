@@ -1,5 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { resolveAppOrigin } from "@/lib/app-origin";
 import { redirect } from "next/navigation";
 import { database, identity, invitationAdmin } from "@/lib/supabase/server";
 import {
@@ -98,18 +99,12 @@ export async function requestSignInLink(
   };
 }
 async function appOrigin() {
-  const origin = process.env.APP_ORIGIN;
-  if (!origin)
-    throw Error("Set APP_ORIGIN in hosting settings before inviting clients.");
-  const url = new URL(origin);
-  if (
-    url.protocol !== "https:" &&
-    url.hostname !== "localhost" &&
-    url.hostname !== "127.0.0.1"
-  )
-    throw Error("APP_ORIGIN must use HTTPS.");
-  return url.origin;
+  return resolveAppOrigin(
+    process.env.APP_ORIGIN,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  );
 }
+
 export async function confirmInvitation(
   _: Result,
   form: FormData,
@@ -452,6 +447,56 @@ export async function runPortalChecks(): Promise<Result> {
       ok: false,
       message:
         "The automatic check needs your owner sign-in and the server-only Supabase service key in Vercel settings. No client email address is needed. Never paste the key in chat.",
+    };
+  }
+}
+
+export async function sendOwnerTestEmail(): Promise<Result> {
+  try {
+    const { db, user } = await identity(true);
+    if (!user.email)
+      return { ok: false, message: "Your owner account has no email address." };
+    const origin = await appOrigin();
+    const { error } = await db.auth.signInWithOtp({
+      email: user.email,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: origin + "/auth/callback",
+      },
+    });
+    if (error) {
+      if (error.status === 429)
+        return {
+          ok: false,
+          message:
+            "Supabase has limited email requests. Wait a few minutes before trying again.",
+        };
+      return {
+        ok: false,
+        message:
+          "Supabase did not accept the test email request. Check Authentication email/SMTP settings and allowed recipients. No new account was created.",
+      };
+    }
+    return {
+      ok: true,
+      message:
+        "Supabase accepted a sign-in email request for your owner account. Delivery is not yet confirmed: check your inbox and spam folder, then open the link in this same browser. It should return to " +
+        origin +
+        ". If it opens localhost or another site, set Supabase Authentication → URL Configuration → Site URL to " +
+        origin +
+        " and add " +
+        origin +
+        "/auth/callback to Redirect URLs. No client invitation emails were sent.",
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("APP_ORIGIN"))
+      return { ok: false, message: error.message };
+    if (error instanceof Error && error.message.startsWith("Set APP_ORIGIN"))
+      return { ok: false, message: error.message };
+    return {
+      ok: false,
+      message:
+        "Sign in as the owner to send a test email. If already signed in, check the Supabase connection.",
     };
   }
 }
