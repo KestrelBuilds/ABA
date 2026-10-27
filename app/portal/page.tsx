@@ -1,3 +1,4 @@
+import { MfaRequiredError } from "@/lib/mfa";
 import { redirect } from "next/navigation";
 import { configured, identity } from "@/lib/supabase/server";
 import { loadWorkspace } from "@/lib/workspace";
@@ -8,7 +9,8 @@ export default async function Portal() {
   let role: string;
   try {
     role = (await identity()).profile.role;
-  } catch {
+  } catch (error) {
+    if (error instanceof MfaRequiredError) redirect("/account-security");
     redirect("/login");
   }
   if (role === "admin") redirect("/workspace");

@@ -1643,3 +1643,12 @@ details summary {
     padding: 8px 10px;
   }
 }
+.mfa-qr {
+  display: block;
+  width: 220px;
+  height: 220px;
+  background: white;
+  padding: 10px;
+  margin: 20px auto;
+  max-width: 100%;
+}

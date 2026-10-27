@@ -34,3 +34,5 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 
 ## Everyday workspace update
 Implemented compact editable workflows, mobile project-section navigation, client/project edits, shared questionnaire completeness validation and expanded hosted creative-journey tests. Supabase invitation-email API support is gated on explicit email-template setup; delivery testing is pending. Remaining launch work is tracked in docs/LAUNCH-CHECKLIST.md, including owner MFA enforcement, recovery, backups/restore, privacy/retention and full client browser acceptance.
+
+Owner MFA enrollment/challenge and database assurance enforcement are implemented, pending the additional SQL upgrade and owner authenticator setup. Permission-filtered JSON data export is implemented. Provider backups/restore, email-template configuration, MFA recovery rehearsal and privacy/retention decisions remain required launch prerequisites.

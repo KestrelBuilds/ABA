@@ -65,3 +65,6 @@ These are development checks, not full launch approval. Client invitation links 
 
 ## Everyday workspace update
 The connected workspace now has expandable milestone editors, mobile section shortcuts and owner editing of client/project details. Client email changes after invitations are blocked pending an identity review. The automatic hosted check also exercises questionnaire submission and creative feedback/approvals; rerun it to validate those added checks. Supabase invitation email sending is implemented but disabled until the Invite template and readiness flag are configured; see the connection guide. No migration rerun is needed for this update. See [the remaining launch checklist](docs/LAUNCH-CHECKLIST.md) before real client use.
+
+### Account protection upgrade
+The new authenticator screen and permission-filtered JSON data export are implemented. Apply only `supabase/migrations/202610270003_owner_mfa.sql` as the next SQL upgrade; do not rerun the initial setup files. Then open My account → Protect my account with an authenticator to enrol and verify your own device. The database and app require high-assurance owner sessions once a factor is verified. Hosted MFA and recovery remain unverified until this setup is completed. See the connection guide for recovery and the remaining launch checklist for provider backup/privacy requirements.

@@ -1,4 +1,5 @@
 import "server-only";
+import { MfaRequiredError, requiresMfa } from "../mfa";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
@@ -46,7 +47,7 @@ export function invitationAdmin() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
-export async function identity(adminOnly = false) {
+export async function identity(adminOnly = false, allowMfaSetup = false) {
   const db = await database();
   const {
     data: { user },
@@ -65,5 +66,14 @@ export async function identity(adminOnly = false) {
     (adminOnly && profile.role !== "admin")
   )
     throw Error("You do not have access to this area.");
+  if (profile.role === "admin" && !allowMfaSetup) {
+    const assurance = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assurance.error)
+      throw Error(
+        "Account security could not be checked. Please sign in again.",
+      );
+    if (requiresMfa(profile.role, user.factors, assurance.data.currentLevel))
+      throw new MfaRequiredError();
+  }
   return { db, user, profile };
 }

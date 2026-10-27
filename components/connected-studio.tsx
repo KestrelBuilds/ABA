@@ -573,7 +573,7 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                         <a href="#documents">Documents & feedback</a>
                         {admin && <a href="#controls">Project settings</a>}
                       </div>
-                      <div className="two-col detail">
+                      <div className="two-col detail" key={project.id}>
                         <div>
                           <section className="panel">
                             <h2 id="journey">Your project journey</h2>
@@ -1144,6 +1144,14 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
           )}
           <section className="panel account-panel">
             <h2>My account</h2>
+            {admin && (
+              <Link className="resource" href="/account-security">
+                Protect my account with an authenticator →
+              </Link>
+            )}
+            <a className="resource" href="/account/export">
+              Download my workspace data →
+            </a>
             <PasswordForm />
             {admin && <PortalCheck />}
           </section>

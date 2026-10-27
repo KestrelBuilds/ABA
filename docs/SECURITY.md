@@ -31,3 +31,6 @@ A hosted automatic test reported a revoked-client Storage failure. That generic 
 
 ### Hosted verification evidence — 27 October 2026
 Owner screenshot confirms the expanded check passed real Storage access, signed downloads, final-delivery gates and revoked-client denial, with cleanup completed. The owner also confirmed email receipt and successful email-link sign-in after Supabase redirect correction. These observations close those specific checks; they do not establish complete production security or GDPR compliance. The full remaining review above still applies.
+
+### Owner MFA implementation
+The owner security screen uses Supabase TOTP enrollment/challenge/verification, with sensitive QR data confined to the authenticated owner response and browser memory. After a verified factor exists, server identity checks require `aal2`; the additional migration 202610270003 also enforces that condition inside `is_admin`, protecting direct API/Storage calls. Before that migration, enrollment through ABA Studio is blocked. Existing data is not rewritten. The setup screen can be reached at low assurance solely to verify a code or begin first enrollment; it cannot read project records or bypass an existing factor. Confirm hosted setup and recovery before real use.

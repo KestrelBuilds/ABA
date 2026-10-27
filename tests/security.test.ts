@@ -22,6 +22,9 @@ test("PostgreSQL policies enforce client isolation, protected writes, questionna
   try {
     await db.exec(`create role authenticated; create role anon; create schema auth; create table auth.users(id uuid primary key); create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$; grant usage on schema auth to authenticated; grant execute on function auth.uid() to authenticated;
  create schema storage; create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]); create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text); alter table storage.objects enable row level security; grant usage on schema storage to authenticated; grant select,insert,delete on storage.objects to authenticated;`);
+    await db.exec(
+      `create table auth.mfa_factors(id uuid primary key default gen_random_uuid(),user_id uuid references auth.users(id),status text); create function auth.jwt() returns jsonb language sql stable as $$ select jsonb_build_object('aal',coalesce(nullif(current_setting('request.jwt.claim.aal',true),''),'aal1')) $$;`,
+    );
     // PGlite has core gen_random_uuid(); pgcrypto extension registration is Supabase-specific.
     await db.exec(
       (
@@ -30,6 +33,9 @@ test("PostgreSQL policies enforce client isolation, protected writes, questionna
     );
     await db.exec(
       await readFile("supabase/migrations/202610270002_storage.sql", "utf8"),
+    );
+    await db.exec(
+      await readFile("supabase/migrations/202610270003_owner_mfa.sql", "utf8"),
     );
     await db.exec(`insert into auth.users(id) values('${ids.admin}'),('${ids.one}'),('${ids.two}'),('${ids.stranger}');
  insert into public.clients(id,name,contact,email) values('${ids.c1}','Client one','One','one@example.com'),('${ids.c2}','Client two','Two','two@example.com');
@@ -202,6 +208,39 @@ test("PostgreSQL policies enforce client isolation, protected writes, questionna
         [createdId, "Forged"],
       ),
     );
+    await asUser(ids.admin);
+    assert.equal(
+      (await rows("select public.owner_mfa_ready() as ready"))[0].ready,
+      true,
+    );
+    await db.exec("reset role");
+    await db.exec(
+      `insert into auth.mfa_factors(user_id,status) values('${ids.admin}','verified')`,
+    );
+    await asUser(ids.admin);
+    assert.equal(
+      (await rows("select public.is_admin() as allowed"))[0].allowed,
+      false,
+    );
+    assert.equal((await rows("select * from public.projects")).length, 0);
+    assert.equal((await rows("select * from public.project_notes")).length, 0);
+    assert.equal((await rows("select * from storage.objects")).length, 0);
+    await assert.rejects(() =>
+      db.exec(`select public.revoke_client_access('${ids.c2}')`),
+    );
+    await db.exec("select set_config('request.jwt.claim.aal','aal2',false)");
+    assert.equal(
+      (await rows("select public.is_admin() as allowed"))[0].allowed,
+      true,
+    );
+    assert.ok((await rows("select * from public.projects")).length > 0);
+    await db.exec("select set_config('request.jwt.claim.aal','aal1',false)");
+    await asUser(ids.two);
+    assert.equal(
+      (await rows("select public.owner_mfa_ready() as ready"))[0].ready,
+      false,
+    );
+    assert.ok((await rows("select * from public.projects")).length > 0);
     await db.exec("reset role;set role anon");
     await assert.rejects(() => db.exec("select * from public.projects"));
   } finally {

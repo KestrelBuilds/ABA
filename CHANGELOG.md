@@ -56,3 +56,10 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Expanded hosted checks to submit/review branding and website questionnaires, revision requests and creative approvals, and confirm approvals do not bypass payment/delivery controls.
 - Added owner-requested Supabase invitation emails behind an explicit email-template readiness flag; private links remain the default. Hosted email invitation testing is pending configuration.
 - Validation: 23 local tests, strict type checks and production build passed. Browser regression checks passed for demo interactions, mobile overflow and unauthenticated route/file protection. Newly expanded hosted questionnaire/approval checks await an owner-run result; invitation-email delivery awaits template configuration.
+
+### Owner account protection and data portability
+- Added provider-backed authenticator enrollment and challenge screens, session assurance checks and the owner MFA database upgrade.
+- Added database tests for low-assurance owner denial, high-assurance owner access and unchanged client access.
+- Added permission-filtered JSON workspace export with no credentials/file bytes; it is explicitly not a full backup.
+- Hosted MFA setup/recovery and actual provider backup/restore require owner/project settings access.
+- Final validation: 26 local tests passed, including PostgreSQL MFA enforcement and QR rendering; strict types and production build passed. Browser checks confirmed signed-out security/export denial. Hosted MFA enrollment/recovery remains pending the owner's SQL upgrade and device setup.

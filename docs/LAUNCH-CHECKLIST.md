@@ -9,7 +9,7 @@ The owner has confirmed hosted account/isolation, private file and sign-in-email
 - Test edit controls, mobile milestone expansion, navigation shortcuts, sign-out and account recovery.
 
 ## Security and operation review
-- Enforce provider-supported owner MFA with a server-side assurance-level check, and rehearse recovery. Creating an MFA factor alone is not enforcement.
+- Apply the owner MFA SQL upgrade, enrol the owner authenticator, test new-session challenge and rehearse recovery. Application and database assurance checks are implemented and locally tested; hosted acceptance is still needed.
 - Review Supabase email recipient limits/SMTP, rate limits and abuse protection.
 - Review real-user storage policies, existing upload caching, file format limits, malware scanning and total storage/retention limits.
 - Establish a backup schedule and perform a restore rehearsal. A schema migration is not a data backup.

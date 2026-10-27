@@ -38,6 +38,13 @@ const assert = require("node:assert/strict");
       "http://127.0.0.1:3000/files/30000000-0000-4000-8000-000000000001",
     );
     assert.equal(response.status(), 403);
+    const exportResponse = await page.request.get(
+      "http://127.0.0.1:3000/account/export",
+    );
+    assert.equal(exportResponse.status(), 403);
+    assert.match(exportResponse.headers()["cache-control"], /no-store/);
+    await page.goto("http://127.0.0.1:3000/account-security");
+    await page.waitForURL("**/login");
     await page.goto("http://127.0.0.1:3000/auth/confirm");
     await page
       .getByText(

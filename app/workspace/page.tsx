@@ -1,3 +1,4 @@
+import { MfaRequiredError } from "@/lib/mfa";
 import { redirect } from "next/navigation";
 import { configured, identity } from "@/lib/supabase/server";
 import { loadWorkspace } from "@/lib/workspace";
@@ -7,7 +8,8 @@ export default async function Workspace() {
   if (!configured()) redirect("/login");
   try {
     await identity(true);
-  } catch {
+  } catch (error) {
+    if (error instanceof MfaRequiredError) redirect("/account-security");
     redirect("/login");
   }
   const data = await loadWorkspace();
