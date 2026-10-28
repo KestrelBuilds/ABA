@@ -1855,8 +1855,8 @@ details summary {
 }
 .brand-lockup img {
   display: block;
-  width: 142px;
-  height: auto;
+  width: 80px;
+  height: 80px;
   max-width: 100%;
   object-fit: contain;
 }
@@ -1875,7 +1875,7 @@ details summary {
   gap: 5px;
 }
 .sidebar .brand-lockup img {
-  width: 125px;
+  width: 80px;
 }
 .sidebar .brand-studio {
   font-size: 8px;
@@ -1920,14 +1920,16 @@ details summary {
 }
 @media (max-width: 800px) {
   .connected .sidebar .brand-lockup img {
-    width: 110px;
+    width: 64px;
+    height: 64px;
   }
   .connected .sidebar .brand-studio {
     font-size: 8px;
     margin: 0;
   }
   .auth-page .brand-lockup img {
-    width: 163px;
+    width: 96px;
+    height: 96px;
   }
 }
 

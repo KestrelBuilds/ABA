@@ -16,3 +16,6 @@ The uploaded typeface sheets are raster samples, not font files or documented fo
 
 
 Higher-resolution update: wordmark 1302×640, primary mark 641×640 and favicon artwork 193×192. The supplied PNG files are used without redrawing/resizing. Display sizes remain unchanged; asset URLs include a version marker so browsers request the new artwork.
+
+
+Current logo choice: Alex requested only the standalone black A symbol, with no ABA wordmark or STUDIO text beside it. BrandMark now uses the supplied higher-resolution primary transparent PNG. The wordmark source is retained for future use; the interface palette and accessible Alex Bell Arts label remain.

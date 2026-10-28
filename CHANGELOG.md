@@ -92,3 +92,7 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 ### Higher-resolution brand artwork
 - Replaced the deployed wordmark, primary mark and favicon sources with the matching original PNGs from the owner's 4x.zip.
 - Kept displayed logo dimensions and colour tokens unchanged; versioned image URLs refresh previously cached artwork.
+
+### Standalone A branding
+- Changed the shared interface logo to the supplied black standalone A mark and removed the adjacent STUDIO text, following Alex's preference.
+- Adjusted responsive logo dimensions for the square artwork; original high-resolution image is unchanged.
