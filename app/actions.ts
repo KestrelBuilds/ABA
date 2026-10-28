@@ -14,7 +14,7 @@ import {
   uuid,
   validateFile,
 } from "@/lib/validation";
-import { createStages } from "@/lib/projects";
+import { newProjectStages } from "@/lib/workflow-templates";
 import { z } from "zod";
 import { stageVerification } from "@/lib/journey-verification";
 export type Result = { ok: boolean; message: string; link?: string };
@@ -159,7 +159,7 @@ export async function addProject(form: FormData) {
           project_type: v.type,
           due_date: v.due,
           project_budget: v.budget,
-          template: createStages(v.type).map((s) => ({
+          template: newProjectStages(v.type).map((s) => ({
             name: s.name,
             stream: s.stream,
           })),
@@ -971,17 +971,15 @@ export async function uploadSignedContract(form: FormData) {
       object_path = project_id + "/" + id;
     checked(
       (
-        await db
-          .from("client_assets")
-          .insert({
-            id,
-            project_id,
-            stage_id: original.data.stage_id,
-            contract_document_id: documentId,
-            uploader_id: user.id,
-            name: file.name.slice(0, 180),
-            object_path,
-          })
+        await db.from("client_assets").insert({
+          id,
+          project_id,
+          stage_id: original.data.stage_id,
+          contract_document_id: documentId,
+          uploader_id: user.id,
+          name: file.name.slice(0, 180),
+          object_path,
+        })
       ).error,
     );
     const upload = await db.storage

@@ -713,15 +713,14 @@ export default function ConnectedStudio({
                               <h2 id="journey">Your project journey</h2>
                               {admin && otherVerificationFields.length > 0 && (
                                 <details>
-                                  <summary>
-                                    Other verification records for customised
-                                    workflows
-                                  </summary>
+                                  <summary>Project verification checks</summary>
                                   <p>
-                                    Custom milestones keep their own progress.
-                                    These verified records control access;
-                                    completing a custom milestone never confirms
-                                    a contract or payment.
+                                    Review final creative approval and payment
+                                    here before releasing final files and the
+                                    goodbye packet. These records also remain
+                                    available when stages are customised.
+                                    Completing an ordinary milestone never
+                                    confirms a contract or payment.
                                   </p>
                                   <JourneyVerification
                                     data={data}
@@ -781,8 +780,9 @@ export default function ConnectedStudio({
                                             project records below. Renaming it
                                             to a custom name restores ordinary
                                             progress tracking; its verification
-                                            controls move to Other verification
-                                            records at the top of the journey.
+                                            controls move to Project
+                                            verification checks at the top of
+                                            the journey.
                                           </p>
                                         )}
                                         {stageVerification(s).length > 0 && (

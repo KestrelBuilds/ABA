@@ -94,3 +94,6 @@ Project at a glance shows the next milestone, portal eligibility and final-deliv
 
 ### Initial contract signing and return
 A restricted contract-only area now supports invited clients before full onboarding, after applying migration 202610280006. Explicitly enable it inside a client-visible stage with shared Contract PDFs. Clients sign externally in Acrobat and return the PDF; Alex reviews it and verifies contract/deposit before the full portal opens. See [activation and hosted checks](docs/CONTRACT-AREA.md). No automatic signatures, payment confirmations or historical opt-ins.
+
+### New project templates
+New branding projects follow Alex’s supplied 10-folder layout plus Goodbye Packet. Website projects use the same five opening stages, then Website Brief & Content, Page Structure & Layout, Website Design, Framer Build & Review, Launch & Handover and Goodbye Packet. Combined projects share acquisition and one goodbye stage. Existing projects/files are unchanged. See [exact folder lists](docs/PROJECT-TEMPLATES.md). No extra SQL is needed for templates.

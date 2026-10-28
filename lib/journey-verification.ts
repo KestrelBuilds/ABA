@@ -12,6 +12,10 @@ export function stageVerification(
   stage: Pick<DbStage, "name" | "stream">,
 ): VerificationField[] {
   const name = stage.name.trim().toLowerCase();
+  if (stage.stream === "Onboarding" && name === "contract")
+    return ["contract_signed"];
+  if (stage.stream === "Onboarding" && name === "invoice")
+    return ["deposit_paid"];
   if (stage.stream === "Onboarding" && name === "contract and deposit")
     return ["contract_signed", "deposit_paid"];
   if (["Brand Identity", "Website Design"].includes(stage.stream)) {

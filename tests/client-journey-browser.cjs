@@ -7,6 +7,9 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const templateMode = process.argv
+  .find((a) => a.startsWith("--template="))
+  ?.split("=")[1];
 const contractMode = process.argv.includes("--contracts");
 const contractOwnerMode = process.argv.includes("--contract-owner");
 const verificationMode = process.argv.includes("--verification");
@@ -18,7 +21,8 @@ const ownerMode =
   process.argv.includes("--owner-preview") ||
   financeMode ||
   verificationMode ||
-  contractOwnerMode;
+  contractOwnerMode ||
+  Boolean(templateMode);
 const uid = randomUUID(),
   cid = randomUUID(),
   pid = randomUUID(),
@@ -74,6 +78,53 @@ if (financeMode) {
   project.deposit_paid = false;
   project.final_paid = false;
 }
+if (templateMode) {
+  project.type =
+    templateMode === "website"
+      ? "Website Design"
+      : templateMode === "combined"
+        ? "Both"
+        : "Brand Identity";
+  project.contract_signed = false;
+  project.deposit_paid = false;
+}
+const liveTemplate = templateMode
+  ? [
+      ...[
+        "Enquiry Stage",
+        "Project Proposal",
+        "Onboarding",
+        "Contract",
+        "Invoice",
+      ].map((name) => ({ name, stream: "Onboarding" })),
+      ...(templateMode !== "website"
+        ? [
+            "Creative Direction",
+            "Logo Design",
+            "Logo Presentation",
+            "Brand Touchpoints",
+            "Brand Guidelines",
+          ].map((name) => ({ name, stream: "Brand Identity" }))
+        : []),
+      ...(templateMode !== "brand"
+        ? [
+            "Website Brief & Content",
+            "Page Structure & Layout",
+            "Website Design",
+            "Framer Build & Review",
+            "Launch & Handover",
+          ].map((name) => ({ name, stream: "Website Design" }))
+        : []),
+      { name: "Goodbye Packet", stream: "Delivery" },
+    ].map((s, position) => ({
+      ...s,
+      id: randomUUID(),
+      project_id: pid,
+      position,
+      status: "Not Started",
+      visible: true,
+    }))
+  : [];
 const financeProposals = [];
 const financeInvoices = ["Deposit", "Final"].map((kind) => ({
   id: randomUUID(),
@@ -420,6 +471,7 @@ const server = createServer(async (req, res) => {
           visible: true,
         },
       ];
+    if (table === "stages" && templateMode) rows = liveTemplate;
     if (stageMode || verificationMode) documents[0].stage_id = fixtureStageId;
     if (table === "documents")
       rows = documents.filter(
@@ -539,6 +591,92 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (templateMode) {
+      await page
+        .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
+        .waitFor();
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      assert.equal(
+        await page.locator(".milestone-disclosure").count(),
+        templateMode === "combined" ? 16 : 11,
+      );
+      const findStage = (name) =>
+        page
+          .locator(".milestone-disclosure")
+          .filter({
+            has: page.locator('input[name="name"][value="' + name + '"]'),
+          });
+      const onboarding = findStage("Onboarding");
+      await onboarding.locator("summary").first().click();
+      assert.equal(
+        await onboarding
+          .getByRole("link", { name: /Open brand discovery/ })
+          .count(),
+        templateMode === "website" ? 0 : 1,
+      );
+      assert.equal(
+        await onboarding
+          .getByRole("link", { name: /Open website discovery/ })
+          .count(),
+        templateMode === "brand" ? 0 : 1,
+      );
+      const enquiry = findStage("Enquiry Stage");
+      await enquiry.locator("summary").first().click();
+      await enquiry
+        .getByRole("link", { name: /Book a call with me/ })
+        .waitFor();
+      for (const [name, field] of [
+        ["Contract", "contract_signed"],
+        ["Invoice", "deposit_paid"],
+      ]) {
+        const stage = findStage(name);
+        await stage.locator("summary").first().click();
+        assert.equal(
+          await stage
+            .locator('.journey-verification input[name="field"]')
+            .count(),
+          1,
+        );
+        assert.equal(
+          await stage
+            .locator('.journey-verification input[name="field"]')
+            .inputValue(),
+          field,
+        );
+        assert.equal(
+          await stage.locator('select[name="status"]').isDisabled(),
+          true,
+        );
+      }
+      const goodbye = findStage("Goodbye Packet");
+      await goodbye.locator("summary").first().click();
+      assert.equal(
+        await goodbye
+          .getByRole("link", { name: /goodbye.*questionnaire/i })
+          .count(),
+        0,
+      );
+      project.final_paid = true;
+      project.final_approved = true;
+      await page.reload();
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await goodbye.locator("summary").first().click();
+      await goodbye
+        .getByRole("link", { name: /goodbye.*questionnaire/i })
+        .waitFor();
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: " +
+          templateMode +
+          " live template layout, matching brief/booking links, distinct contract/deposit confirmations and gated goodbye, at mobile size. Fictional services only.",
+      );
+      return;
+    }
     if (contractMode) {
       await page.waitForURL("**/contracts");
       await page
@@ -565,13 +703,11 @@ const server = createServer(async (req, res) => {
         ).href,
       );
       assert.equal(download.status(), 200);
-      await page
-        .getByLabel("Signed or completed PDF")
-        .setInputFiles({
-          name: "Invalid.pdf",
-          mimeType: "application/pdf",
-          buffer: Buffer.from("This is not a PDF"),
-        });
+      await page.getByLabel("Signed or completed PDF").setInputFiles({
+        name: "Invalid.pdf",
+        mimeType: "application/pdf",
+        buffer: Buffer.from("This is not a PDF"),
+      });
       await page
         .getByRole("button", { name: "Send signed PDF for review" })
         .click();

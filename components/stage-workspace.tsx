@@ -35,7 +35,7 @@ export default function StageWorkspace({
     assets = (data.assets ?? []).filter((a) => a.stage_id === stage.id);
   const booking = resource
     ? resource.booking_url
-    : /discovery call/i.test(stage.name)
+    : /^(discovery call|enquiry stage)$/i.test(stage.name.trim())
       ? discoveryBookingUrl
       : "";
   const project = data.projects.find((p) => p.id === stage.project_id);
@@ -46,11 +46,15 @@ export default function StageWorkspace({
     ? project?.final_paid && project?.final_approved
       ? "goodbye"
       : null
-    : briefStage && stage.stream === "Brand Identity"
-      ? "brand"
-      : briefStage && stage.stream === "Website Design"
+    : name === "onboarding" && stage.stream === "Onboarding" && project
+      ? project.type === "Website Design"
         ? "website"
-        : null;
+        : "brand"
+      : briefStage && stage.stream === "Brand Identity"
+        ? "brand"
+        : briefStage && stage.stream === "Website Design"
+          ? "website"
+          : null;
   return (
     <div className="stage-workspace">
       <p>{resource?.instructions || stageGuidance(stage.name)}</p>
@@ -152,6 +156,20 @@ export default function StageWorkspace({
                 : "goodbye & feedback"}{" "}
             questionnaire ↓
           </a>
+          {name === "onboarding" && project?.type === "Both" && (
+            <a
+              className="resource"
+              href={"#questionnaire-" + stage.project_id + "-website"}
+              onClick={() => {
+                const section = document.getElementById(
+                  "questionnaire-" + stage.project_id + "-website",
+                );
+                if (section instanceof HTMLDetailsElement) section.open = true;
+              }}
+            >
+              Open website discovery questionnaire ↓
+            </a>
+          )}
           {questionnaire !== "website" && (
             <a
               className="resource"

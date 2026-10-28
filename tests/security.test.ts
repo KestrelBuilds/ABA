@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
-import { createStages } from "../lib/projects";
+import { newProjectStages } from "../lib/workflow-templates";
 const ids = {
   admin: "00000000-0000-4000-8000-000000000001",
   one: "00000000-0000-4000-8000-000000000002",
@@ -258,7 +258,10 @@ test("PostgreSQL policies enforce client isolation, protected writes, questionna
         "2027-03-01",
         5000,
         JSON.stringify(
-          createStages("Both").map((s) => ({ name: s.name, stream: s.stream })),
+          newProjectStages("Both").map((s) => ({
+            name: s.name,
+            stream: s.stream,
+          })),
         ),
       ],
     );
@@ -269,7 +272,7 @@ test("PostgreSQL policies enforce client isolation, protected writes, questionna
           `select * from public.stages where project_id='${createdId}'`,
         )
       ).length,
-      25,
+      newProjectStages("Both").length,
     );
     await db.query(
       `select public.save_project_controls($1,true,true,false,false,$2)`,

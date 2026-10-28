@@ -80,3 +80,30 @@ test("custom labels and unrelated streams never acquire inferred payment meaning
     assert.equal(verifiedStageStatus(custom, project), "Completed");
   }
 });
+
+test("separate Contract and Invoice template stages follow their own verification only", () => {
+  const contract = { ...stage, name: "Contract" };
+  const invoice = { ...stage, name: "Invoice" };
+  assert.deepEqual(stageVerification(contract), ["contract_signed"]);
+  assert.deepEqual(stageVerification(invoice), ["deposit_paid"]);
+  assert.equal(
+    verifiedStageStatus(contract, { ...project, deposit_paid: true }),
+    "Awaiting verification",
+  );
+  assert.equal(
+    verifiedStageStatus(invoice, { ...project, contract_signed: true }),
+    "Awaiting verification",
+  );
+  assert.equal(
+    verifiedStageStatus(contract, { ...project, contract_signed: true }),
+    "Completed",
+  );
+  assert.equal(
+    verifiedStageStatus(invoice, { ...project, deposit_paid: true }),
+    "Completed",
+  );
+  assert.deepEqual(
+    stageVerification({ ...stage, name: "Goodbye Packet", stream: "Delivery" }),
+    [],
+  );
+});
