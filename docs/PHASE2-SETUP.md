@@ -105,3 +105,6 @@ If the authenticator is lost, recover it through its backup method. If necessary
 
 ### Workspace data export
 My account includes **Download my workspace data**. It exports only data visible to the current verified account, with no auth credentials, file bytes or service keys. Client exports exclude private notes/admin activity. Owner export requires MFA if enabled. This is a portable JSON export with a limited recent activity log, not a full/restorable database backup. Provider backups, retention and a restore rehearsal still need to be configured separately.
+
+### Initial contract area upgrade
+After migrations through 202610280005, apply only 202610280006_contract_area.sql once to enable the optional restricted pre-onboarding contract area. No existing projects are opted in. Follow CONTRACT-AREA.md for explicit stage setup, invitations, PDF returns and hosted acceptance. No new secrets or signing-service account are required.

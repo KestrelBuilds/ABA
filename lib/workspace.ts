@@ -72,6 +72,7 @@ export type ClientAction = {
   status: "To do" | "Done";
 };
 export type ClientAsset = {
+  contract_document_id?: string | null;
   stage_id?: string | null;
   id: string;
   project_id: string;
@@ -79,6 +80,12 @@ export type ClientAsset = {
   created_at: string;
 };
 export type WorkspaceData = {
+  contractReady?: boolean;
+  contractExchanges?: {
+    project_id: string;
+    stage_id: string;
+    enabled: boolean;
+  }[];
   finance?: FinanceData;
   stageResources?: {
     stage_id: string;
@@ -110,6 +117,21 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
   )
     throw Error("Project tools could not be checked. Please retry.");
   const managementReady = capability.data === true;
+  const contractCapability = await db.rpc("contract_area_ready");
+  if (
+    contractCapability.error &&
+    !["PGRST202", "42883"].includes(contractCapability.error.code)
+  )
+    throw Error("Contract access could not be checked.");
+  const contractReady = contractCapability.data === true;
+  const contractExchanges =
+    contractReady && profile.role === "admin"
+      ? await db
+          .from("contract_exchanges")
+          .select("project_id,stage_id,enabled")
+      : null;
+  if (contractExchanges?.error)
+    throw Error("Contract sharing settings could not be loaded.");
   const finance = await loadFinance(db);
   const resources = finance.ready
     ? await db
@@ -129,7 +151,9 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
           .from("client_assets")
           .select(
             finance.ready
-              ? "id,project_id,name,created_at,stage_id"
+              ? contractReady
+                ? "id,project_id,name,created_at,stage_id,contract_document_id"
+                : "id,project_id,name,created_at,stage_id"
               : "id,project_id,name,created_at",
           )
           .order("created_at")
@@ -190,6 +214,8 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       "Workspace data could not be loaded. Check the database migrations and access policies.",
     );
   return {
+    contractReady,
+    contractExchanges: contractExchanges?.data ?? [],
     finance,
     stageResources: resources?.data ?? [],
     managementReady,

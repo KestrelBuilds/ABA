@@ -92,3 +92,43 @@ test("unattached files need no stage; unresolved or mismatched stages remain loc
     false,
   );
 });
+
+test("only explicitly enabled shared contract documents can bypass onboarding in the limited area", () => {
+  const project = {
+    id: "p",
+    contract_signed: false,
+    deposit_paid: false,
+  } as DbProject;
+  const doc = {
+    published: true,
+    document_role: "Contract",
+    category: "document",
+    stage_id: "s",
+  } as DbDocument;
+  const stages = [{ id: "s", project_id: "p", visible: true } as DbStage];
+  const exchanges = [{ project_id: "p", stage_id: "s", enabled: true }];
+  assert.equal(fileVisibility(doc, project, stages, exchanges).available, true);
+  assert.match(
+    fileVisibility(doc, project, stages, exchanges).message,
+    /initial contract area only/,
+  );
+  for (const altered of [
+    { ...doc, published: false },
+    { ...doc, document_role: "Invoice" },
+    { ...doc, category: "final" },
+  ])
+    assert.equal(
+      fileVisibility(altered, project, stages, exchanges).available,
+      false,
+    );
+  assert.equal(
+    fileVisibility(doc, project, [{ ...stages[0], visible: false }], exchanges)
+      .available,
+    false,
+  );
+  assert.equal(
+    fileVisibility(doc, project, stages, [{ ...exchanges[0], enabled: false }])
+      .available,
+    false,
+  );
+});

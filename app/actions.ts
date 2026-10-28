@@ -21,6 +21,7 @@ export type Result = { ok: boolean; message: string; link?: string };
 function refresh() {
   revalidatePath("/workspace");
   revalidatePath("/portal");
+  revalidatePath("/contracts");
 }
 async function run(fn: () => Promise<string | void>): Promise<Result> {
   try {
@@ -439,10 +440,20 @@ export async function inviteClient(form: FormData): Promise<Result> {
       .eq("deposit_paid", true)
       .limit(1);
     checked(projectError);
-    if (!eligible?.length)
-      throw Error(
-        "Record the signed contract and 50% deposit on a project before inviting this client.",
-      );
+    if (!eligible?.length) {
+      const contractEligibility = await db.rpc("client_invitation_ready", {
+        target: id,
+      });
+      if (
+        contractEligibility.error &&
+        !["PGRST202", "42883"].includes(contractEligibility.error.code)
+      )
+        throw Error("Invitation eligibility could not be checked.");
+      if (contractEligibility.data !== true)
+        throw Error(
+          "Verify contract/deposit or enable an initial contract area with a shared Contract PDF before inviting this client.",
+        );
+    }
     const service = invitationAdmin();
     const delivery = z
       .enum(["link", "email"])
@@ -870,5 +881,120 @@ export async function saveStageResources(form: FormData) {
           .upsert({ stage_id, instructions, booking_url })
       ).error,
     );
+  });
+}
+
+export async function setContractExchange(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const ready = await db.rpc("contract_area_ready");
+    if (ready.data !== true)
+      throw Error("Apply the contract-area SQL upgrade first.");
+    const stageId = uuid.parse(form.get("stageId"));
+    const enabled =
+      z.enum(["true", "false"]).parse(form.get("enabled")) === "true";
+    if (enabled && form.get("confirmed") !== "on")
+      throw Error(
+        "Confirm that only shared Contract PDFs in this stage should be accessible before onboarding.",
+      );
+    const stage = await db
+      .from("stages")
+      .select("project_id,visible")
+      .eq("id", stageId)
+      .single();
+    checked(stage.error);
+    if (!stage.data) throw Error("Stage not found.");
+    if (enabled) {
+      if (!stage.data.visible)
+        throw Error("Make this stage client-visible first.");
+      const docs = await db
+        .from("documents")
+        .select("id")
+        .eq("project_id", stage.data.project_id)
+        .eq("stage_id", stageId)
+        .eq("document_role", "Contract")
+        .eq("category", "document")
+        .eq("published", true)
+        .limit(1);
+      checked(docs.error);
+      if (!docs.data?.length)
+        throw Error(
+          "Upload a Contract PDF to this stage with Project document release rules and share it first.",
+        );
+    }
+    checked(
+      (
+        await db
+          .from("contract_exchanges")
+          .upsert(
+            { project_id: stage.data.project_id, stage_id: stageId, enabled },
+            { onConflict: "project_id" },
+          )
+      ).error,
+    );
+    return enabled
+      ? "Initial contract area enabled. Create/share a private invitation from Clients. Full portal access still requires your contract and deposit verification."
+      : "Initial contract area disabled. Existing signed links can remain usable for up to 60 seconds.";
+  });
+}
+export async function uploadSignedContract(form: FormData) {
+  return run(async () => {
+    const { db, user, profile } = await identity();
+    if (profile.role !== "client")
+      throw Error("Use a client account to return a signed contract.");
+    const documentId = uuid.parse(form.get("documentId"));
+    const ready = await db.rpc("contract_area_ready");
+    if (ready.data !== true)
+      throw Error("The contract area is not available yet.");
+    const allowed = await db.rpc("can_read_contract_document", {
+      target: documentId,
+    });
+    if (allowed.error || allowed.data !== true)
+      throw Error("This contract is no longer available to your account.");
+    const original = await db
+      .from("documents")
+      .select("project_id,stage_id")
+      .eq("id", documentId)
+      .single();
+    checked(original.error);
+    if (!original.data?.stage_id) throw Error("Contract not found.");
+    const file = form.get("file");
+    if (!(file instanceof File)) throw Error("Choose your completed PDF.");
+    validateFile(file);
+    if (
+      file.type !== "application/pdf" ||
+      new TextDecoder().decode(await file.slice(0, 5).arrayBuffer()) !== "%PDF-"
+    )
+      throw Error("Choose a completed PDF up to 3 MB.");
+    const id = crypto.randomUUID(),
+      project_id = original.data.project_id,
+      object_path = project_id + "/" + id;
+    checked(
+      (
+        await db
+          .from("client_assets")
+          .insert({
+            id,
+            project_id,
+            stage_id: original.data.stage_id,
+            contract_document_id: documentId,
+            uploader_id: user.id,
+            name: file.name.slice(0, 180),
+            object_path,
+          })
+      ).error,
+    );
+    const upload = await db.storage
+      .from("client-assets")
+      .upload(object_path, file, {
+        contentType: "application/pdf",
+        cacheControl: "0",
+        upsert: false,
+      });
+    if (upload.error) {
+      await db.from("client_assets").delete().eq("id", id);
+      throw Error("Your signed PDF could not be uploaded. Please try again.");
+    }
+    return "Your completed PDF has been sent for my review. Uploading it does not verify the contract or payment; I’ll unlock the full portal after both checks.";
   });
 }

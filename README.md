@@ -91,3 +91,6 @@ Both file views show why a shared file is still locked, including missing contra
 
 ### Simpler owner project overview
 Project at a glance shows the next milestone, portal eligibility and final-delivery requirements together. Open next step expands the relevant stage or built-in invoices. Eligibility does not mean an invitation was sent. See [the database/UI review](docs/DATABASE-UX-REVIEW.md) for the schema review and next recommendations.
+
+### Initial contract signing and return
+A restricted contract-only area now supports invited clients before full onboarding, after applying migration 202610280006. Explicitly enable it inside a client-visible stage with shared Contract PDFs. Clients sign externally in Acrobat and return the PDF; Alex reviews it and verifies contract/deposit before the full portal opens. See [activation and hosted checks](docs/CONTRACT-AREA.md). No automatic signatures, payment confirmations or historical opt-ins.

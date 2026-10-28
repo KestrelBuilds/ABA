@@ -41,3 +41,5 @@ Do not merge documents/client assets or remove private notes/handover tables mer
 ## Validation boundaries
 
 Existing PostgreSQL policy/finance tests exercise the local SQL model. Pure summary tests cover stale stage completion, native invoice routing, reordered/custom/empty workflows and eligibility gates. Browser checks use fictional HTTP services and exercise milestone navigation, automatic expansion, access-summary updates and read-only preview exclusion. These do not establish hosted Supabase/Vercel acceptance.
+
+Later implementation: migration 202610280006 adds one explicit contract_exchanges table (21 public application tables total after activation), while returned contract PDFs reuse client_assets with an original-document reference. This preserves the chosen same-stage/same-file-library organisation and adds no parallel payment/signature status tracker. See CONTRACT-AREA.md.

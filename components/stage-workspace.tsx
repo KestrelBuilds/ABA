@@ -4,6 +4,7 @@ import type { WorkspaceData, DbStage } from "@/lib/workspace";
 import type { Result } from "@/app/actions";
 import {
   saveStageResources,
+  setContractExchange,
   uploadDocument,
   publishDocument,
   uploadClientAsset,
@@ -63,14 +64,69 @@ export default function StageWorkspace({
       )}
       {admin && project && (
         <p>
-          Client file access:{" "}
+          Full portal file access:{" "}
           {!(project.contract_signed && project.deposit_paid)
-            ? "locked until the signed contract and deposit are verified."
+            ? "locked until the signed contract and deposit are verified. An enabled initial contract area is separate and only exposes shared contracts."
             : !stage.visible
               ? "this stage is internal; its files stay private."
               : "shared files in this stage are available; final deliverables also need verified final approval and payment."}
         </p>
       )}
+      {admin &&
+        data.contractReady &&
+        (documents.some((d) => d.document_role === "Contract") ||
+          data.contractExchanges?.some((x) => x.stage_id === stage.id)) && (
+          <details>
+            <summary>Initial contract area</summary>
+            <p>
+              Only shared Contract PDFs with Project document release rules in
+              this client-visible stage can be opened before onboarding. Other
+              files, stages and questionnaires stay locked. One initial contract
+              stage per project.
+            </p>
+            <Form
+              action={setContractExchange}
+              label={
+                data.contractExchanges?.some(
+                  (x) => x.stage_id === stage.id && x.enabled,
+                )
+                  ? "Disable initial contract area"
+                  : "Enable initial contract area"
+              }
+            >
+              <input type="hidden" name="stageId" value={stage.id} />
+              <input
+                type="hidden"
+                name="enabled"
+                value={String(
+                  !data.contractExchanges?.some(
+                    (x) => x.stage_id === stage.id && x.enabled,
+                  ),
+                )}
+              />
+              {!data.contractExchanges?.some(
+                (x) => x.stage_id === stage.id && x.enabled,
+              ) && (
+                <label className="check-row">
+                  <input name="confirmed" type="checkbox" required />
+                  Allow this project’s invited client to download shared
+                  contracts and return signed copies before the full portal
+                  unlocks.
+                </label>
+              )}
+            </Form>
+            {data.contractExchanges?.some(
+              (x) => x.stage_id === stage.id && x.enabled,
+            ) && (
+              <a
+                className="resource"
+                href={"/contracts?projectId=" + stage.project_id}
+              >
+                Preview initial contract area ↗
+              </a>
+            )}
+          </details>
+        )}
       {booking && (
         <a className="resource" href={booking} target="_blank" rel="noreferrer">
           Book a call with me ↗
@@ -129,7 +185,10 @@ export default function StageWorkspace({
           </a>
           {admin && project && (
             <p className="file-visibility">
-              {fileVisibility(d, project, data.stages).message}
+              {
+                fileVisibility(d, project, data.stages, data.contractExchanges)
+                  .message
+              }
             </p>
           )}
           {admin && (

@@ -43,6 +43,11 @@ test("PostgreSQL policies enforce client isolation, protected writes, questionna
         "utf8",
       ),
     );
+    for (const file of [
+      "202610280005_business_documents.sql",
+      "202610280006_contract_area.sql",
+    ])
+      await db.exec(await readFile("supabase/migrations/" + file, "utf8"));
     await db.exec(`insert into auth.users(id) values('${ids.admin}'),('${ids.one}'),('${ids.two}'),('${ids.stranger}');
  insert into public.clients(id,name,contact,email) values('${ids.c1}','Client one','One','one@example.com'),('${ids.c2}','Client two','Two','two@example.com');
  insert into public.profiles values('${ids.admin}','admin',null),('${ids.one}','client','${ids.c1}'),('${ids.two}','client','${ids.c2}');

@@ -19,3 +19,6 @@ The owner has confirmed hosted account/isolation, private file and sign-in-email
 - Obtain Alex's explicit approval for real client use. Payments and signatures need established providers and separate test/live approval.
 
 No purchases, production compliance certification or automatic client communication are authorised merely by this checklist.
+
+## Initial contract area acceptance
+After applying migration 202610280006, run docs/CONTRACT-AREA.md hosted acceptance with fictional owner/two-client accounts. Verify early invitation, scoped PDF download/return, no auto-verification, full-portal locking until both confirmations, raw provider isolation and revoke/hide/unpublish/disable behaviour. Local SQL/fixture tests are not hosted acceptance.

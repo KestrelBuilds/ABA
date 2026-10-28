@@ -8,8 +8,9 @@ export async function GET(request: Request) {
       const db = await database();
       const { error } = await db.auth.exchangeCodeForSession(code);
       if (!error) {
-        await db.rpc("accept_invitation");
-        return NextResponse.redirect(new URL("/portal", url.origin));
+        const accepted = await db.rpc("accept_invitation");
+        if (!accepted.error)
+          return NextResponse.redirect(new URL("/portal", url.origin));
       }
     } catch {
       /* Show a safe retry path. */

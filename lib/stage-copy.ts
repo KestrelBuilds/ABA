@@ -5,7 +5,7 @@ export function stageGuidance(name: string) {
   if (n.includes("proposal"))
     return "Open the project proposal PDF below and review the scope, deliverables, timeline and revision allowance. Contact me about anything you would like clarified.";
   if (n.includes("contract"))
-    return "Download the contract PDF and complete/sign it in Adobe Acrobat or the agreed signing tool. Save and upload the completed PDF back to this stage when portal access is available; before that, return it by the agreed email process. I’ll review and verify the signed contract and receipt of the deposit before enabling onboarding.";
+    return "Download the contract PDF and complete/sign it in Adobe Acrobat or the agreed signing tool. Save and upload the completed PDF in the initial contract area when I’ve invited you there, or return it to this stage after portal access opens. I’ll review and verify the signed contract and receipt of the deposit before enabling onboarding.";
   if (n.includes("invoice"))
     return "Open your invoice PDF and follow the payment instructions. Uploading a document does not confirm payment; I’ll update the payment record after checking receipt.";
   if (n.includes("questionnaire") || n.includes("brief"))

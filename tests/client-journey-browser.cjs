@@ -7,13 +7,18 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const contractMode = process.argv.includes("--contracts");
+const contractOwnerMode = process.argv.includes("--contract-owner");
 const verificationMode = process.argv.includes("--verification");
 const managementMode = process.argv.includes("--management");
 const stageMode = process.argv.includes("--stages");
 const fixtureStageId = randomUUID();
 const financeMode = process.argv.includes("--finance");
 const ownerMode =
-  process.argv.includes("--owner-preview") || financeMode || verificationMode;
+  process.argv.includes("--owner-preview") ||
+  financeMode ||
+  verificationMode ||
+  contractOwnerMode;
 const uid = randomUUID(),
   cid = randomUUID(),
   pid = randomUUID(),
@@ -61,7 +66,7 @@ const project = {
   final_paid: false,
   final_approved: false,
 };
-if (verificationMode) {
+if (verificationMode || contractMode || contractOwnerMode) {
   project.contract_signed = false;
   project.deposit_paid = false;
 }
@@ -122,6 +127,16 @@ const documents = [
     published: true,
   },
 ];
+let exchangeEnabled = contractMode;
+let uploadedContractPdf = null;
+if (contractMode || contractOwnerMode)
+  Object.assign(documents[0], {
+    name: "Agreement.pdf",
+    category: "document",
+    document_role: "Contract",
+    version_label: "v1",
+    stage_id: fixtureStageId,
+  });
 const questionnaires = [],
   feedback = [];
 const clientActions = [
@@ -169,16 +184,61 @@ const server = createServer(async (req, res) => {
           signedURL: path.replace("/storage/v1", "") + "?token=fictional",
         });
       res.writeHead(200, { "Content-Type": "application/pdf" });
+      if (path.includes("client-assets/") && uploadedContractPdf)
+        return res.end(uploadedContractPdf);
       return res.end("%PDF-1.4\nFictional test bytes\n%%EOF");
     }
     if (
       path.startsWith("/storage/v1/object/client-assets/") &&
       req.method === "POST"
-    )
+    ) {
+      if (contractMode) {
+        const pdfStart = text.indexOf("%PDF-");
+        const pdfEnd = text.indexOf("%%EOF", pdfStart) + 5;
+        if (pdfStart >= 0 && pdfEnd > pdfStart)
+          uploadedContractPdf = Buffer.from(text.slice(pdfStart, pdfEnd));
+      }
       return json({ Key: path.split("/object/")[1], Id: randomUUID() });
+    }
     const table = path.split("/").pop();
+    if (table === "contract_area_ready")
+      return json(contractMode || contractOwnerMode);
+    if (table === "can_read_contract_document")
+      return json(exchangeEnabled && body.target === presentation);
+    if (table === "contract_area")
+      return json(
+        (contractMode || contractOwnerMode) && exchangeEnabled
+          ? [
+              {
+                project_id: pid,
+                name: project.name,
+                stage_id: fixtureStageId,
+                stage_name: "Contract and Deposit",
+                contract_signed: project.contract_signed,
+                deposit_paid: project.deposit_paid,
+                documents: [
+                  {
+                    id: presentation,
+                    name: "Agreement.pdf",
+                    version_label: "v1",
+                  },
+                ],
+                returns: assets
+                  .filter((a) => a.contract_document_id === presentation)
+                  .map((a) => ({
+                    id: a.id,
+                    name: a.name,
+                    contract_document_id: a.contract_document_id,
+                    created_at: a.created_at,
+                  })),
+              },
+            ]
+          : [],
+      );
     if (table === "business_documents_ready")
-      return json(financeMode || stageMode);
+      return json(
+        financeMode || stageMode || contractMode || contractOwnerMode,
+      );
     if (table === "new_proposal") {
       const id = randomUUID();
       financeProposals.push({
@@ -258,7 +318,9 @@ const server = createServer(async (req, res) => {
       return json(null);
     }
     if (table === "project_management_ready")
-      return json(managementMode || stageMode);
+      return json(
+        managementMode || stageMode || contractMode || contractOwnerMode,
+      );
     if (table === "complete_client_action") {
       const a = clientActions.find((a) => a.id === body.target);
       if (a) a.status = body.done ? "Done" : "To do";
@@ -284,6 +346,12 @@ const server = createServer(async (req, res) => {
           sector: "Design",
         },
       ];
+    if (table === "contract_exchanges") {
+      if (req.method === "POST") exchangeEnabled = body.enabled;
+      rows = [
+        { project_id: pid, stage_id: fixtureStageId, enabled: exchangeEnabled },
+      ];
+    }
     if (table === "projects") {
       if (req.method === "PATCH") Object.assign(project, body);
       rows = [project];
@@ -337,12 +405,16 @@ const server = createServer(async (req, res) => {
         {
           id: fixtureStageId,
           project_id: pid,
-          name: verificationMode
-            ? "Contract and Deposit"
-            : stageMode
-              ? "Discovery Call"
-              : "Concept review",
-          stream: verificationMode ? "Onboarding" : "Brand Identity",
+          name:
+            verificationMode || contractOwnerMode || contractMode
+              ? "Contract and Deposit"
+              : stageMode
+                ? "Discovery Call"
+                : "Concept review",
+          stream:
+            verificationMode || contractOwnerMode || contractMode
+              ? "Onboarding"
+              : "Brand Identity",
           position: 0,
           status: verificationMode ? "Completed" : "Awaiting Client",
           visible: true,
@@ -375,6 +447,27 @@ const server = createServer(async (req, res) => {
           created_at: new Date().toISOString(),
         });
       rows = feedback;
+    }
+    if (contractMode && !(project.contract_signed && project.deposit_paid)) {
+      if (
+        [
+          "projects",
+          "stages",
+          "project_details",
+          "project_handover",
+          "questionnaires",
+          "client_actions",
+          "stage_resources",
+          "feedback",
+          "proposals",
+          "invoices",
+        ].includes(table)
+      )
+        rows = [];
+      if (table === "documents")
+        rows = documents.filter(
+          (d) => d.id === presentation && exchangeEnabled,
+        );
     }
     for (const [key, value] of url.searchParams)
       if (value.startsWith("eq."))
@@ -446,6 +539,149 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (contractMode) {
+      await page.waitForURL("**/contracts");
+      await page
+        .getByRole("heading", { name: "Your contract with me", exact: true })
+        .waitFor();
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Your project journey", exact: true })
+          .count(),
+        0,
+      );
+      assert.equal(
+        await page
+          .getByText("Fictional final files.pdf", { exact: true })
+          .count(),
+        0,
+      );
+      const download = await page.request.get(
+        new URL(
+          await page
+            .getByRole("link", { name: /Download contract PDF/ })
+            .getAttribute("href"),
+          page.url(),
+        ).href,
+      );
+      assert.equal(download.status(), 200);
+      await page
+        .getByLabel("Signed or completed PDF")
+        .setInputFiles({
+          name: "Invalid.pdf",
+          mimeType: "application/pdf",
+          buffer: Buffer.from("This is not a PDF"),
+        });
+      await page
+        .getByRole("button", { name: "Send signed PDF for review" })
+        .click();
+      await page
+        .getByRole("alert")
+        .filter({ hasText: "Choose a completed PDF up to 3 MB." })
+        .waitFor();
+      assert.equal(assets.length, 0);
+      const bytes = Buffer.from(
+        "%PDF-1.4\nFictional Acrobat completed contract; keep signed bytes unchanged\n%%EOF",
+      );
+      await page.getByLabel("Signed or completed PDF").setInputFiles({
+        name: "Signed agreement.pdf",
+        mimeType: "application/pdf",
+        buffer: bytes,
+      });
+      await page
+        .getByRole("button", { name: "Send signed PDF for review" })
+        .click();
+      await page
+        .getByText(/Your completed PDF has been sent for my review/)
+        .waitFor();
+      const returned = page.getByRole("link", {
+        name: /Your returned copy.*Signed agreement.pdf/,
+      });
+      await returned.waitFor();
+      assert.equal(assets[0].contract_document_id, presentation);
+      assert.deepEqual(uploadedContractPdf, bytes);
+      const returnedBytes = await page.request.get(
+        new URL(await returned.getAttribute("href"), page.url()).href,
+      );
+      assert.deepEqual(await returnedBytes.body(), bytes);
+      assert.equal(project.contract_signed, false);
+      assert.equal(project.deposit_paid, false);
+      project.contract_signed = true;
+      await page.goto(`http://127.0.0.1:${appPort}/portal`);
+      await page.waitForURL("**/contracts");
+      project.deposit_paid = true;
+      await page.goto(`http://127.0.0.1:${appPort}/portal`);
+      await page
+        .getByRole("heading", { name: project.name, exact: true })
+        .waitFor();
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Your contract with me", exact: true })
+          .count(),
+        0,
+      );
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: restricted client contract download, byte-identical signed PDF return, no auto-verification, signed-only remains restricted, contract plus deposit opens full portal. Fictional services only.",
+      );
+      return;
+    }
+    if (contractOwnerMode) {
+      await page
+        .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
+        .waitFor();
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      const stage = page
+        .locator(".milestone-disclosure")
+        .filter({ hasText: "Contract and Deposit" });
+      await stage.locator("summary").first().click();
+      await stage.getByText("Initial contract area", { exact: true }).click();
+      await stage.locator('input[type="checkbox"][name="confirmed"]').check();
+      await stage
+        .getByRole("button", {
+          name: "Enable initial contract area",
+          exact: true,
+        })
+        .click();
+      const preview = stage.getByRole("link", {
+        name: /Preview initial contract area/,
+      });
+      await preview.waitFor();
+      assert.equal(exchangeEnabled, true);
+      assert.match(
+        await stage.locator(".file-visibility").first().innerText(),
+        /initial contract area only/,
+      );
+      await preview.click();
+      await page
+        .getByText(/Read-only preview of the initial contract area/)
+        .waitFor();
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Send signed PDF for review" })
+          .count(),
+        0,
+      );
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Sign out", exact: true })
+          .count(),
+        0,
+      );
+      assert.equal(assets.length, 0);
+      assert.equal(project.contract_signed, false);
+      assert.equal(project.deposit_paid, false);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: owner opts in a specific contract stage and previews the restricted area without client upload/actions or verification changes. Fictional services only.",
+      );
+      return;
+    }
     if (verificationMode) {
       await page
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })

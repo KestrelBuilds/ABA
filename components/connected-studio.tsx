@@ -577,8 +577,10 @@ export default function ConnectedStudio({
                             </select>
                           </label>
                           <p>
-                            Requires a signed contract and recorded deposit.
-                            Choose a private link or, after email-template
+                            Requires verified contract/deposit or an enabled
+                            initial contract area with a shared Contract PDF.
+                            Early invitations only open the restricted contract
+                            area. Choose a private link or, after email-template
                             setup, a Supabase invitation email.
                           </p>
                         </ActionForm>
@@ -1306,6 +1308,7 @@ export default function ConnectedStudio({
                                             d,
                                             project,
                                             data.stages,
+                                            data.contractExchanges,
                                           ).message
                                         }
                                       </p>

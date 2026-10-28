@@ -6,6 +6,8 @@ import { MfaRequiredError } from "@/lib/mfa";
 import { redirect } from "next/navigation";
 import { configured, identity } from "@/lib/supabase/server";
 import { loadWorkspace } from "@/lib/workspace";
+import Link from "next/link";
+import { loadContractArea } from "@/lib/contracts";
 import ConnectedStudio from "@/components/connected-studio";
 export const dynamic = "force-dynamic";
 export default async function Portal() {
@@ -19,5 +21,20 @@ export default async function Portal() {
   }
   if (role === "admin") redirect("/workspace");
   const data = await loadWorkspace();
-  return <ConnectedStudio data={data} />;
+  const contracts = await loadContractArea((await identity()).db);
+  if (!data.projects.length && contracts.entries.length) redirect("/contracts");
+  return (
+    <>
+      {contracts.entries.some(
+        (p) => !(p.contract_signed && p.deposit_paid),
+      ) && (
+        <div className="banner">
+          <Link href="/contracts">
+            Review contracts for projects awaiting onboarding →
+          </Link>
+        </div>
+      )}
+      <ConnectedStudio data={data} />
+    </>
+  );
 }

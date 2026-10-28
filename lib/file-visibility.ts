@@ -5,7 +5,28 @@ export function fileVisibility(
   document: DbDocument,
   project: DbProject,
   stages: DbStage[],
+  exchanges: { project_id: string; stage_id: string; enabled: boolean }[] = [],
 ): { available: boolean; message: string } {
+  const restricted =
+    document.published &&
+    document.document_role === "Contract" &&
+    document.category === "document" &&
+    stages.some(
+      (s) =>
+        s.id === document.stage_id && s.project_id === project.id && s.visible,
+    ) &&
+    exchanges.some(
+      (x) =>
+        x.project_id === project.id &&
+        x.stage_id === document.stage_id &&
+        x.enabled,
+    );
+  if (restricted && !(project.contract_signed && project.deposit_paid))
+    return {
+      available: true,
+      message:
+        "Available to this project’s invited client in the initial contract area only. The full portal remains locked until contract and deposit verification.",
+    };
   const restrictions: string[] = [];
   if (!document.published) restrictions.push("share this private draft");
   if (!project.contract_signed) restrictions.push("verify the signed contract");

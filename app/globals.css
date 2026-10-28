@@ -2025,3 +2025,18 @@ nav button {
     gap: 1rem;
   }
 }
+
+.contract-area-page {
+  align-items: start;
+}
+.contract-area-content {
+  width: min(100%, 840px);
+  min-width: 0;
+}
+.contract-area-content .panel {
+  margin: 1.5rem 0;
+}
+.contract-area-content p,
+.contract-area-content a {
+  overflow-wrap: anywhere;
+}
