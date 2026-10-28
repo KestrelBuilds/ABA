@@ -74,3 +74,9 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Added the six-section client home, content/handover/support guidance and relevant review checklists.
 - Preserved prior submitted answers; documented remaining Notion feature gaps and external Tally question definitions in docs/reference/NOTION-MAPPING.md.
 - Validation: 28 local tests, strict type checks and production build passed. The real client screens/actions passed the automated fictional-service browser journey with the expanded Notion brief and mobile layout. No new database migration is required. Remaining feature gaps are explicitly mapped rather than represented as complete.
+
+### Owner access to Notion-style preview
+- Added Preview client portal to the owner workspace so reviewing the Notion updates does not require a client account.
+- Reuses the client layout with read-only forms, no account actions and filtered project data; planned layout remains previewable before onboarding without granting access or releasing documents.
+- Added projection/access-gate tests and a browser owner-preview flow.
+- Validation: 31 local tests, strict types and production build passed, plus browser checks for owner preview and the real client journey against fictional services. No database upgrade required.

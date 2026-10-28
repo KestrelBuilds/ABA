@@ -7,6 +7,7 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const ownerMode = process.argv.includes("--owner-preview");
 const uid = randomUUID(),
   cid = randomUUID(),
   pid = randomUUID(),
@@ -111,7 +112,13 @@ const server = createServer(async (req, res) => {
     const table = path.split("/").pop();
     let rows = [];
     if (table === "profiles")
-      rows = [{ id: uid, role: "client", client_id: cid }];
+      rows = [
+        {
+          id: uid,
+          role: ownerMode ? "admin" : "client",
+          client_id: ownerMode ? null : cid,
+        },
+      ];
     if (table === "clients")
       rows = [
         {
@@ -229,6 +236,51 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (ownerMode) {
+      await page
+        .getByRole("heading", { name: "Good things take shape.", exact: true })
+        .waitFor();
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await page
+        .getByRole("heading", {
+          name: "Everything for your project",
+          exact: true,
+        })
+        .waitFor();
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Sign out", exact: true })
+          .count(),
+        0,
+      );
+      const brief = page.locator(".questionnaire").first();
+      await brief.locator("summary").click();
+      assert.equal(
+        await brief
+          .getByRole("button", { name: "Send my answers" })
+          .isDisabled(),
+        true,
+      );
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Project controls", exact: true })
+          .count(),
+        0,
+      );
+      await page
+        .getByRole("button", { name: "Back to owner workspace" })
+        .click();
+      await page
+        .getByRole("heading", { name: "Good things take shape.", exact: true })
+        .waitFor();
+      assert.equal(questionnaires.length, 0);
+      assert.equal(feedback.length, 0);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: owner opens the real read-only client layout, sees Notion sections, cannot submit client forms or sign out from preview, and returns to owner workspace without mutations. Fictional service fixture used.",
+      );
+      return;
+    }
     await page
       .getByRole("heading", { name: "Fictional client journey", exact: true })
       .waitFor();

@@ -1738,3 +1738,59 @@ details summary {
     font-size: 10px;
   }
 }
+.action-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.action-fields:disabled {
+  opacity: 0.7;
+}
+.preview-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #e1eacb;
+  border-bottom: 1px solid #c6d5aa;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+.preview-toolbar b {
+  font-size: 13px;
+}
+.preview-toolbar span {
+  display: block;
+  font-size: 11px;
+  margin-top: 5px;
+}
+.owner-preview-entry {
+  margin: 0 0 25px;
+}
+.owner-preview-entry p {
+  font-size: 11px;
+  margin-top: 8px;
+}
+@media (max-width: 520px) {
+  .preview-toolbar {
+    padding: 12px;
+    align-items: flex-start;
+  }
+  .preview-toolbar .primary {
+    font-size: 9px;
+    padding: 10px;
+    white-space: normal;
+  }
+  .preview-toolbar span {
+    font-size: 9px;
+  }
+}
+.connected-form .action-fields > label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  margin: 18px 0;
+}

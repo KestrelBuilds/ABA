@@ -74,3 +74,6 @@ Run `node tests/client-journey-browser.cjs` with system Chromium available. It s
 
 ### Notion reference received and implemented
 The owner supplied a client-free master portal export. The client home and six navigation sections, native branding/website questions, review checklists and handover/help guidance now follow it. Existing responses remain unchanged. Shared business questions are asked once for combined projects. See [the reference mapping](docs/reference/NOTION-MAPPING.md) for implementation details and remaining gaps; linked Tally form internals were not part of the export. No SQL upgrade is required for this update.
+
+### Reviewing the Notion-style portal as the owner
+Open the owner workspace, choose a project and click **Preview client portal**. It renders the actual client layout with submissions/account actions disabled and internal records excluded. If contract/deposit conditions are not met, it explicitly previews the planned layout without granting client access or showing locked documents. Use **Back to owner workspace** to leave. The fictional demo remains separate.
