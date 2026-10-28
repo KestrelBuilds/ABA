@@ -110,7 +110,7 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
   )
     throw Error("Project tools could not be checked. Please retry.");
   const managementReady = capability.data === true;
-  const finance = await loadFinance(db, profile.role === "admin");
+  const finance = await loadFinance(db);
   const resources = finance.ready
     ? await db
         .from("stage_resources")

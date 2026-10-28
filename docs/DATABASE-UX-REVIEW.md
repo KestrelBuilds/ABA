@@ -1,5 +1,7 @@
 # Database and workspace usability review
 
+Update: Alex has since chosen Illustrator PDFs exclusively. Native generation/Finance UI has been removed; references to optional generators below describe the reviewed historical schema. Previous records and invoice protections remain.
+
 28 October 2026. Scope: the five committed SQL migrations, workspace loading, owner/client screens, file and finance access paths. This is a schema/code review, not an inspection of the hosted database, its records, migration state, performance statistics or a full security audit. No hosted data was changed.
 
 ## Main finding

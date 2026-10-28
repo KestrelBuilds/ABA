@@ -241,8 +241,8 @@ export default function StageWorkspace({
                   <p>
                     PDFs and supported images up to 3 MB. Uploads are private
                     drafts until you share them. Proposal, contract and invoice
-                    PDFs made in Illustrator are welcome; the built-in finance
-                    tools are optional.
+                    PDFs made in Illustrator belong here. Clients can download
+                    shared files and return completed copies in this stage.
                   </p>
                 </Form>
               </details>

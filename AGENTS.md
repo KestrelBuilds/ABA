@@ -64,3 +64,5 @@ Journey verification: standard Contract and Deposit, Final Review and Approval/F
 File access explanations: lib/file-visibility.ts is shared by stage files and All project files and describes existing RLS rules without authorising access. Keep its tests aligned with clientPreview filtering. Verification forms reset acknowledgement after a record changes.
 
 ProjectFocus is an owner-only derived summary, not a new persisted status or access boundary. Eligibility is distinct from invitation/sign-in. Keep next-step links usable for keyboard/mobile users, open collapsed stage/finance ancestors, and preserve native invoice payment routing. See docs/DATABASE-UX-REVIEW.md for schema follow-ups.
+
+Owner decision: remove native proposal/invoice generation and Finance UI; Illustrator PDF uploads are the intended document workflow. Do not reintroduce generation, template or seller/billing forms. Keep historic migrations/records and protected invoice payment/void/download paths. ExistingBusinessRecords renders only if actual previous records exist, with no new/issue/replace actions. This supersedes earlier optional-generation UI guidance.

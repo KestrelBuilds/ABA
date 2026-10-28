@@ -35,7 +35,7 @@ export function projectFocus(data: WorkspaceData, project: DbProject) {
         paymentStep &&
         (next.name.trim().toLowerCase() !== "contract and deposit" ||
           project.contract_signed)
-        ? "#business-documents"
+        ? "#existing-invoices"
         : "#stage-" + next.id
       : "#journey",
     nextLabel: next

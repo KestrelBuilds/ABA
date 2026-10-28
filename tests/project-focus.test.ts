@@ -47,7 +47,7 @@ test("native payments route to invoice actions after contract verification; void
   assert.equal(projectFocus(native, project).nextHref, "#stage-s");
   assert.equal(
     projectFocus(native, { ...project, contract_signed: true }).nextHref,
-    "#business-documents",
+    "#existing-invoices",
   );
   assert.equal(
     projectFocus(data([stage], [{ project_id: "p", status: "Void" }]), {

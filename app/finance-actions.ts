@@ -3,8 +3,7 @@ import { identity } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { Result } from "./actions";
-const id = z.uuid(),
-  text = (max: number) => z.string().trim().max(max);
+const id = z.uuid();
 function check(error: { message: string } | null) {
   if (error) {
     const known = [
@@ -56,118 +55,6 @@ async function run(
     };
   }
 }
-export async function saveSeller(form: FormData) {
-  return run(async (db) => {
-    const v = z
-      .object({
-        seller_name: text(180).min(1),
-        seller_address: text(1500).min(1),
-        seller_email: z.email().max(254),
-        payment_instructions: text(1500),
-        no_vat_confirmed: z.boolean(),
-      })
-      .parse({
-        ...Object.fromEntries(form),
-        no_vat_confirmed: form.get("no_vat_confirmed") === "on",
-      });
-    check((await db.from("finance_settings").upsert({ id: true, ...v })).error);
-  });
-}
-export async function saveBilling(form: FormData) {
-  return run(async (db) => {
-    const v = z
-      .object({
-        client_id: id,
-        billing_name: text(180).min(1),
-        billing_address: text(1500).min(1),
-      })
-      .parse(Object.fromEntries(form));
-    check((await db.from("client_billing").upsert(v)).error);
-  });
-}
-const content = z.object({
-  scope: text(6000),
-  deliverables: text(6000),
-  timeline: text(3000),
-  revisions: text(2000),
-  exclusions: text(3000),
-  notes: text(3000),
-});
-export async function saveTemplate(form: FormData) {
-  return run(async (db) => {
-    const values = content
-      .extend({ name: text(120).min(1) })
-      .parse(Object.fromEntries(form));
-    check((await db.from("proposal_templates").insert(values)).error);
-  });
-}
-export async function createProposal(form: FormData) {
-  return run(async (db) => {
-    check(
-      (
-        await db.rpc("new_proposal", {
-          target: id.parse(form.get("projectId")),
-          template_id: form.get("templateId")
-            ? id.parse(form.get("templateId"))
-            : null,
-        })
-      ).error,
-    );
-  });
-}
-export async function saveProposal(form: FormData) {
-  return run(async (db) => {
-    const values = content.parse(Object.fromEntries(form));
-    check(
-      (
-        await db.rpc("save_proposal", {
-          target: id.parse(form.get("id")),
-          ...Object.fromEntries(
-            Object.entries(values).map(([k, v]) => ["new_" + k, v]),
-          ),
-        })
-      ).error,
-    );
-  });
-}
-export async function proposalStatus(form: FormData) {
-  return run(async (db) => {
-    check(
-      (
-        await db.rpc("change_proposal_status", {
-          target: id.parse(form.get("id")),
-          new_status: z
-            .enum(["Shared", "Accepted", "Declined"])
-            .parse(form.get("status")),
-        })
-      ).error,
-    );
-  });
-}
-export async function createInvoices(form: FormData) {
-  return run(async (db) => {
-    check(
-      (
-        await db.rpc("create_invoice_pair", {
-          target: id.parse(form.get("projectId")),
-        })
-      ).error,
-    );
-  });
-}
-export async function issueInvoice(form: FormData) {
-  return run(async (db) => {
-    check(
-      (
-        await db.rpc("issue_invoice", {
-          target: id.parse(form.get("id")),
-          issue_date: z.iso.date().parse(form.get("issued_on")),
-          due_date: z.iso.date().parse(form.get("due_on")),
-        })
-      ).error,
-    );
-  });
-}
 export async function markInvoicePaid(form: FormData) {
   return run(async (db) => {
     if (form.get("confirmed") !== "on")
@@ -189,18 +76,6 @@ export async function voidInvoice(form: FormData) {
     check(
       (await db.rpc("void_invoice", { target: id.parse(form.get("id")) }))
         .error,
-    );
-  });
-}
-
-export async function replaceInvoice(form: FormData) {
-  return run(async (db) => {
-    check(
-      (
-        await db.rpc("replace_void_invoice", {
-          target: id.parse(form.get("id")),
-        })
-      ).error,
     );
   });
 }

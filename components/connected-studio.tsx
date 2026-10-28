@@ -21,7 +21,6 @@ import {
   LogOut,
   Files,
   LayoutDashboard,
-  Wallet,
 } from "lucide-react";
 import type { WorkspaceData, DbProject } from "@/lib/workspace";
 import {
@@ -51,7 +50,7 @@ import {
   type VerificationField,
 } from "@/lib/journey-verification";
 import StageWorkspace from "./stage-workspace";
-import BusinessDocuments from "./business-documents";
+import ExistingBusinessRecords from "./existing-business-records";
 import ProjectManagement from "./project-management";
 import { PortalCheck } from "./portal-check";
 import { PasswordForm } from "./auth-forms";
@@ -209,7 +208,6 @@ export default function ConnectedStudio({
                   ["Overview", LayoutDashboard],
                   ["Projects", FolderKanban],
                   ["Clients", Users],
-                  ["Finance", Wallet],
                 ] as const)
               : ([["Projects", FolderKanban]] as const)
             ).map(([name, Icon]) => (
@@ -603,9 +601,6 @@ export default function ConnectedStudio({
                 </div>
               </>
             )}
-            {admin && view === "Finance" && (
-              <BusinessDocuments data={data} Form={ActionForm} />
-            )}
             {(view === "Projects" || !admin) && (
               <>
                 {data.projects.length ? (
@@ -640,24 +635,11 @@ export default function ConnectedStudio({
                           project={project}
                           Form={ActionForm}
                         />
-                        {admin ? (
-                          <details className="panel">
-                            <summary>
-                              Optional built-in proposals & invoices
-                            </summary>
-                            <BusinessDocuments
-                              data={data}
-                              project={project}
-                              Form={ActionForm}
-                            />
-                          </details>
-                        ) : (
-                          <BusinessDocuments
-                            data={data}
-                            project={project}
-                            Form={ActionForm}
-                          />
-                        )}
+                        <ExistingBusinessRecords
+                          data={data}
+                          project={project}
+                          Form={ActionForm}
+                        />
                         <div className="project-summary">
                           <div>
                             <div className="eyebrow">{project.type}</div>

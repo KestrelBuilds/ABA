@@ -1,4 +1,4 @@
-# PDF-first stage work and optional business documents
+# Uploaded PDFs and previous document records
 
 Apply `supabase/migrations/202610280005_business_documents.sql` once after the four previous setup/upgrade files. It is transactional and additive. Existing records, uploaded files and submitted questionnaires are preserved. The UI checks capability and keeps existing workflows available before the upgrade. No extra secret, payment account or paid service is needed.
 
@@ -12,23 +12,25 @@ The primary workflow is **Projects → project → Your project journey → expa
 - Portal access still starts after signed contract and deposit. Before that, download/email the proposal, contract and deposit PDFs through your normal process and upload records here. A narrowly scoped pre-booking signature portal is not implemented.
 - Files currently support PDF/PNG/JPEG/WebP up to 3 MB. Larger Illustrator PDFs need compression or an agreed external sharing method. Source/ZIP/font files and malware scanning are not implemented.
 
-## Optional built-in proposals/invoices
-Inside a project, expand **Optional built-in proposals & invoices**. Owner Finance contains the invoice ledger, seller settings and reusable proposal templates.
+## Illustrator PDFs are the document workflow
 
-### Proposals
-Create a draft from a saved internal template or blank fields. Fill scope, deliverables, timeline, revision allowance, exclusions and notes. The value snapshots the project budget when the draft is created. Share freezes the revision and client/seller snapshot; create a new draft for subsequent changes. Record Accepted/Declined only after receiving the actual client decision. This is not legal signing, and acceptance does not automatically satisfy the contract or deposit conditions. Download and manually email PDFs before onboarding if needed.
+The Finance navigation, generation forms, seller/billing settings, templates and new native proposal/invoice actions have been removed at Alex’s request. Upload PDFs into the relevant journey stage, share them, and let eligible clients download/return their completed copies. Verify the signed contract/payment separately inside the journey. Electronic signing and automatic payment collection are not provided.
 
-### Invoices
-Create a deposit/final pair from the project value. Odd pennies go to the deposit; the two amounts sum exactly to the total. Previously recorded manual payments block automatic pair creation until reconciled: do not clear genuine payment records just to bypass the guard. A latest accepted native proposal with a different price also blocks pair creation.
+No SQL rerun is needed. Keep migration 202610280005: it also supplies stage attachments and privacy rules used by uploaded files.
 
-Before issue, complete seller legal/trading name, business address/email and client billing name/address. Confirm no VAT is being charged only if correct for the business; VAT calculation is not supported. Review accounting/legal details before real invoices. Currency is GBP. Issued invoices get unique numbers and frozen party/amount snapshots. Later settings edits do not rewrite prior documents. Final invoices require verified creative approval.
+## Previous records, only if any exist
 
-Record only verified full payments with the received date. The RPC updates the corresponding project deposit/final payment flag; manual project payment edits are guarded once native invoices exist. No money moves, no card credentials are stored and Stripe is not connected. Partial payments, refunds, credit notes, late fees and automated reminders are not implemented. Project price changes are blocked while current invoices exist; revise/void unpaid documents or seek accounting review for paid ones.
+A collapsed **Previous generated documents** section appears only on projects that already contain generated records. It preserves downloads and history; it has no creation, replacement, issuing or template tools. The normal PDF workflow has no such section.
 
-Void unpaid drafts/issued invoices without deleting history. Replacements retain the original amount but receive new billing snapshots/number on issue. Paid invoices cannot be voided here. Ledger totals cover built-in invoices only, not external PDF invoices/project-only manual payment flags; drafts and voids are excluded.
+If a previously issued native invoice exists, its payment must still use **Record full payment** after verifying full receipt and the date. Unpaid unused drafts/issued invoices can be explicitly voided without deleting their history. Paid records cannot be voided. Do not clear project payment flags or remove financial records to bypass these guards. Ordinary uploaded Illustrator invoice PDFs use manual verified project payment records, as before.
+
+The schema and PDF download code for previous records remain for compatibility. New-record application actions were removed; historical SQL migrations remain unchanged. This is not a destructive database cleanup.
 
 ## PDFs and privacy
 PDF downloads authenticate every request and use row policies: owner sees own business records, clients see only published/shared eligible project records. Drafts/internal templates/seller settings are not exposed to clients. Responses are private/no-store attachments. PDFs include the A logo and embedded DejaVu Sans under its bundled licence for readable £/European characters; unsupported scripts may need additional licensed fonts. Long sections wrap and paginate. Draft PDFs are labelled DRAFT. The files are generated on demand, not stored publicly or emailed automatically.
 
 ## Verification status
-Local PostgreSQL tests exercise full lifecycle, snapshots, rounding, client isolation, phase gates, stage-resource privacy and no accidental stage-deletion release. PDF tests use text extraction to verify real content, prices, Unicode and pagination. Browser tests cover the actual finance and stage/returned-copy UI through fictional services (`--finance`, `--stages`); they are not hosted provider proof. After applying the upgrade, run the hosted acceptance steps with fictional records before real client use. Existing automatic portal checks remain valuable but do not cover the entire new finance lifecycle.
+Local PostgreSQL tests exercise full lifecycle, snapshots, rounding, client isolation, phase gates, stage-resource privacy and no accidental stage-deletion release. PDF tests use text extraction to verify real content, prices, Unicode and pagination. Browser tests cover existing-invoice preservation and stage/returned-copy UI through fictional services (`--finance`, `--stages`); they are not hosted provider proof. After applying the upgrade, run the hosted acceptance steps with fictional records before real client use. Existing automatic portal checks remain valuable but do not cover the entire new finance lifecycle.
+
+## Acrobat-signed PDFs
+Alex’s intended workflow is an externally fillable/signable PDF, downloaded and completed in Acrobat, uploaded back to the same stage, and explicitly reviewed/verified by the owner. Uploads never mark the contract verified automatically. Currently pre-onboarding portal access remains locked; the choice between an initial email return and a restricted contract-only area is pending. Do not claim pre-onboarding uploads or automatic stage-by-stage access gates are implemented.

@@ -83,6 +83,19 @@ const financeInvoices = ["Deposit", "Final"].map((kind) => ({
   client_snapshot: null,
   seller_snapshot: null,
 }));
+if (financeMode) {
+  financeInvoices[0].status = "Issued";
+  financeInvoices[0].number = "ABA-PREVIOUS-000001";
+  financeInvoices[0].client_snapshot = {
+    name: "Fictional business",
+    address: "Fictional address",
+  };
+  financeInvoices[0].seller_snapshot = {
+    name: "Alex Bell Arts",
+    address: "Fictional address",
+    email: "owner@example.com",
+  };
+}
 const seller = {
   id: true,
   seller_name: "Alex Bell trading as Alex Bell Arts",
@@ -230,6 +243,11 @@ const server = createServer(async (req, res) => {
         tax_note: "No VAT charged",
         payment_instructions: seller.payment_instructions,
       };
+      return json(null);
+    }
+    if (table === "void_invoice") {
+      const i = financeInvoices.find((i) => i.id === body.target);
+      i.status = "Void";
       return json(null);
     }
     if (table === "record_invoice_payment") {
@@ -436,6 +454,18 @@ const server = createServer(async (req, res) => {
       const stage = page
         .locator(".milestone-disclosure")
         .filter({ hasText: "Contract and Deposit" });
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Finance", exact: true })
+          .count(),
+        0,
+      );
+      assert.equal(
+        await page
+          .getByText("Previous generated documents", { exact: true })
+          .count(),
+        0,
+      );
       const focus = page.getByRole("region", { name: "Project at a glance" });
       await focus.getByRole("link", { name: "Open next step" }).click();
       assert.equal(await stage.evaluate((el) => el.open), true);
@@ -526,84 +556,64 @@ const server = createServer(async (req, res) => {
       await page
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
-      await page.getByRole("button", { name: "Finance", exact: true }).click();
-      await page
-        .getByRole("heading", { name: "Invoice ledger", exact: true })
-        .waitFor();
-      await page.getByRole("button", { name: "Projects", exact: true }).click();
-      await page
-        .getByRole("region", { name: "Project at a glance" })
-        .getByRole("link", { name: "Open built-in invoices" })
-        .click();
       assert.equal(
         await page
-          .locator("#business-documents")
-          .evaluate((el) => el.closest("details").open),
+          .getByRole("button", { name: "Finance", exact: true })
+          .count(),
+        0,
+      );
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await page
+        .getByRole("link", { name: "View existing invoice records" })
+        .click();
+      const history = page.getByRole("region", {
+        name: "Previous generated documents",
+      });
+      assert.equal(
+        await history.evaluate((el) => el.closest("details").open),
         true,
       );
       assert.equal(
         await page.evaluate(() => document.activeElement.id),
-        "business-documents",
+        "existing-invoices",
       );
-      const business = page.locator("#business-documents");
-      await business
-        .getByRole("button", { name: "Create draft proposal", exact: true })
-        .click();
-      const proposal = business
-        .locator(".business-record")
-        .filter({ hasText: "Proposal · revision 1" });
-      await proposal.getByText("Edit draft", { exact: true }).click();
-      for (const label of [
-        "Scope",
-        "Deliverables",
-        "Timeline",
-        "Revision allowance",
-        "Outside scope",
-        "Additional notes",
+      for (const name of [
+        /Create draft proposal/,
+        /Create invoice/,
+        /Issue invoice/,
+        /Save seller/,
+        /Save template/,
       ])
-        await proposal
-          .getByLabel(label, { exact: true })
-          .fill("Fictional " + label + " terms.");
-      await proposal
-        .getByRole("button", { name: "Save draft", exact: true })
-        .click();
-      await proposal
-        .locator(".brief-field p")
-        .filter({ hasText: "Fictional Scope terms." })
-        .waitFor();
-      await proposal
-        .getByRole("button", {
-          name: "Share this revision with client",
-          exact: true,
-        })
-        .click();
-      await proposal.getByText("Shared", { exact: true }).waitFor();
+        assert.equal(await page.getByRole("button", { name }).count(), 0);
+      const invoice = history
+        .locator(".business-record")
+        .filter({ hasText: "Deposit invoice" });
       const pdf = await page.request.get(
         new URL(
-          await proposal
-            .getByRole("link", { name: /proposal PDF/ })
+          await invoice
+            .getByRole("link", { name: /Download previous invoice PDF/ })
             .getAttribute("href"),
           page.url(),
         ).href,
       );
       assert.equal(pdf.status(), 200);
-      assert.match(pdf.headers()["content-type"], /application\/pdf/);
       assert.ok((await pdf.body()).subarray(0, 4).equals(Buffer.from("%PDF")));
-      const invoice = business
-        .locator(".business-record")
-        .filter({ hasText: "Deposit invoice" });
-      await invoice.getByLabel("Due date", { exact: true }).fill("2027-02-01");
-      await invoice
-        .getByRole("button", { name: "Issue invoice", exact: true })
-        .click();
-      await invoice.getByText("Issued", { exact: true }).waitFor();
       await invoice.locator('input[name="confirmed"]').check();
       await invoice
         .getByRole("button", { name: "Record full payment", exact: true })
         .click();
-      await invoice.getByText("Paid", { exact: true }).waitFor();
+      await invoice.getByText("Paid · £500.00", { exact: true }).waitFor();
       assert.equal(financeInvoices[0].status, "Paid");
       assert.equal(project.deposit_paid, true);
+      const draft = history
+        .locator(".business-record")
+        .filter({ hasText: "Final invoice" });
+      await draft.getByText("Void unused invoice", { exact: true }).click();
+      await draft
+        .getByRole("button", { name: "Confirm void", exact: true })
+        .click();
+      await draft.getByText("Void · £500.00", { exact: true }).waitFor();
+      assert.equal(financeInvoices[1].status, "Void");
       assert.deepEqual(errors, []);
       assert.ok(
         await page.evaluate(
@@ -611,7 +621,7 @@ const server = createServer(async (req, res) => {
         ),
       );
       console.log(
-        "PASS: actual finance UI draft creation/edit/share, protected proposal PDF download, invoice issue and verified full-payment recording, using fictional HTTP services.",
+        "PASS: generation/Finance controls removed; existing invoice downloads, verified full payments and voiding remain available without new record creation. Fictional services only.",
       );
       return;
     }

@@ -123,3 +123,10 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Added an owner-only project-at-a-glance panel with next-milestone navigation, onboarding/delivery requirements and invitation-management shortcut. Stage/invoice links expand their collapsed sections and move keyboard focus.
 - Dashboard project rows show the next milestone; clarified the budget-based balance as Unreceived project value. No new migration required.
 - Validation: 49 automated tests, production build and strict type check passed. Fictional-service Chromium checks passed verification/revocation with next-stage navigation, client journey, owner-preview exclusion, mobile layouts and finance shortcut expansion/keyboard focus. Hosted acceptance remains pending.
+
+### Remove unused document-generation tools
+- Removed Finance navigation, optional generator panels, proposal/invoice creation, issuing/replacement actions, templates and seller/billing forms. Stopped fetching unused finance settings/templates for the workspace.
+- Kept Illustrator PDF uploads/sharing/returns and journey verification as the intended workflow.
+- Preserve previous generated documents in a collapsed history section only where records exist; downloads, verified invoice payments and voiding unused unpaid invoices remain protected. No records or migrations deleted.
+- Clarified external Acrobat PDF completion/return and manual verification; pre-onboarding access rules are unchanged. A restricted initial contract area is not yet implemented.
+- Validation: 49 automated tests, type checking and production build passed. Browser checks passed removal of generation controls, previous-invoice downloads/payment/voiding, journey verification, stage PDF returns, client journey and owner preview using fictional services.

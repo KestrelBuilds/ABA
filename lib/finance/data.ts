@@ -59,10 +59,7 @@ export type FinanceData = {
     billing_address: string;
   }[];
 };
-export async function loadFinance(
-  db: SupabaseClient,
-  admin: boolean,
-): Promise<FinanceData> {
+export async function loadFinance(db: SupabaseClient): Promise<FinanceData> {
   const empty: FinanceData = {
     ready: false,
     proposals: [],
@@ -80,13 +77,6 @@ export async function loadFinance(
   const queries = await Promise.all([
     db.from("proposals").select("*").order("revision", { ascending: false }),
     db.from("invoices").select("*").order("created_at"),
-    ...(admin
-      ? [
-          db.from("proposal_templates").select("*").order("name"),
-          db.from("finance_settings").select("*"),
-          db.from("client_billing").select("*"),
-        ]
-      : []),
   ]);
   if (queries.some((r) => r.error))
     throw Error("Business documents could not be loaded.");
@@ -94,8 +84,8 @@ export async function loadFinance(
     ready: true,
     proposals: queries[0].data ?? [],
     invoices: queries[1].data ?? [],
-    templates: queries[2]?.data ?? [],
-    seller: queries[3]?.data?.[0] ?? null,
-    billing: queries[4]?.data ?? [],
+    templates: [],
+    seller: null,
+    billing: [],
   } as FinanceData;
 }

@@ -41,8 +41,9 @@ export default function JourneyVerification({
             </p>
             {invoice ? (
               <p>
-                Managed by built-in invoices. Use its Record full payment action
-                in <a href="#business-documents">Proposals & invoices</a>.
+                An existing invoice controls this payment. Use its Record full
+                payment action in{" "}
+                <a href="#existing-invoices">Previous generated documents</a>.
               </p>
             ) : (
               <Form

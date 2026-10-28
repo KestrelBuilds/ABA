@@ -47,3 +47,5 @@ Journey controls follow-up: implemented verified contract/payment/approval recor
 File visibility explanations are now shared between stage files and All project files, with preview-parity regression coverage. Live-site checks from the coding environment need the app hostname allowed in environment network settings; hosted owner/client acceptance still requires authenticated access.
 
 Database/UI review: implemented an owner-only project-at-a-glance summary using existing records. Next recommended work is stable stage-purpose keys, explicit archival, invitation-state visibility, dated verification evidence and per-workstream approval evidence. These require separate additive schema/access design; see docs/DATABASE-UX-REVIEW.md.
+
+Owner scope decision: built-in proposal/invoice generation and Finance navigation removed. Illustrator PDFs in journey stages are the chosen workflow. Do not expand native finance generation; retain previous generated records and protected payment/download/void paths only. No database migration or data deletion.

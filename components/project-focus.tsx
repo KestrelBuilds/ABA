@@ -73,7 +73,7 @@ export default function ProjectFocus({
           </p>
           {link("#journey", "Review delivery milestones")}
           {focus.invoiceManaged &&
-            link("#business-documents", "Open built-in invoices")}
+            link("#existing-invoices", "View existing invoice records")}
         </div>
       </div>
     </section>
