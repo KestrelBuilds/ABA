@@ -46,6 +46,7 @@ export default function JourneyVerification({
               </p>
             ) : (
               <Form
+                key={project.id + field + String(project[field])}
                 action={verifyJourneyRecord}
                 label={
                   project[field]

@@ -111,3 +111,9 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Changed Project controls to read-only access/verification summaries with independent note saving. Built-in invoice payment protections remain authoritative.
 - Renamed the secondary library All project files, labelled each file’s stage and clarified stage/publication/onboarding/final-release restrictions. Both views use the same records.
 - No database migration required. Validation: 42 automated tests, strict types and production build passed. Chromium checks passed for explicit journey verification/revocation, client journey, owner preview, stage files and finance using fictional services. Hosted acceptance remains unverified.
+
+### Consistent file-access explanations
+- Stage files and All project files now show the same list of outstanding access requirements, including publication, contract/deposit, stage visibility and final approval/payment. Published no longer implies accessible.
+- Verification confirmations reset after each change, requiring fresh acknowledgement before removal. Empty custom-workflow verification panels are hidden; renamed-stage behaviour is explained.
+- Added 128 publication/stage/onboarding/delivery combinations checked against owner-preview filtering, and browser assertions for matching file notices before/after verification and revocation.
+- Validation: 45 automated tests, strict type checking and production build passed; Chromium verification/revocation, stage files, client journey and owner preview passed with fictional services. Hosted acceptance remains pending.

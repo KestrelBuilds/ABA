@@ -330,7 +330,7 @@ const server = createServer(async (req, res) => {
           visible: true,
         },
       ];
-    if (stageMode) documents[0].stage_id = fixtureStageId;
+    if (stageMode || verificationMode) documents[0].stage_id = fixtureStageId;
     if (table === "documents")
       rows = documents.filter(
         (d) =>
@@ -445,6 +445,15 @@ const server = createServer(async (req, res) => {
         await stage.locator('select[name="status"]').isDisabled(),
         true,
       );
+      const stageFile = stage.locator(".file-visibility").first();
+      const libraryFile = page
+        .locator(".document-item .file-visibility")
+        .first();
+      assert.match(
+        await stageFile.innerText(),
+        /verify the signed contract; verify the deposit payment/,
+      );
+      assert.equal(await stageFile.innerText(), await libraryFile.innerText());
       const confirmations = stage.locator(".journey-verification form");
       await confirmations.nth(0).getByRole("checkbox").check();
       await confirmations
@@ -469,6 +478,12 @@ const server = createServer(async (req, res) => {
           ?.textContent.includes("Completed"),
       );
       assert.equal(project.deposit_paid, true);
+      assert.equal(
+        await confirmations.nth(1).getByRole("checkbox").isChecked(),
+        false,
+      );
+      assert.match(await stageFile.innerText(), /Available to this project/);
+      assert.equal(await stageFile.innerText(), await libraryFile.innerText());
       await confirmations.nth(1).getByRole("checkbox").check();
       await confirmations
         .nth(1)
@@ -480,6 +495,8 @@ const server = createServer(async (req, res) => {
           ?.textContent.includes("In Progress"),
       );
       assert.equal(project.deposit_paid, false);
+      assert.match(await stageFile.innerText(), /verify the deposit payment/);
+      assert.equal(await stageFile.innerText(), await libraryFile.innerText());
       assert.equal(
         await page
           .locator("#controls")

@@ -10,6 +10,7 @@ import {
 } from "@/app/actions";
 import { discoveryBookingUrl } from "@/lib/stage-links";
 import JourneyVerification from "./journey-verification";
+import { fileVisibility } from "@/lib/file-visibility";
 import { stageVerification } from "@/lib/journey-verification";
 import { stageGuidance } from "@/lib/stage-copy";
 type FormProps = {
@@ -126,6 +127,11 @@ export default function StageWorkspace({
             {d.document_role ?? "Document"} · {d.name} ·{" "}
             {d.version_label ?? "v1"} ↗
           </a>
+          {admin && project && (
+            <p className="file-visibility">
+              {fileVisibility(d, project, data.stages).message}
+            </p>
+          )}
           {admin && (
             <Form
               action={publishDocument}

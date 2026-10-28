@@ -1,4 +1,5 @@
 "use client";
+import { fileVisibility } from "@/lib/file-visibility";
 import BrandMark from "@/components/brand-mark";
 import {
   useState,
@@ -147,6 +148,16 @@ export default function ConnectedStudio({
   const [creating, setCreating] = useState<"client" | "project" | null>(null);
   const project =
     data.projects.find((p) => p.id === projectId) ?? data.projects[0];
+  const otherVerificationFields = (
+    Object.keys(verificationLabels) as VerificationField[]
+  ).filter(
+    (field) =>
+      project &&
+      !data.stages.some(
+        (s) =>
+          s.project_id === project.id && stageVerification(s).includes(field),
+      ),
+  );
   const clientFor = (p: DbProject) =>
     data.clients.find((c) => c.id === p.client_id);
   const currentClient = project ? clientFor(project) : null;
@@ -703,29 +714,22 @@ export default function ConnectedStudio({
                           <div>
                             <section className="panel">
                               <h2 id="journey">Your project journey</h2>
-                              {admin && (
+                              {admin && otherVerificationFields.length > 0 && (
                                 <details>
                                   <summary>
                                     Other verification records for customised
                                     workflows
                                   </summary>
+                                  <p>
+                                    Custom milestones keep their own progress.
+                                    These verified records control access;
+                                    completing a custom milestone never confirms
+                                    a contract or payment.
+                                  </p>
                                   <JourneyVerification
                                     data={data}
                                     project={project}
-                                    fields={(
-                                      Object.keys(
-                                        verificationLabels,
-                                      ) as VerificationField[]
-                                    ).filter(
-                                      (field) =>
-                                        !data.stages.some(
-                                          (s) =>
-                                            s.project_id === project.id &&
-                                            stageVerification(s).includes(
-                                              field,
-                                            ),
-                                        ),
-                                    )}
+                                    fields={otherVerificationFields}
                                     Form={ActionForm}
                                   />
                                 </details>
@@ -773,6 +777,16 @@ export default function ConnectedStudio({
                                             maxLength={120}
                                           />
                                         </label>
+                                        {stageVerification(s).length > 0 && (
+                                          <p>
+                                            This stage follows the verified
+                                            project records below. Renaming it
+                                            to a custom name restores ordinary
+                                            progress tracking; its verification
+                                            controls move to Other verification
+                                            records at the top of the journey.
+                                          </p>
+                                        )}
                                         {stageVerification(s).length > 0 && (
                                           <input
                                             type="hidden"
@@ -1289,6 +1303,17 @@ export default function ConnectedStudio({
                                           ? "· Published"
                                           : "· Private draft")}
                                     </small>
+                                    {admin && (
+                                      <p className="file-visibility">
+                                        {
+                                          fileVisibility(
+                                            d,
+                                            project,
+                                            data.stages,
+                                          ).message
+                                        }
+                                      </p>
+                                    )}
                                     <a
                                       className="resource"
                                       href={"/files/" + d.id}
