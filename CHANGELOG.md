@@ -63,3 +63,7 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Added permission-filtered JSON workspace export with no credentials/file bytes; it is explicitly not a full backup.
 - Hosted MFA setup/recovery and actual provider backup/restore require owner/project settings access.
 - Final validation: 26 local tests passed, including PostgreSQL MFA enforcement and QR rendering; strict types and production build passed. Browser checks confirmed signed-out security/export denial. Hosted MFA enrollment/recovery remains pending the owner's SQL upgrade and device setup.
+
+### Client journey browser verification
+- Automated Chromium test passed actual app screens/actions for client sign-in, questionnaire submission, revision request, creative approval, payment-only delivery lock and final release/download at mobile size, using a fictional HTTP service fixture.
+- Notion questionnaire/template fidelity remains pending the owner's client-free source content; starter prompts are not represented as copied Notion content.

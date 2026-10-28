@@ -25,16 +25,6 @@ Use fictional records only. Clearly label demonstrations. The client preview is 
 
 Use the existing isolated checkout; do not create worktrees unless requested. Keep strict types, reusable functions and clear limitations. Run `npm test`, `npm run typecheck`, `npm run build` and representative browser checks after functional work. Verify project creation, workflow separation, edits, storage reload, portal visibility and mobile layouts. Fix errors before claiming success; distinguish unimplemented integrations from working features. Maintain README.md, ROADMAP.md and CHANGELOG.md as the product evolves.
 
-<!-- BEGIN:nextjs-agent-rules -->
-
-## This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
-
 ## Phase 2 implementation
 
 `/` is the welcome page; `/demo` preserves Phase 1 browser-local examples. `/login`, `/auth/callback` and `/auth/confirm` use Supabase Auth. `/workspace` is owner-only; `/portal` requires a client role (owners redirect to their workspace). Never load demo state as connected client records.
@@ -56,3 +46,5 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 Phase 2 everyday UX: milestone editors are expandable; project anchor shortcuts support mobile use. Client/project edit actions validate owner access and inputs; client email cannot change while invitations exist. `lib/questionnaires.ts` supplies shared prompts and submission completeness rules. Hosted `journey-check.ts` covers real questionnaire persistence and creative feedback/approval isolation. Email invitations use Supabase inviteUserByEmail only when `SUPABASE_INVITE_EMAIL_READY=true`; the Invite email template must target RedirectTo plus token_hash, and /auth/confirm must be allowlisted. Never enable this flag without template/recipient setup. Provider acceptance is not confirmed delivery. The default remains private links, and existing-account resend is still a follow-up.
 
 Owner MFA: apply migration 202610270003 before enrollment. It gates database is_admin on aal2 when a verified provider factor exists; client access remains ownership-based. App identity checks also enforce assurance, except the tightly scoped owner MFA enrollment/challenge screen. No unverified factor should lock an owner out. Never log QR/secrets/codes. My account's JSON export uses loadWorkspace under the caller's permissions, excludes file bytes/credentials and is explicitly not a full database backup. Hosted MFA/recovery and provider backup configuration remain external prerequisites.
+
+Notion alignment: owner explicitly wants the existing Notion portal/questionnaires replicated. No Notion tool or content is currently available; do not imply the starter questionnaire prompts reproduce it. Request a client-free template link or questionnaire content and keep working on independent verification. `tests/client-journey-browser.cjs` now verifies the actual client screens/actions through an isolated fictional HTTP backend; this is UI integration evidence, not hosted Supabase security/email proof. It starts/stops its own processes and must not run concurrently with another Next.js build/dev process using .next.

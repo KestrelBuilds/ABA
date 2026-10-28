@@ -68,3 +68,9 @@ The connected workspace now has expandable milestone editors, mobile section sho
 
 ### Account protection upgrade
 The new authenticator screen and permission-filtered JSON data export are implemented. Apply only `supabase/migrations/202610270003_owner_mfa.sql` as the next SQL upgrade; do not rerun the initial setup files. Then open My account → Protect my account with an authenticator to enrol and verify your own device. The database and app require high-assurance owner sessions once a factor is verified. Hosted MFA and recovery remain unverified until this setup is completed. See the connection guide for recovery and the remaining launch checklist for provider backup/privacy requirements.
+
+### Automated client-screen journey
+Run `node tests/client-journey-browser.cjs` with system Chromium available. It starts/stops its own local Next.js dev server and fictional Supabase HTTP fixture on ports 35431/35432, without real credentials, clients or email. It exercises actual sign-in screens/server actions, questionnaire submission, revisions, creative approval, payment-only final-file restriction, final release/download and mobile overflow. This verifies UI integration against a fixture, not hosted provider behaviour or live email invitations. It uses `.next` as the normal development cache, so do not run it alongside another local Next.js build/dev process.
+
+### Notion reference pending
+The current native questionnaires are starter prompts. The owner wants the existing Notion client portal and its questionnaires used as the reference; no Notion connector is currently available. Exact structure/questions remain pending a viewable client-free template or supplied content. The three Tally links from the original brief are available; they are not a copy of the full Notion portal.
