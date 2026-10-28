@@ -34,12 +34,16 @@ export type DbDocument = {
   name: string;
   category: string;
   published: boolean;
+  version_label?: string;
+  review_due?: string | null;
 };
 export type DbFeedback = {
   id: string;
   document_id: string;
   body: string;
   decision: string;
+  approver_name?: string | null;
+  reviewed_version?: string | null;
   created_at: string;
 };
 export type DbQuestionnaire = {
@@ -49,7 +53,33 @@ export type DbQuestionnaire = {
   answers: Record<string, string>;
   submitted_at: string;
 };
+export type ProjectDetails = {
+  project_id: string;
+  goal: string;
+  deliverables: string;
+  exclusions: string;
+  approver: string;
+  support: string;
+};
+export type ClientAction = {
+  id: string;
+  project_id: string;
+  title: string;
+  due: string | null;
+  status: "To do" | "Done";
+};
+export type ClientAsset = {
+  id: string;
+  project_id: string;
+  name: string;
+  created_at: string;
+};
 export type WorkspaceData = {
+  managementReady?: boolean;
+  projectDetails?: ProjectDetails[];
+  handovers?: { project_id: string; body: string }[];
+  clientActions?: ClientAction[];
+  assets?: ClientAsset[];
   role: "admin" | "client";
   emailInvitesReady: boolean;
   clients: DbClient[];
@@ -63,6 +93,29 @@ export type WorkspaceData = {
 };
 export async function loadWorkspace(): Promise<WorkspaceData> {
   const { db, profile } = await identity();
+  const capability = await db.rpc("project_management_ready");
+  if (
+    capability.error &&
+    !["PGRST202", "42883"].includes(capability.error.code)
+  )
+    throw Error("Project tools could not be checked. Please retry.");
+  const managementReady = capability.data === true;
+  const extra = managementReady
+    ? await Promise.all([
+        db.from("project_details").select("*"),
+        db.from("project_handover").select("project_id,body"),
+        db
+          .from("client_actions")
+          .select("id,project_id,title,due,status")
+          .order("due"),
+        db
+          .from("client_assets")
+          .select("id,project_id,name,created_at")
+          .order("created_at"),
+      ])
+    : [];
+  if (extra.some((r) => r.error))
+    throw Error("Project tools could not be loaded.");
   const results = await Promise.all([
     db
       .from("clients")
@@ -80,12 +133,22 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       .order("position"),
     db
       .from("documents")
-      .select("id,project_id,name,category,published")
-      .order("created_at"),
+      .select(
+        managementReady
+          ? "id,project_id,name,category,published,version_label,review_due"
+          : "id,project_id,name,category,published",
+      )
+      .order("created_at")
+      .overrideTypes<DbDocument[], { merge: false }>(),
     db
       .from("feedback")
-      .select("id,document_id,body,decision,created_at")
-      .order("created_at", { ascending: false }),
+      .select(
+        managementReady
+          ? "id,document_id,body,decision,created_at,approver_name,reviewed_version"
+          : "id,document_id,body,decision,created_at",
+      )
+      .order("created_at", { ascending: false })
+      .overrideTypes<DbFeedback[], { merge: false }>(),
     db.from("questionnaires").select("id,project_id,kind,answers,submitted_at"),
     ...(profile.role === "admin"
       ? [
@@ -103,6 +166,11 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       "Workspace data could not be loaded. Check the database migrations and access policies.",
     );
   return {
+    managementReady,
+    projectDetails: extra[0]?.data ?? [],
+    handovers: extra[1]?.data ?? [],
+    clientActions: extra[2]?.data ?? [],
+    assets: extra[3]?.data ?? [],
     role: profile.role,
     emailInvitesReady:
       profile.role === "admin" &&

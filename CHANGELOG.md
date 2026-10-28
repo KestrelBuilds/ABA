@@ -80,3 +80,11 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Reuses the client layout with read-only forms, no account actions and filtered project data; planned layout remains previewable before onboarding without granting access or releasing documents.
 - Added projection/access-gate tests and a browser owner-preview flow.
 - Validation: 31 local tests, strict types and production build passed, plus browser checks for owner preview and the real client journey against fictional services. No database upgrade required.
+
+### Notion project management and Alex Bell Arts branding
+- Added capability-gated dated client actions, editable agreed briefs/support, protected handover records and private client PDF/image assets.
+- Added presentation version/deadline fields and database-bound named creative approval snapshots; existing historical reviews are preserved.
+- Added transactional database upgrade 202610280004 and PostgreSQL tests for permissions, asset isolation, immutable versions and final-handover gates.
+- Applied supplied Alex Bell Arts wordmark/favicons and Hyper Purple/Acid Lime/Carbon Black/Stark White palette. Font files/names were not supplied; readable fallbacks remain.
+- Named the signed-in experiences ABA Owner Dashboard and ABA Client Portal, including browser titles.
+- Validation: 31 local tests, strict TypeScript and production build passed. Chromium tests covered dated action completion, private asset upload, protected handover visibility, branded logo rendering, the creative journey and owner preview using fictional services. Hosted activation/acceptance of the added project tools awaits the SQL upgrade.

@@ -1,4 +1,5 @@
 "use client";
+import BrandMark from "@/components/brand-mark";
 import {
   useState,
   useTransition,
@@ -38,6 +39,7 @@ import {
   signOut,
   type Result,
 } from "@/app/actions";
+import ProjectManagement from "./project-management";
 import { PortalCheck } from "./portal-check";
 import { PasswordForm } from "./auth-forms";
 import { statuses } from "@/lib/projects";
@@ -163,8 +165,7 @@ export default function ConnectedStudio({
       <div className="shell connected">
         <aside className="sidebar">
           <Link className="logo" href="/">
-            aba<span>STUDIO</span>
-            <i>®</i>
+            <BrandMark />
           </Link>
           <div className="workspace-label">
             ALEX BELL ARTS
@@ -215,7 +216,8 @@ export default function ConnectedStudio({
         <div className="main-wrap">
           <header className="topbar">
             <span>
-              ABA Studio <b>{admin ? "Owner workspace" : "Client portal"}</b>
+              ABA Studio{" "}
+              <b>{admin ? "ABA Owner Dashboard" : "ABA Client Portal"}</b>
             </span>
             <span>Private account · Development version</span>
           </header>
@@ -232,7 +234,7 @@ export default function ConnectedStudio({
                 <h1>
                   {admin
                     ? view === "Overview"
-                      ? "Good things take shape."
+                      ? "ABA Owner Dashboard"
                       : view === "Clients"
                         ? "Good people. Great possibilities."
                         : "Every project, in perspective."
@@ -588,8 +590,19 @@ export default function ConnectedStudio({
                     {project && (
                       <>
                         {!admin && (
-                          <PortalGuide project={project} stages={data.stages} />
+                          <PortalGuide
+                            project={project}
+                            stages={data.stages}
+                            assetsReady={data.managementReady}
+                            clientActions={data.clientActions}
+                          />
                         )}
+                        <ProjectManagement
+                          key={project.id}
+                          data={data}
+                          project={project}
+                          Form={ActionForm}
+                        />
                         <div className="project-summary">
                           <div>
                             <div className="eyebrow">{project.type}</div>
@@ -1087,6 +1100,23 @@ export default function ConnectedStudio({
                                       </option>
                                     </select>
                                   </label>
+                                  {data.managementReady && (
+                                    <>
+                                      <label>
+                                        Presentation version
+                                        <input
+                                          name="version_label"
+                                          defaultValue="v1"
+                                          required
+                                          maxLength={40}
+                                        />
+                                      </label>
+                                      <label>
+                                        Feedback due date
+                                        <input name="review_due" type="date" />
+                                      </label>
+                                    </>
+                                  )}
                                   <label>
                                     File
                                     <input
@@ -1114,7 +1144,16 @@ export default function ConnectedStudio({
                                   <div className="document-item" key={d.id}>
                                     <b>{d.name}</b>
                                     <small>
-                                      {d.category}{" "}
+                                      {d.category}
+                                      {d.version_label
+                                        ? " · " + d.version_label
+                                        : ""}
+                                      {d.review_due
+                                        ? " · Review by " +
+                                          new Date(
+                                            d.review_due + "T12:00:00",
+                                          ).toLocaleDateString("en-GB")
+                                        : ""}{" "}
                                       {admin &&
                                         (d.published
                                           ? "· Published"
@@ -1159,6 +1198,13 @@ export default function ConnectedStudio({
                                             {f.decision.replaceAll("_", " ")}
                                           </span>
                                           <p>{f.body}</p>
+                                          <small>
+                                            {f.approver_name ??
+                                              "Name not recorded"}{" "}
+                                            ·{" "}
+                                            {f.reviewed_version ??
+                                              "Historical version not recorded"}
+                                          </small>
                                           <small>
                                             {new Date(
                                               f.created_at,

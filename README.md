@@ -77,3 +77,6 @@ The owner supplied a client-free master portal export. The client home and six n
 
 ### Reviewing the Notion-style portal as the owner
 Open the owner workspace, choose a project and click **Preview client portal**. It renders the actual client layout with submissions/account actions disabled and internal records excluded. If contract/deposit conditions are not met, it explicitly previews the planned layout without granting client access or showing locked documents. Use **Back to owner workspace** to leave. The fictional demo remains separate.
+
+## Project-management and brand update
+The supplied Alex Bell Arts logo and purple/lime palette are now applied. New project tools require the one-time SQL upgrade described in [PROJECT-MANAGEMENT-UPGRADE.md](docs/PROJECT-MANAGEMENT-UPGRADE.md): dated client actions, editable briefs/support, protected handover, versioned reviews and private client asset upload. The app keeps existing workflows usable until that upgrade is applied. Asset uploads currently support PDF/PNG/JPEG/WebP up to 3 MB; larger/source files need an agreed external method. See [BRANDING.md](docs/BRANDING.md) for supplied assets and outstanding typography details.

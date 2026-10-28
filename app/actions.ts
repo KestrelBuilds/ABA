@@ -276,6 +276,27 @@ export async function uploadDocument(form: FormData) {
     validateFile(file);
     const id = crypto.randomUUID();
     const path = projectId + "/" + id;
+    const capability = await db.rpc("project_management_ready");
+    if (
+      capability.error &&
+      !["PGRST202", "42883"].includes(capability.error.code)
+    )
+      throw Error("Review settings could not be checked.");
+    const review =
+      capability.data === true
+        ? {
+            version_label: z
+              .string()
+              .trim()
+              .min(1)
+              .max(40)
+              .parse(form.get("version_label") ?? "v1"),
+            review_due:
+              z
+                .union([z.iso.date(), z.literal("")])
+                .parse(form.get("review_due") ?? "") || null,
+          }
+        : {};
     // Insert unpublished metadata first: policy requires a known project/document path.
     checked(
       (
@@ -286,6 +307,7 @@ export async function uploadDocument(form: FormData) {
           object_path: path,
           category,
           published: false,
+          ...review,
         })
       ).error,
     );
@@ -597,5 +619,128 @@ export async function editProject(form: FormData) {
           .single()
       ).error,
     );
+  });
+}
+
+async function managementDb(owner = false) {
+  const account = await identity(owner);
+  const ready = await account.db.rpc("project_management_ready");
+  if (ready.error || ready.data !== true)
+    throw Error(
+      "Apply the project management SQL upgrade first. Existing projects have not been changed.",
+    );
+  return account;
+}
+export async function saveBrief(form: FormData) {
+  return run(async () => {
+    const { db } = await managementDb(true);
+    const target = uuid.parse(form.get("projectId"));
+    const text = (key: string, max: number) =>
+      z
+        .string()
+        .trim()
+        .max(max)
+        .parse(form.get(key) ?? "");
+    checked(
+      (
+        await db.rpc("save_portal_brief", {
+          target,
+          new_goal: text("goal", 6000),
+          new_deliverables: text("deliverables", 6000),
+          new_exclusions: text("exclusions", 4000),
+          new_approver: text("approver", 120),
+          new_support: text("support", 4000),
+          new_handover: text("handover", 6000),
+        })
+      ).error,
+    );
+  });
+}
+export async function saveClientAction(form: FormData) {
+  return run(async () => {
+    const { db } = await managementDb(true);
+    const project_id = uuid.parse(form.get("projectId"));
+    const title = z.string().trim().min(1).max(180).parse(form.get("title"));
+    const due =
+      z.union([z.iso.date(), z.literal("")]).parse(form.get("due") ?? "") ||
+      null;
+    const id = form.get("id");
+    if (id) {
+      checked(
+        (
+          await db.rpc("edit_client_action", {
+            target: uuid.parse(id),
+            new_title: title,
+            new_due: due,
+          })
+        ).error,
+      );
+    } else
+      checked(
+        (await db.from("client_actions").insert({ project_id, title, due }))
+          .error,
+      );
+  });
+}
+export async function toggleClientAction(form: FormData) {
+  return run(async () => {
+    const { db } = await managementDb();
+    checked(
+      (
+        await db.rpc("complete_client_action", {
+          target: uuid.parse(form.get("id")),
+          done: form.get("done") === "true",
+        })
+      ).error,
+    );
+  });
+}
+export async function removeClientAction(form: FormData) {
+  return run(async () => {
+    const { db } = await managementDb(true);
+    checked(
+      (
+        await db
+          .from("client_actions")
+          .delete()
+          .eq("id", uuid.parse(form.get("id")))
+      ).error,
+    );
+  });
+}
+export async function uploadClientAsset(form: FormData) {
+  return run(async () => {
+    const { db, user } = await managementDb();
+    const project_id = uuid.parse(form.get("projectId"));
+    const file = form.get("file");
+    if (!(file instanceof File)) throw Error("Choose a file.");
+    validateFile(file);
+    const id = crypto.randomUUID(),
+      object_path = project_id + "/" + id;
+    checked(
+      (
+        await db.from("client_assets").insert({
+          id,
+          project_id,
+          uploader_id: user.id,
+          name: file.name.slice(0, 180),
+          object_path,
+        })
+      ).error,
+    );
+    const uploaded = await db.storage
+      .from("client-assets")
+      .upload(object_path, file, {
+        contentType: file.type,
+        cacheControl: "0",
+        upsert: false,
+      });
+    if (uploaded.error) {
+      await db.from("client_assets").delete().eq("id", id);
+      throw Error(
+        "Asset upload failed. Check the private client-assets bucket and try again.",
+      );
+    }
+    return "Your asset was uploaded privately.";
   });
 }

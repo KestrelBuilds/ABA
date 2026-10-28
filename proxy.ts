@@ -42,6 +42,7 @@ export const config = {
     "/account/:path*",
     "/portal/:path*",
     "/files/:path*",
+    "/assets/:path*",
     "/login",
     "/auth/:path*",
   ],

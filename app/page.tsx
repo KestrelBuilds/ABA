@@ -1,9 +1,10 @@
+import BrandMark from "@/components/brand-mark";
 import Link from "next/link";
 export default function Home() {
   return (
     <main className="auth-page">
       <Link href="/" className="logo">
-        aba<span>STUDIO</span>
+        <BrandMark />
       </Link>
       <section className="panel auth-panel">
         <div className="eyebrow">ALEX BELL ARTS</div>

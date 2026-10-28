@@ -7,6 +7,7 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const managementMode = process.argv.includes("--management");
 const ownerMode = process.argv.includes("--owner-preview");
 const uid = randomUUID(),
   cid = randomUUID(),
@@ -75,6 +76,16 @@ const documents = [
 ];
 const questionnaires = [],
   feedback = [];
+const clientActions = [
+  {
+    id: randomUUID(),
+    project_id: pid,
+    title: "Supply approved brand assets",
+    due: "2027-01-01",
+    status: "To do",
+  },
+];
+const assets = [];
 const errors = [];
 let browser, app;
 const server = createServer(async (req, res) => {
@@ -83,7 +94,10 @@ const server = createServer(async (req, res) => {
     const path = url.pathname;
     let text = "";
     for await (const chunk of req) text += chunk;
-    const body = text ? JSON.parse(text) : {};
+    const body =
+      text && (req.headers["content-type"] || "").includes("application/json")
+        ? JSON.parse(text)
+        : {};
     const json = (data, status = 200) => {
       res.writeHead(status, {
         "Content-Type": "application/json",
@@ -109,7 +123,19 @@ const server = createServer(async (req, res) => {
       res.writeHead(200, { "Content-Type": "application/pdf" });
       return res.end("%PDF-1.4\nFictional test bytes\n%%EOF");
     }
+    if (
+      path.startsWith("/storage/v1/object/client-assets/") &&
+      req.method === "POST"
+    )
+      return json({ Key: path.split("/object/")[1], Id: randomUUID() });
     const table = path.split("/").pop();
+    if (table === "project_management_ready") return json(managementMode);
+    if (table === "complete_client_action") {
+      const a = clientActions.find((a) => a.id === body.target);
+      if (a) a.status = body.done ? "Done" : "To do";
+      return json(null);
+    }
+
     let rows = [];
     if (table === "profiles")
       rows = [
@@ -130,6 +156,29 @@ const server = createServer(async (req, res) => {
         },
       ];
     if (table === "projects") rows = [project];
+    if (table === "client_actions") rows = clientActions;
+    if (table === "project_details")
+      rows = [
+        {
+          project_id: pid,
+          goal: "A clear identity",
+          deliverables: "Agreed logo and guidelines",
+          exclusions: "Printing",
+          approver: "Jamie Example",
+          support: "Agreed support only",
+        },
+      ];
+    if (table === "project_handover")
+      rows =
+        project.final_paid && project.final_approved
+          ? [{ project_id: pid, body: "Private final handover guidance" }]
+          : [];
+    if (table === "client_assets") {
+      if (req.method === "POST")
+        assets.push({ ...body, created_at: new Date().toISOString() });
+      rows = assets;
+    }
+
     if (table === "stages")
       rows = [
         {
@@ -161,6 +210,9 @@ const server = createServer(async (req, res) => {
       if (req.method === "POST")
         feedback.push({
           ...body,
+          ...(managementMode
+            ? { approver_name: "Jamie Example", reviewed_version: "v1" }
+            : {}),
           id: randomUUID(),
           created_at: new Date().toISOString(),
         });
@@ -238,7 +290,7 @@ const server = createServer(async (req, res) => {
       .click();
     if (ownerMode) {
       await page
-        .getByRole("heading", { name: "Good things take shape.", exact: true })
+        .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
       await page.getByRole("button", { name: /Preview client portal/ }).click();
       await page
@@ -271,7 +323,7 @@ const server = createServer(async (req, res) => {
         .getByRole("button", { name: "Back to owner workspace" })
         .click();
       await page
-        .getByRole("heading", { name: "Good things take shape.", exact: true })
+        .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
       assert.equal(questionnaires.length, 0);
       assert.equal(feedback.length, 0);
@@ -290,6 +342,44 @@ const server = createServer(async (req, res) => {
         .count(),
       0,
     );
+    if (managementMode) {
+      await page
+        .getByRole("button", { name: "Mark done", exact: true })
+        .click();
+      await page
+        .getByRole("button", { name: "Mark to do", exact: true })
+        .waitFor();
+      assert.equal(clientActions[0].status, "Done");
+      await page
+        .locator("#client-assets")
+        .getByLabel("File", { exact: true })
+        .setInputFiles({
+          name: "Fictional brand asset.pdf",
+          mimeType: "application/pdf",
+          buffer: Buffer.from("%PDF-1.4 Fictional asset"),
+        });
+      await page
+        .getByRole("button", { name: "Upload asset privately", exact: true })
+        .click();
+      await page
+        .getByRole("link", { name: /Fictional brand asset.pdf/ })
+        .waitFor();
+      assert.equal(assets.length, 1);
+      assert.equal(
+        await page
+          .getByText("Private final handover guidance", { exact: true })
+          .count(),
+        0,
+      );
+    }
+    await page
+      .getByRole("img", { name: "ABA — Alex Bell Arts", exact: true })
+      .waitFor();
+    const brandImage = await page.request.get(
+      `http://127.0.0.1:${appPort}/brand/aba-wordmark.png`,
+    );
+    assert.equal(brandImage.status(), 200);
+    assert.match(brandImage.headers()["content-type"], /image\/png/);
     const discovery = page.locator(".questionnaire").first();
     await discovery.locator("summary").click();
     for (const textarea of await discovery.locator("textarea").all())
@@ -370,6 +460,10 @@ const server = createServer(async (req, res) => {
       fullPage: true,
     });
     assert.deepEqual(errors, []);
+    if (managementMode)
+      console.log(
+        "PASS: dated action completion, private client asset upload, gated handover details and supplied Alex Bell Arts logo rendered through actual app screens with fictional services.",
+      );
     console.log(
       "PASS: actual client UI login, questionnaire submission, revision request, creative approval, payment-only lock, final release/download and mobile layout. Supabase HTTP fixture used; this does not verify hosted email/invitation delivery or replace hosted RLS checks.",
     );

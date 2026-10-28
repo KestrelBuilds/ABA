@@ -14,7 +14,7 @@ Reference: owner-uploaded HTML export of ABA Client Portal Master Template (Noti
 
 ## Explicit differences and remaining work
 - The export contains links to Tally Logo Direction and Goodbye forms, not their internal question definitions. The goodbye native form retains clearly documented starter questions; do not claim it reproduces the external Tally form. The public enquiry stays outside onboarding.
-- Asset folders/client uploads, editable agreed-brief summaries, named approvers, individual milestone deadlines, review-version metadata/preview URLs and project-specific support/hosting arrangements are not yet editable/persisted as in the template. Guidance avoids inventing dates, links or scope. Those need additional schema/UI work.
+- The project-management upgrade 202610280004 now implements private PDF/image client uploads, editable brief/deliverables/exclusions/support, nominated approver text, versioned presentation deadlines and named account/version approval snapshots. These require the additive migration before activation. Individual stage deadlines, external preview URLs, expanded source/ZIP formats and detailed hosting renewal arrangements remain future refinements. Guidance avoids inventing dates, links or scope.
 - The next action/milestone summaries derive from visible stage status. They do not claim to be the custom homepage actions/dates from Notion. Overall progress still derives from milestones.
 - Existing questionnaire submissions are preserved and continue displaying their saved answers; they are not silently migrated or overwritten with the new questions.
 - Document starters are outlines in the export, not signed contracts, invoices or completed proposals. Proposal/contract/invoice automation remains a later implementation.

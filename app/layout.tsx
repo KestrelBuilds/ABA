@@ -2,7 +2,16 @@ import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
   title: "ABA Studio — Your creative business, considered.",
-  description: "Alex Bell Arts project management demonstration.",
+  description: "The project workspace for Alex Bell Arts.",
+  icons: {
+    icon: [
+      {
+        url: "/brand/favicon-light.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      { url: "/brand/favicon-dark.png", media: "(prefers-color-scheme: dark)" },
+    ],
+  },
 };
 export default function RootLayout({
   children,

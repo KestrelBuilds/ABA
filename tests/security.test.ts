@@ -37,6 +37,12 @@ test("PostgreSQL policies enforce client isolation, protected writes, questionna
     await db.exec(
       await readFile("supabase/migrations/202610270003_owner_mfa.sql", "utf8"),
     );
+    await db.exec(
+      await readFile(
+        "supabase/migrations/202610280004_project_management.sql",
+        "utf8",
+      ),
+    );
     await db.exec(`insert into auth.users(id) values('${ids.admin}'),('${ids.one}'),('${ids.two}'),('${ids.stranger}');
  insert into public.clients(id,name,contact,email) values('${ids.c1}','Client one','One','one@example.com'),('${ids.c2}','Client two','Two','two@example.com');
  insert into public.profiles values('${ids.admin}','admin',null),('${ids.one}','client','${ids.c1}'),('${ids.two}','client','${ids.c2}');
@@ -104,6 +110,74 @@ test("PostgreSQL policies enforce client isolation, protected writes, questionna
     assert.equal((await rows("select * from public.project_notes")).length, 2);
     assert.equal((await rows("select * from public.documents")).length, 4);
     assert.ok((await rows("select * from public.audit_events")).length > 0);
+    const actionId = "40000000-0000-4000-8000-000000000001",
+      assetId = "50000000-0000-4000-8000-000000000001";
+    await db.exec(
+      `select public.save_portal_brief('${ids.p1}','Confirmed goal','Deliverables','Outside scope','One','Support terms','PRIVATE FINAL HANDOVER'); insert into public.client_actions(id,project_id,title,due) values('${actionId}','${ids.p1}','Supply approved copy','2027-01-01');`,
+    );
+    const review = (
+      await rows("select approver_name,reviewed_version from public.feedback")
+    )[0];
+    assert.equal(review.approver_name, "One");
+    assert.equal(review.reviewed_version, "v1");
+    await assert.rejects(() =>
+      db.exec(
+        `update public.documents set version_label='v2' where id='${ids.d1}'`,
+      ),
+    );
+    await asUser(ids.one);
+    assert.equal(
+      (await rows("select * from public.project_details")).length,
+      1,
+    );
+    assert.equal(
+      (await rows("select * from public.project_handover")).length,
+      0,
+    );
+    await db.exec(`select public.complete_client_action('${actionId}',true)`);
+    assert.equal(
+      (await rows("select status from public.client_actions"))[0].status,
+      "Done",
+    );
+    await assert.rejects(() =>
+      db.exec(
+        `update public.client_actions set title='Forged deadline' where id='${actionId}'`,
+      ),
+    );
+    await assert.rejects(() =>
+      db.exec(`select public.edit_client_action('${actionId}','Forged',null)`),
+    );
+    await assert.rejects(() =>
+      db.exec(
+        `insert into public.client_assets(project_id,uploader_id,name,object_path) values('${ids.p2}','${ids.one}','Wrong project','${ids.p2}/00000000-0000-4000-8000-000000000999')`,
+      ),
+    );
+    await db.exec(
+      `insert into public.client_assets(id,project_id,uploader_id,name,object_path) values('${assetId}','${ids.p1}','${ids.one}','Fictional asset.pdf','${ids.p1}/${assetId}');insert into storage.objects(bucket_id,name) values('client-assets','${ids.p1}/${assetId}');`,
+    );
+    assert.equal(
+      (
+        await rows(
+          "select * from storage.objects where bucket_id='client-assets'",
+        )
+      ).length,
+      1,
+    );
+    await asUser(ids.two);
+    assert.equal((await rows("select * from public.client_actions")).length, 0);
+    assert.equal((await rows("select * from public.client_assets")).length, 0);
+    assert.equal(
+      (
+        await rows(
+          "select * from storage.objects where bucket_id='client-assets'",
+        )
+      ).length,
+      0,
+    );
+    await asUser(ids.admin);
+    await db.exec(
+      `delete from storage.objects where bucket_id='client-assets';delete from public.client_assets where id='${assetId}'`,
+    );
     // Final files remain locked with payment alone, then release only after verified final approval.
     await db.exec(
       `update public.projects set final_paid=true where id='${ids.p1}'`,
@@ -117,6 +191,10 @@ test("PostgreSQL policies enforce client isolation, protected writes, questionna
     await asUser(ids.one);
     assert.equal((await rows("select * from public.documents")).length, 2);
     assert.equal((await rows("select * from storage.objects")).length, 2);
+    assert.equal(
+      (await rows("select * from public.project_handover")).length,
+      1,
+    );
     // Revoking onboarding removes all project and document access even with a live session.
     await asUser(ids.admin);
     await db.exec(

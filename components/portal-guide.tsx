@@ -1,12 +1,16 @@
-import type { DbProject, DbStage } from "@/lib/workspace";
+import type { DbProject, DbStage, ClientAction } from "@/lib/workspace";
 export default function PortalGuide({
   project,
   stages,
   part = "overview",
+  assetsReady = false,
+  clientActions = [],
 }: {
   project: DbProject;
   stages: DbStage[];
   part?: "overview" | "reference";
+  assetsReady?: boolean;
+  clientActions?: ClientAction[];
 }) {
   const visible = stages.filter(
     (s) => s.project_id === project.id && s.visible,
@@ -15,13 +19,20 @@ export default function PortalGuide({
   const action = visible.find((s) =>
     ["Awaiting Client", "Awaiting Approval"].includes(s.status),
   );
+  const nextAction = clientActions.find(
+    (a) => a.project_id === project.id && a.status !== "Done",
+  );
   const sections = [
     [
       "questionnaires",
       "Project brief & onboarding",
       "Your goals, agreed brief and onboarding.",
     ],
-    ["content-assets", "Content & assets", "Copy, images and brand files."],
+    [
+      assetsReady ? "client-assets" : "content-assets",
+      "Content & assets",
+      "Copy, images and brand files.",
+    ],
     [
       "documents",
       "Documents & payments",
@@ -51,12 +62,21 @@ export default function PortalGuide({
             <section>
               <span className="eyebrow">YOUR NEXT ACTION</span>
               <h3>
-                {action?.name ?? "Check your brief and project documents"}
+                {nextAction?.title ??
+                  action?.name ??
+                  "Check your brief and project documents"}
               </h3>
               <p>
-                {action
-                  ? "Please review the relevant presentation or request below."
-                  : "Only complete the questions for your agreed service. Short answers are welcome."}
+                {nextAction
+                  ? nextAction.due
+                    ? "Due " +
+                      new Date(nextAction.due + "T12:00:00").toLocaleDateString(
+                        "en-GB",
+                      )
+                    : "Date to be agreed with me."
+                  : action
+                    ? "Please review the relevant presentation or request below."
+                    : "Only complete the questions for your agreed service. Short answers are welcome."}
               </p>
             </section>
             <section>

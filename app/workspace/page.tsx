@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+export const metadata: Metadata = {
+  title: "ABA Owner Dashboard — Alex Bell Arts",
+};
 import { MfaRequiredError } from "@/lib/mfa";
 import { redirect } from "next/navigation";
 import { configured, identity } from "@/lib/supabase/server";

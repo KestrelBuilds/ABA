@@ -17,6 +17,20 @@ export function clientPreview(
       )
     : [];
   return {
+    managementReady: data.managementReady,
+    projectDetails: eligible
+      ? (data.projectDetails ?? []).filter((d) => d.project_id === projectId)
+      : [],
+    handovers:
+      eligible && project?.final_paid && project.final_approved
+        ? (data.handovers ?? []).filter((h) => h.project_id === projectId)
+        : [],
+    clientActions: eligible
+      ? (data.clientActions ?? []).filter((a) => a.project_id === projectId)
+      : [],
+    assets: eligible
+      ? (data.assets ?? []).filter((a) => a.project_id === projectId)
+      : [],
     role: "client",
     emailInvitesReady: false,
     clients: project

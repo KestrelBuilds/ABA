@@ -1,3 +1,4 @@
+import BrandMark from "@/components/brand-mark";
 import Link from "next/link";
 import { LoginForms } from "@/components/auth-forms";
 import { configured } from "@/lib/supabase/server";
@@ -10,7 +11,7 @@ export default async function Login({
   return (
     <main className="auth-page">
       <Link className="logo" href="/">
-        aba<span>STUDIO</span>
+        <BrandMark />
       </Link>
       <section className="panel auth-panel">
         <div className="eyebrow">YOUR CREATIVE JOURNEY</div>

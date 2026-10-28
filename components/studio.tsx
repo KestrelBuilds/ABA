@@ -1,4 +1,5 @@
 "use client";
+import BrandMark from "@/components/brand-mark";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   ArrowUpRight,
@@ -252,8 +253,7 @@ export default function Studio() {
     <div className={portal ? "shell portal-mode" : "shell"}>
       <aside className={mobile ? "sidebar open" : "sidebar"}>
         <a className="logo" href="/">
-          aba<span>STUDIO</span>
-          <i>®</i>
+          <BrandMark />
         </a>
         <div className="workspace-label">
           ALEX BELL ARTS <span>WORKSPACE</span>
