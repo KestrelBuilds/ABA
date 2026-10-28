@@ -88,3 +88,7 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Applied supplied Alex Bell Arts wordmark/favicons and Hyper Purple/Acid Lime/Carbon Black/Stark White palette. Font files/names were not supplied; readable fallbacks remain.
 - Named the signed-in experiences ABA Owner Dashboard and ABA Client Portal, including browser titles.
 - Validation: 31 local tests, strict TypeScript and production build passed. Chromium tests covered dated action completion, private asset upload, protected handover visibility, branded logo rendering, the creative journey and owner preview using fictional services. Hosted activation/acceptance of the added project tools awaits the SQL upgrade.
+
+### Higher-resolution brand artwork
+- Replaced the deployed wordmark, primary mark and favicon sources with the matching original PNGs from the owner's 4x.zip.
+- Kept displayed logo dimensions and colour tokens unchanged; versioned image URLs refresh previously cached artwork.
