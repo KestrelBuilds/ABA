@@ -97,3 +97,6 @@ A restricted contract-only area now supports invited clients before full onboard
 
 ### New project templates
 New branding projects follow Alex’s supplied 10-folder layout plus Goodbye Packet. Website projects use the same five opening stages, then Website Brief & Content, Page Structure & Layout, Website Design, Framer Build & Review, Launch & Handover and Goodbye Packet. Combined projects share acquisition and one goodbye stage. Existing projects/files are unchanged. See [exact folder lists](docs/PROJECT-TEMPLATES.md). No extra SQL is needed for templates.
+
+### Removing fictional clients
+After applying migration 202610280007, use Clients → Delete client permanently. Exact-name confirmation is required. Linked projects/uploads are removed with retry support; financial records block deletion and audit/sign-in-account history is retained. See [deletion setup and behaviour](docs/CLIENT-DELETION.md).

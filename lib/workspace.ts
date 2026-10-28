@@ -2,6 +2,7 @@ import "server-only";
 import { loadFinance, type FinanceData } from "./finance/data";
 import { identity } from "./supabase/server";
 export type DbClient = {
+  deletion_pending?: boolean;
   id: string;
   name: string;
   contact: string;
@@ -80,6 +81,7 @@ export type ClientAsset = {
   created_at: string;
 };
 export type WorkspaceData = {
+  clientDeletionReady?: boolean;
   contractReady?: boolean;
   contractExchanges?: {
     project_id: string;
@@ -117,6 +119,13 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
   )
     throw Error("Project tools could not be checked. Please retry.");
   const managementReady = capability.data === true;
+  const deletionCapability = await db.rpc("client_deletion_ready");
+  if (
+    deletionCapability.error &&
+    !["PGRST202", "42883"].includes(deletionCapability.error.code)
+  )
+    throw Error("Client deletion availability could not be checked.");
+  const clientDeletionReady = deletionCapability.data === true;
   const contractCapability = await db.rpc("contract_area_ready");
   if (
     contractCapability.error &&
@@ -165,8 +174,13 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
   const results = await Promise.all([
     db
       .from("clients")
-      .select("id,name,contact,email,sector")
-      .order("created_at"),
+      .select(
+        clientDeletionReady
+          ? "id,name,contact,email,sector,deletion_pending"
+          : "id,name,contact,email,sector",
+      )
+      .order("created_at")
+      .overrideTypes<DbClient[], { merge: false }>(),
     db
       .from("projects")
       .select(
@@ -214,6 +228,7 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       "Workspace data could not be loaded. Check the database migrations and access policies.",
     );
   return {
+    clientDeletionReady,
     contractReady,
     contractExchanges: contractExchanges?.data ?? [],
     finance,

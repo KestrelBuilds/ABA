@@ -1,5 +1,6 @@
 "use client";
 import { fileVisibility } from "@/lib/file-visibility";
+import DeleteClient from "./delete-client";
 import ProjectFocus from "./project-focus";
 import { projectFocus } from "@/lib/project-focus";
 import BrandMark from "@/components/brand-mark";
@@ -146,6 +147,7 @@ export default function ConnectedStudio({
   const [view, setView] = useState(admin ? "Overview" : "Projects");
   const [projectId, setProjectId] = useState(data.projects[0]?.id ?? "");
   const [query, setQuery] = useState("");
+  const [clientNotice, setClientNotice] = useState("");
   const [creating, setCreating] = useState<"client" | "project" | null>(null);
   const project =
     data.projects.find((p) => p.id === projectId) ?? data.projects[0];
@@ -496,6 +498,11 @@ export default function ConnectedStudio({
             )}
             {admin && view === "Clients" && (
               <>
+                {clientNotice && (
+                  <p role="status" className="banner">
+                    {clientNotice}
+                  </p>
+                )}
                 <label className="search">
                   Search clients
                   <input
@@ -529,75 +536,132 @@ export default function ConnectedStudio({
                           }{" "}
                           projects
                         </p>
-                        <details>
-                          <summary>Edit client details</summary>
-                          <ActionForm action={editClient} label="Save client">
-                            <input type="hidden" name="id" value={c.id} />
-                            {(
-                              [
-                                ["name", "Business name"],
-                                ["contact", "Contact name"],
-                                ["email", "Email address"],
-                                ["sector", "Sector"],
-                              ] as const
-                            ).map(([name, label]) => (
-                              <label key={name}>
-                                {label}
-                                <input
-                                  name={name}
-                                  defaultValue={c[name]}
-                                  required={name !== "sector"}
-                                  type={name === "email" ? "email" : "text"}
-                                  maxLength={name === "email" ? 254 : 120}
-                                />
-                              </label>
-                            ))}
-                          </ActionForm>
-                        </details>
-                        <ActionForm
-                          action={inviteClient}
-                          label="Create invitation"
-                        >
-                          <input type="hidden" name="clientId" value={c.id} />
-                          <label>
-                            Invitation delivery
-                            <select name="delivery">
-                              <option value="link">
-                                Create a private link
-                              </option>
-                              <option
-                                value="email"
-                                disabled={!data.emailInvitesReady}
+                        {c.deletion_pending && (
+                          <p role="status">
+                            Deletion paused — client access is revoked. Open
+                            Delete client permanently to retry cleanup.
+                          </p>
+                        )}
+                        {!c.deletion_pending && (
+                          <>
+                            <details>
+                              <summary>Edit client details</summary>
+                              <ActionForm
+                                action={editClient}
+                                label="Save client"
                               >
-                                Send invitation email
-                                {!data.emailInvitesReady
-                                  ? " (setup needed)"
-                                  : ""}
-                              </option>
-                            </select>
-                          </label>
-                          <p>
-                            Requires verified contract/deposit or an enabled
-                            initial contract area with a shared Contract PDF.
-                            Early invitations only open the restricted contract
-                            area. Choose a private link or, after email-template
-                            setup, a Supabase invitation email.
-                          </p>
-                        </ActionForm>
-                        <details>
-                          <summary>Revoke portal access</summary>
-                          <p>
-                            This removes access for every account associated
-                            with this client. Their current sessions will no
-                            longer return project data.
-                          </p>
-                          <ActionForm
-                            action={revokeClientAccess}
-                            label="Revoke this client’s access"
-                          >
-                            <input type="hidden" name="clientId" value={c.id} />
-                          </ActionForm>
-                        </details>
+                                <input type="hidden" name="id" value={c.id} />
+                                {(
+                                  [
+                                    ["name", "Business name"],
+                                    ["contact", "Contact name"],
+                                    ["email", "Email address"],
+                                    ["sector", "Sector"],
+                                  ] as const
+                                ).map(([name, label]) => (
+                                  <label key={name}>
+                                    {label}
+                                    <input
+                                      name={name}
+                                      defaultValue={c[name]}
+                                      required={name !== "sector"}
+                                      type={name === "email" ? "email" : "text"}
+                                      maxLength={name === "email" ? 254 : 120}
+                                    />
+                                  </label>
+                                ))}
+                              </ActionForm>
+                            </details>
+                            <ActionForm
+                              action={inviteClient}
+                              label="Create invitation"
+                            >
+                              <input
+                                type="hidden"
+                                name="clientId"
+                                value={c.id}
+                              />
+                              <label>
+                                Invitation delivery
+                                <select name="delivery">
+                                  <option value="link">
+                                    Create a private link
+                                  </option>
+                                  <option
+                                    value="email"
+                                    disabled={!data.emailInvitesReady}
+                                  >
+                                    Send invitation email
+                                    {!data.emailInvitesReady
+                                      ? " (setup needed)"
+                                      : ""}
+                                  </option>
+                                </select>
+                              </label>
+                              <p>
+                                Requires verified contract/deposit or an enabled
+                                initial contract area with a shared Contract
+                                PDF. Early invitations only open the restricted
+                                contract area. Choose a private link or, after
+                                email-template setup, a Supabase invitation
+                                email.
+                              </p>
+                            </ActionForm>
+                            <details>
+                              <summary>Revoke portal access</summary>
+                              <p>
+                                This removes access for every account associated
+                                with this client. Their current sessions will no
+                                longer return project data.
+                              </p>
+                              <ActionForm
+                                action={revokeClientAccess}
+                                label="Revoke this client’s access"
+                              >
+                                <input
+                                  type="hidden"
+                                  name="clientId"
+                                  value={c.id}
+                                />
+                              </ActionForm>
+                            </details>
+                          </>
+                        )}
+                        {data.clientDeletionReady && (
+                          <DeleteClient
+                            client={c}
+                            projectCount={
+                              data.projects.filter((p) => p.client_id === c.id)
+                                .length
+                            }
+                            fileCount={
+                              data.documents.filter((d) =>
+                                data.projects.some(
+                                  (p) =>
+                                    p.id === d.project_id &&
+                                    p.client_id === c.id,
+                                ),
+                              ).length +
+                              (data.assets ?? []).filter((a) =>
+                                data.projects.some(
+                                  (p) =>
+                                    p.id === a.project_id &&
+                                    p.client_id === c.id,
+                                ),
+                              ).length
+                            }
+                            blocked={[
+                              ...(data.finance?.invoices ?? []),
+                              ...(data.finance?.proposals ?? []),
+                            ].some((r) =>
+                              data.projects.some(
+                                (p) =>
+                                  p.id === r.project_id && p.client_id === c.id,
+                              ),
+                            )}
+                            onDeleted={setClientNotice}
+                          />
+                        )}
                       </section>
                     ))}
                 </div>

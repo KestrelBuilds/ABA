@@ -46,6 +46,7 @@ test("PostgreSQL policies enforce client isolation, protected writes, questionna
     for (const file of [
       "202610280005_business_documents.sql",
       "202610280006_contract_area.sql",
+      "202610280007_client_deletion.sql",
     ])
       await db.exec(await readFile("supabase/migrations/" + file, "utf8"));
     await db.exec(`insert into auth.users(id) values('${ids.admin}'),('${ids.one}'),('${ids.two}'),('${ids.stranger}');

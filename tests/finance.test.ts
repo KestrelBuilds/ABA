@@ -39,6 +39,7 @@ test("finance SQL enforces immutable snapshots, private drafts, 50/50 invoices a
       "202610280004_project_management.sql",
       "202610280005_business_documents.sql",
       "202610280006_contract_area.sql",
+      "202610280007_client_deletion.sql",
     ])
       await db.exec(
         (await readFile("supabase/migrations/" + file, "utf8")).replace(

@@ -41,6 +41,7 @@ test("contract-only SQL isolates early invitations, signed returns, storage and 
       "202610280004_project_management.sql",
       "202610280005_business_documents.sql",
       "202610280006_contract_area.sql",
+      "202610280007_client_deletion.sql",
     ])
       await db.exec(
         (await readFile("supabase/migrations/" + file, "utf8")).replace(

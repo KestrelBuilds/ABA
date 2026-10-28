@@ -143,3 +143,9 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Preserved existing projects and the separate older fictional demo. Added relevant enquiry booking/onboarding questionnaire links, stage instructions, distinct contract/deposit confirmations and explicit final verification checks. Actual goodbye-packet content is pending Alex’s supplied file.
 - Added exact external folder lists and scope/access explanations in docs/PROJECT-TEMPLATES.md. No extra SQL migration needed for templates.
 - Validation: 55 automated tests, strict types and production build passed. Chromium verified branding/website/combined layouts, relevant questionnaires/booking links, separate contract/deposit controls, gated goodbye links, mobile overflow and the existing restricted contract return. Hosted application acceptance remains pending.
+
+### Confirmed client/project/file deletion
+- Added owner-only Delete client permanently with exact-name/acknowledgement confirmation, scope explanation, financial-history protection and a retry state. Pending cards disable normal editing/invitation actions.
+- Added transaction-wrapped migration 202610280007: freeze metadata/uploads, revoke client access, snapshot UUID-scoped Storage paths and verify API cleanup before deleting dependent records. Preserve audit history, Auth accounts and all native proposal/invoice records; protect other clients.
+- No hosted client data was deleted during development. Activation and hosted Storage acceptance require the new migration and a fictional test.
+- Validation: 59 automated tests, strict type checking and production build passed. Chromium checks passed exact-name confirmation, removal of linked files/records, simulated Storage failure with successful retry, and the existing restricted-contract/combined-template flows using fictional services. Hosted activation/acceptance remains pending.

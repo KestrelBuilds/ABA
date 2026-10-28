@@ -108,3 +108,6 @@ My account includes **Download my workspace data**. It exports only data visible
 
 ### Initial contract area upgrade
 After migrations through 202610280005, apply only 202610280006_contract_area.sql once to enable the optional restricted pre-onboarding contract area. No existing projects are opted in. Follow CONTRACT-AREA.md for explicit stage setup, invitations, PDF returns and hosted acceptance. No new secrets or signing-service account are required.
+
+### Client deletion upgrade
+After migration 202610280006, apply only 202610280007_client_deletion.sql once. It adds the confirmed client/project/file cleanup workflow without new credentials. Follow CLIENT-DELETION.md and verify it on fictional hosted data before real client use.

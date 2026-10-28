@@ -7,6 +7,12 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const deletionMode =
+  process.argv.includes("--delete-client") ||
+  process.argv.includes("--delete-client-retry");
+let failDeletionStorage = process.argv.includes("--delete-client-retry");
+let clientDeleted = false,
+  deletionPending = false;
 const templateMode = process.argv
   .find((a) => a.startsWith("--template="))
   ?.split("=")[1];
@@ -22,7 +28,8 @@ const ownerMode =
   financeMode ||
   verificationMode ||
   contractOwnerMode ||
-  Boolean(templateMode);
+  Boolean(templateMode) ||
+  deletionMode;
 const uid = randomUUID(),
   cid = randomUUID(),
   pid = randomUUID(),
@@ -188,6 +195,7 @@ if (contractMode || contractOwnerMode)
     version_label: "v1",
     stage_id: fixtureStageId,
   });
+const remainingDeletionPaths = new Set(documents.map((d) => d.object_path));
 const questionnaires = [],
   feedback = [];
 const clientActions = [
@@ -251,7 +259,46 @@ const server = createServer(async (req, res) => {
       }
       return json({ Key: path.split("/object/")[1], Id: randomUUID() });
     }
+    if (
+      deletionMode &&
+      path === "/storage/v1/object/project-files" &&
+      req.method === "DELETE"
+    ) {
+      if (failDeletionStorage) {
+        failDeletionStorage = false;
+        return json({ message: "Fictional storage outage" }, 503);
+      }
+      for (const prefix of body.prefixes ?? [])
+        remainingDeletionPaths.delete(prefix);
+      return json([]);
+    }
     const table = path.split("/").pop();
+    if (table === "client_deletion_ready") return json(deletionMode);
+    if (table === "prepare_client_deletion") {
+      if (body.target !== cid || body.confirmation !== "Fictional business")
+        return json(
+          {
+            code: "P0001",
+            message: "Type the exact client business name to confirm deletion",
+          },
+          400,
+        );
+      deletionPending = true;
+      return json({
+        client_id: cid,
+        project_ids: [pid],
+        files: [...remainingDeletionPaths].map((path) => ({
+          bucket: "project-files",
+          path,
+        })),
+      });
+    }
+    if (table === "finish_client_deletion") {
+      if (!deletionPending || remainingDeletionPaths.size)
+        return json({ message: "File cleanup incomplete" }, 400);
+      clientDeleted = true;
+      return json(null);
+    }
     if (table === "contract_area_ready")
       return json(contractMode || contractOwnerMode);
     if (table === "can_read_contract_document")
@@ -388,15 +435,18 @@ const server = createServer(async (req, res) => {
         },
       ];
     if (table === "clients")
-      rows = [
-        {
-          id: cid,
-          name: "Fictional business",
-          contact: "Jamie Example",
-          email: user.email,
-          sector: "Design",
-        },
-      ];
+      rows = clientDeleted
+        ? []
+        : [
+            {
+              id: cid,
+              name: "Fictional business",
+              contact: "Jamie Example",
+              email: user.email,
+              sector: "Design",
+              deletion_pending: deletionPending,
+            },
+          ];
     if (table === "contract_exchanges") {
       if (req.method === "POST") exchangeEnabled = body.enabled;
       rows = [
@@ -521,6 +571,19 @@ const server = createServer(async (req, res) => {
           (d) => d.id === presentation && exchangeEnabled,
         );
     }
+    if (
+      clientDeleted &&
+      [
+        "projects",
+        "stages",
+        "documents",
+        "feedback",
+        "questionnaires",
+        "project_notes",
+        "client_assets",
+      ].includes(table)
+    )
+      rows = [];
     for (const [key, value] of url.searchParams)
       if (value.startsWith("eq."))
         rows = rows.filter((r) => String(r[key]) === value.slice(3));
@@ -591,6 +654,89 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (deletionMode) {
+      await page
+        .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
+        .waitFor();
+      await page.getByRole("button", { name: "Clients", exact: true }).click();
+      const card = page.locator(".client-card").filter({
+        has: page.getByRole("heading", {
+          name: "Fictional business",
+          exact: true,
+        }),
+      });
+      await card
+        .getByText("Delete client permanently", { exact: true })
+        .click();
+      const confirm = card.getByLabel(
+        "Type the exact business name to confirm",
+      );
+      await confirm.fill("Wrong client");
+      await card
+        .getByRole("checkbox", {
+          name: /I understand this permanently removes/,
+        })
+        .check();
+      await card
+        .getByRole("button", { name: "Permanently delete client", exact: true })
+        .click();
+      await card
+        .getByRole("alert")
+        .filter({ hasText: "Type the exact client business name" })
+        .waitFor();
+      assert.equal(deletionPending, false);
+      assert.equal(clientDeleted, false);
+      const retryMode = failDeletionStorage;
+      await confirm.fill("Fictional business");
+      await card
+        .getByRole("checkbox", {
+          name: /I understand this permanently removes/,
+        })
+        .check();
+      await card
+        .getByRole("button", { name: "Permanently delete client", exact: true })
+        .click();
+      if (retryMode) {
+        await card
+          .getByRole("alert")
+          .filter({ hasText: "Deletion paused during private file cleanup" })
+          .waitFor();
+        assert.equal(clientDeleted, false);
+        assert.equal(deletionPending, true);
+        assert.ok(remainingDeletionPaths.size > 0);
+        await confirm.fill("Fictional business");
+        await card
+          .getByRole("checkbox", {
+            name: /I understand this permanently removes/,
+          })
+          .check();
+        await card
+          .getByRole("button", { name: "Retry client deletion", exact: true })
+          .click();
+      }
+      await page
+        .getByRole("status")
+        .filter({
+          hasText: "Client, linked projects and private uploads deleted",
+        })
+        .waitFor();
+      await card.waitFor({ state: "detached" });
+      assert.equal(clientDeleted, true);
+      assert.equal(remainingDeletionPaths.size, 0);
+      assert.equal(await card.count(), 0);
+      assert.deepEqual(errors, []);
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+      console.log(
+        "PASS: exact-name client deletion confirmation, private file cleanup and record removal" +
+          (retryMode ? ", storage failure pauses and retry succeeds" : "") +
+          ". Fictional services only.",
+      );
+      return;
+    }
     if (templateMode) {
       await page
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
@@ -601,11 +747,9 @@ const server = createServer(async (req, res) => {
         templateMode === "combined" ? 16 : 11,
       );
       const findStage = (name) =>
-        page
-          .locator(".milestone-disclosure")
-          .filter({
-            has: page.locator('input[name="name"][value="' + name + '"]'),
-          });
+        page.locator(".milestone-disclosure").filter({
+          has: page.locator('input[name="name"][value="' + name + '"]'),
+        });
       const onboarding = findStage("Onboarding");
       await onboarding.locator("summary").first().click();
       assert.equal(

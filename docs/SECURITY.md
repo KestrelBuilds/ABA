@@ -40,3 +40,6 @@ Client action updates are restricted to the status column at the privilege level
 
 ### Restricted contract-only access
 Migration 202610280006 is an explicit, scoped exception to the earlier blanket onboarding requirement for all file reads. It permits only authenticated invited-client access to shared Contract/document files in an opted-in visible stage and their own linked returns. Full project and creative-feedback access still requires contract/deposit. Existing signed-link expiry and downloaded-copy limitations remain. No automatic signature validity is claimed; see CONTRACT-AREA.md for isolation rules and required hosted checks.
+
+### Owner-confirmed client deletion
+Migration 202610280007 adds a scoped prepare/finish workflow. Exact-name confirmation and owner MFA are checked on the server/database. Profiles/invitations are revoked before file removal. Private retry manifests are owner-readable, non-client-writable, and Storage deletion is restricted to frozen project paths. Pending clients reject metadata/storage writes. Finalization verifies Storage metadata absence; audit/Auth users and native financial records are retained. This is not a full personal-data erasure service. See CLIENT-DELETION.md for retry/hosted acceptance limits.

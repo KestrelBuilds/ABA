@@ -996,3 +996,37 @@ export async function uploadSignedContract(form: FormData) {
     return "Your completed PDF has been sent for my review. Uploading it does not verify the contract or payment; I’ll unlock the full portal after both checks.";
   });
 }
+
+export async function deleteClient(form: FormData): Promise<Result> {
+  try {
+    const { db } = await identity(true);
+    const clientId = uuid.parse(form.get("clientId"));
+    const confirmation = z
+      .string()
+      .min(1)
+      .max(120)
+      .parse(form.get("confirmation"));
+    if (form.get("confirmed") !== "on")
+      throw Error("Confirm that you understand this deletion is permanent.");
+    const { deleteClientRecords } =
+      await import("@/lib/supabase/delete-client");
+    await deleteClientRecords(db, clientId, confirmation);
+    return {
+      ok: true,
+      message:
+        "Client, linked projects and private uploads deleted. Audit history and the sign-in account were retained; client access was removed.",
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof z.ZodError
+          ? "Check the confirmation fields."
+          : error instanceof Error
+            ? error.message
+            : "Deletion could not finish. Retry cleanup.",
+    };
+  } finally {
+    refresh();
+  }
+}
