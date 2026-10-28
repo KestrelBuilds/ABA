@@ -4,7 +4,7 @@ A considered workspace for Alex Bell Arts. Phase 1 is an interactive application
 
 ## Run locally
 
-Requires Node.js 22 or later and npm.
+Requires Node.js 22 or later and npm. The PDF content tests also require `pdftotext` (Poppler utilities; on Debian/Ubuntu install `poppler-utils`). This is a development test dependency only.
 
 ```sh
 npm ci
@@ -24,9 +24,9 @@ Open the application on port 3000 using your development environment's supported
 - Client preview with contract/deposit gates, visible milestones, relevant Tally links and final delivery gate.
 - Browser storage preserves changes on the same browser and origin. Clear site storage to reset the fictional examples.
 
-## Demonstration limitations
+## Demonstration limitations (`/demo` only)
 
-There is no authentication, database, secure file storage, email, invoice generation, payment processing, signing, Tally submission sync or real feedback/approval submission. All browser records are accessible to the local user. Visibility controls affect presentation only. Portal access and delivery gates are demonstration business logic, not security. No files are provided for download. Currency is GBP; demo snapshot dates are explicitly labelled. Recorded payment totals are all-time, not monthly revenue. Native questionnaires and internal task lists remain on the roadmap.
+The separate connected workspace is described below. In `/demo`, there is no authentication, database, secure file storage, email, invoice generation, payment processing, signing, Tally submission sync or real feedback/approval submission. All browser records are accessible to the local user. Visibility controls affect presentation only. Portal access and delivery gates are demonstration business logic, not security. No files are provided for download. Currency is GBP; demo snapshot dates are explicitly labelled. Recorded payment totals are all-time, not monthly revenue. Native questionnaires and internal task lists remain on the roadmap.
 
 The external Tally enquiry form is public acquisition; the AI Logo Direction Exercise appears only for branding projects; goodbye feedback appears after demo delivery conditions. Existing external forms may send real submissions to their owner; use fictional details during testing.
 
@@ -80,3 +80,6 @@ Open the owner workspace, choose a project and click **Preview client portal**. 
 
 ## Project-management and brand update
 The supplied Alex Bell Arts logo and purple/lime palette are now applied. New project tools require the one-time SQL upgrade described in [PROJECT-MANAGEMENT-UPGRADE.md](docs/PROJECT-MANAGEMENT-UPGRADE.md): dated client actions, editable briefs/support, protected handover, versioned reviews and private client asset upload. The app keeps existing workflows usable until that upgrade is applied. Asset uploads currently support PDF/PNG/JPEG/WebP up to 3 MB; larger/source files need an agreed external method. See [BRANDING.md](docs/BRANDING.md) for supplied assets and outstanding typography details.
+
+## PDF-first project stages and optional finance
+Open a project stage to add instructions, the Discovery Call Calendly link and your own proposal/contract/invoice PDFs. Clients can return completed files once their portal access is enabled. Optional native proposals/invoices, the owner Finance ledger and PDF downloads are also implemented. These features require the one-time SQL upgrade in [BUSINESS-DOCUMENTS.md](docs/BUSINESS-DOCUMENTS.md). No live payments/signatures are connected. Existing projects remain usable before activation, and all Tally links are retained.

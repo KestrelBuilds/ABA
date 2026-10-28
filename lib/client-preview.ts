@@ -12,11 +12,41 @@ export function clientPreview(
         (d) =>
           d.project_id === projectId &&
           d.published &&
+          (!d.stage_id ||
+            data.stages.some((s) => s.id === d.stage_id && s.visible)) &&
           (d.category !== "final" ||
             (project!.final_paid && project!.final_approved)),
       )
     : [];
   return {
+    stageResources: eligible
+      ? (data.stageResources ?? []).filter((r) =>
+          data.stages.some(
+            (s) =>
+              s.id === r.stage_id && s.project_id === projectId && s.visible,
+          ),
+        )
+      : [],
+    finance: data.finance
+      ? {
+          ready: data.finance.ready,
+          proposals: eligible
+            ? data.finance.proposals.filter(
+                (p) => p.project_id === projectId && p.status !== "Draft",
+              )
+            : [],
+          invoices: eligible
+            ? data.finance.invoices.filter(
+                (i) =>
+                  i.project_id === projectId &&
+                  ["Issued", "Paid"].includes(i.status),
+              )
+            : [],
+          templates: [],
+          seller: null,
+          billing: [],
+        }
+      : undefined,
     managementReady: data.managementReady,
     projectDetails: eligible
       ? (data.projectDetails ?? []).filter((d) => d.project_id === projectId)
@@ -29,7 +59,12 @@ export function clientPreview(
       ? (data.clientActions ?? []).filter((a) => a.project_id === projectId)
       : [],
     assets: eligible
-      ? (data.assets ?? []).filter((a) => a.project_id === projectId)
+      ? (data.assets ?? []).filter(
+          (a) =>
+            a.project_id === projectId &&
+            (!a.stage_id ||
+              data.stages.some((s) => s.id === a.stage_id && s.visible)),
+        )
       : [],
     role: "client",
     emailInvitesReady: false,

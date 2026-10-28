@@ -1,4 +1,5 @@
 import "server-only";
+import { loadFinance, type FinanceData } from "./finance/data";
 import { identity } from "./supabase/server";
 export type DbClient = {
   id: string;
@@ -34,6 +35,8 @@ export type DbDocument = {
   name: string;
   category: string;
   published: boolean;
+  stage_id?: string | null;
+  document_role?: string;
   version_label?: string;
   review_due?: string | null;
 };
@@ -69,12 +72,19 @@ export type ClientAction = {
   status: "To do" | "Done";
 };
 export type ClientAsset = {
+  stage_id?: string | null;
   id: string;
   project_id: string;
   name: string;
   created_at: string;
 };
 export type WorkspaceData = {
+  finance?: FinanceData;
+  stageResources?: {
+    stage_id: string;
+    instructions: string;
+    booking_url: string;
+  }[];
   managementReady?: boolean;
   projectDetails?: ProjectDetails[];
   handovers?: { project_id: string; body: string }[];
@@ -100,6 +110,13 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
   )
     throw Error("Project tools could not be checked. Please retry.");
   const managementReady = capability.data === true;
+  const finance = await loadFinance(db, profile.role === "admin");
+  const resources = finance.ready
+    ? await db
+        .from("stage_resources")
+        .select("stage_id,instructions,booking_url")
+    : null;
+  if (resources?.error) throw Error("Stage details could not be loaded.");
   const extra = managementReady
     ? await Promise.all([
         db.from("project_details").select("*"),
@@ -110,8 +127,13 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
           .order("due"),
         db
           .from("client_assets")
-          .select("id,project_id,name,created_at")
-          .order("created_at"),
+          .select(
+            finance.ready
+              ? "id,project_id,name,created_at,stage_id"
+              : "id,project_id,name,created_at",
+          )
+          .order("created_at")
+          .overrideTypes<ClientAsset[], { merge: false }>(),
       ])
     : [];
   if (extra.some((r) => r.error))
@@ -135,7 +157,9 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       .from("documents")
       .select(
         managementReady
-          ? "id,project_id,name,category,published,version_label,review_due"
+          ? finance.ready
+            ? "id,project_id,name,category,published,version_label,review_due,stage_id,document_role"
+            : "id,project_id,name,category,published,version_label,review_due"
           : "id,project_id,name,category,published",
       )
       .order("created_at")
@@ -166,6 +190,8 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       "Workspace data could not be loaded. Check the database migrations and access policies.",
     );
   return {
+    finance,
+    stageResources: resources?.data ?? [],
     managementReady,
     projectDetails: extra[0]?.data ?? [],
     handovers: extra[1]?.data ?? [],

@@ -9,7 +9,10 @@ export const metadata: Metadata = {
         url: "/brand/favicon-light.png?v=4x",
         media: "(prefers-color-scheme: light)",
       },
-      { url: "/brand/favicon-dark.png?v=4x", media: "(prefers-color-scheme: dark)" },
+      {
+        url: "/brand/favicon-dark.png?v=4x",
+        media: "(prefers-color-scheme: dark)",
+      },
     ],
   },
 };

@@ -18,6 +18,7 @@ import {
   LogOut,
   Files,
   LayoutDashboard,
+  Wallet,
 } from "lucide-react";
 import type { WorkspaceData, DbProject } from "@/lib/workspace";
 import {
@@ -39,6 +40,8 @@ import {
   signOut,
   type Result,
 } from "@/app/actions";
+import StageWorkspace from "./stage-workspace";
+import BusinessDocuments from "./business-documents";
 import ProjectManagement from "./project-management";
 import { PortalCheck } from "./portal-check";
 import { PasswordForm } from "./auth-forms";
@@ -177,6 +180,7 @@ export default function ConnectedStudio({
                   ["Overview", LayoutDashboard],
                   ["Projects", FolderKanban],
                   ["Clients", Users],
+                  ["Finance", Wallet],
                 ] as const)
               : ([["Projects", FolderKanban]] as const)
             ).map(([name, Icon]) => (
@@ -569,6 +573,9 @@ export default function ConnectedStudio({
                 </div>
               </>
             )}
+            {admin && view === "Finance" && (
+              <BusinessDocuments data={data} Form={ActionForm} />
+            )}
             {(view === "Projects" || !admin) && (
               <>
                 {data.projects.length ? (
@@ -603,6 +610,24 @@ export default function ConnectedStudio({
                           project={project}
                           Form={ActionForm}
                         />
+                        {admin ? (
+                          <details className="panel">
+                            <summary>
+                              Optional built-in proposals & invoices
+                            </summary>
+                            <BusinessDocuments
+                              data={data}
+                              project={project}
+                              Form={ActionForm}
+                            />
+                          </details>
+                        ) : (
+                          <BusinessDocuments
+                            data={data}
+                            project={project}
+                            Form={ActionForm}
+                          />
+                        )}
                         <div className="project-summary">
                           <div>
                             <div className="eyebrow">{project.type}</div>
@@ -731,6 +756,11 @@ export default function ConnectedStudio({
                                           </label>
                                         </div>
                                       </ActionForm>
+                                      <StageWorkspace
+                                        data={data}
+                                        stage={s}
+                                        Form={ActionForm}
+                                      />
                                       <div className="stage-tool-row">
                                         <ActionForm
                                           action={moveStage}
@@ -778,26 +808,36 @@ export default function ConnectedStudio({
                                       </div>
                                     </details>
                                   ) : (
-                                    <div className="portal-stage" key={s.id}>
-                                      <span
-                                        className={
-                                          s.status === "Completed"
-                                            ? "stage-check done"
-                                            : "stage-check"
-                                        }
-                                      >
-                                        {s.status === "Completed" ? (
-                                          <Check size={14} />
-                                        ) : (
-                                          "·"
-                                        )}
-                                      </span>
-                                      <div>
-                                        <b>{s.name}</b>
-                                        <small>{s.stream}</small>
-                                      </div>
-                                      <span className="pill">{s.status}</span>
-                                    </div>
+                                    <details
+                                      className="portal-stage-detail"
+                                      key={s.id}
+                                    >
+                                      <summary className="portal-stage">
+                                        <span
+                                          className={
+                                            s.status === "Completed"
+                                              ? "stage-check done"
+                                              : "stage-check"
+                                          }
+                                        >
+                                          {s.status === "Completed" ? (
+                                            <Check size={14} />
+                                          ) : (
+                                            "·"
+                                          )}
+                                        </span>
+                                        <div>
+                                          <b>{s.name}</b>
+                                          <small>{s.stream}</small>
+                                        </div>
+                                        <span className="pill">{s.status}</span>
+                                      </summary>
+                                      <StageWorkspace
+                                        data={data}
+                                        stage={s}
+                                        Form={ActionForm}
+                                      />
+                                    </details>
                                   ),
                                 )}
                               {admin && (
@@ -854,6 +894,12 @@ export default function ConnectedStudio({
                                   return (
                                     <details
                                       className="questionnaire"
+                                      id={
+                                        "questionnaire-" +
+                                        project.id +
+                                        "-" +
+                                        kind
+                                      }
                                       key={project.id + kind}
                                     >
                                       <summary>
@@ -1020,9 +1066,10 @@ export default function ConnectedStudio({
                                     value={project.id}
                                   />
                                   <p>
-                                    Manual records only. Confirm payments and
-                                    approvals externally before marking them
-                                    here.
+                                    Confirm payments and approvals externally.
+                                    If invoices exist, use their Record full
+                                    payment action instead of these payment
+                                    checkboxes.
                                   </p>
                                   {[
                                     ["contract_signed", "Contract signed"],

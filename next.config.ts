@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   agentRules: false,
+  outputFileTracingIncludes: {
+    "/business-pdf/**": [
+      "./public/fonts/DejaVuSans.ttf",
+      "./public/brand/aba-mark.png",
+    ],
+  },
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
   async headers() {
     return [

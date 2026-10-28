@@ -8,7 +8,10 @@ const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
 const managementMode = process.argv.includes("--management");
-const ownerMode = process.argv.includes("--owner-preview");
+const stageMode = process.argv.includes("--stages");
+const fixtureStageId = randomUUID();
+const financeMode = process.argv.includes("--finance");
+const ownerMode = process.argv.includes("--owner-preview") || financeMode;
 const uid = randomUUID(),
   cid = randomUUID(),
   pid = randomUUID(),
@@ -55,6 +58,32 @@ const project = {
   deposit_paid: true,
   final_paid: false,
   final_approved: false,
+};
+if (financeMode) {
+  project.deposit_paid = false;
+  project.final_paid = false;
+}
+const financeProposals = [];
+const financeInvoices = ["Deposit", "Final"].map((kind) => ({
+  id: randomUUID(),
+  project_id: pid,
+  kind,
+  number: null,
+  amount_pence: 50000,
+  status: "Draft",
+  issued_on: null,
+  due_on: null,
+  paid_on: null,
+  client_snapshot: null,
+  seller_snapshot: null,
+}));
+const seller = {
+  id: true,
+  seller_name: "Alex Bell trading as Alex Bell Arts",
+  seller_address: "Fictional seller address",
+  seller_email: "owner@example.com",
+  payment_instructions: "Payment instructions supplied separately",
+  no_vat_confirmed: true,
 };
 const documents = [
   {
@@ -129,7 +158,83 @@ const server = createServer(async (req, res) => {
     )
       return json({ Key: path.split("/object/")[1], Id: randomUUID() });
     const table = path.split("/").pop();
-    if (table === "project_management_ready") return json(managementMode);
+    if (table === "business_documents_ready")
+      return json(financeMode || stageMode);
+    if (table === "new_proposal") {
+      const id = randomUUID();
+      financeProposals.push({
+        id,
+        project_id: pid,
+        revision: financeProposals.length + 1,
+        status: "Draft",
+        scope: "",
+        deliverables: "",
+        timeline: "",
+        revisions: "",
+        exclusions: "",
+        notes: "",
+        total_pence: 100000,
+        client_snapshot: null,
+        seller_snapshot: null,
+      });
+      return json(id);
+    }
+    if (table === "save_proposal") {
+      const p = financeProposals.find((p) => p.id === body.target);
+      for (const field of [
+        "scope",
+        "deliverables",
+        "timeline",
+        "revisions",
+        "exclusions",
+        "notes",
+      ])
+        p[field] = body["new_" + field];
+      return json(null);
+    }
+    if (table === "change_proposal_status") {
+      const p = financeProposals.find((p) => p.id === body.target);
+      p.status = body.new_status;
+      p.client_snapshot = {
+        name: "Fictional business",
+        contact: "Jamie Example",
+        email: user.email,
+      };
+      p.seller_snapshot = {
+        name: seller.seller_name,
+        address: seller.seller_address,
+        email: seller.seller_email,
+      };
+      return json(null);
+    }
+    if (table === "issue_invoice") {
+      const i = financeInvoices.find((i) => i.id === body.target);
+      i.status = "Issued";
+      i.number = "ABA-TEST-000001";
+      i.issued_on = body.issue_date;
+      i.due_on = body.due_date;
+      i.client_snapshot = {
+        name: "Fictional business",
+        address: "Fictional billing address",
+      };
+      i.seller_snapshot = {
+        name: seller.seller_name,
+        address: seller.seller_address,
+        email: seller.seller_email,
+        tax_note: "No VAT charged",
+        payment_instructions: seller.payment_instructions,
+      };
+      return json(null);
+    }
+    if (table === "record_invoice_payment") {
+      const i = financeInvoices.find((i) => i.id === body.target);
+      i.status = "Paid";
+      i.paid_on = body.payment_date;
+      project.deposit_paid = true;
+      return json(null);
+    }
+    if (table === "project_management_ready")
+      return json(managementMode || stageMode);
     if (table === "complete_client_action") {
       const a = clientActions.find((a) => a.id === body.target);
       if (a) a.status = body.done ? "Done" : "To do";
@@ -156,6 +261,17 @@ const server = createServer(async (req, res) => {
         },
       ];
     if (table === "projects") rows = [project];
+    if (table === "finance_settings") rows = [seller];
+    if (table === "client_billing")
+      rows = [
+        {
+          client_id: cid,
+          billing_name: "Fictional business",
+          billing_address: "Fictional billing address",
+        },
+      ];
+    if (table === "proposals") rows = financeMode ? financeProposals : [];
+    if (table === "invoices") rows = financeMode ? financeInvoices : [];
     if (table === "client_actions") rows = clientActions;
     if (table === "project_details")
       rows = [
@@ -179,18 +295,29 @@ const server = createServer(async (req, res) => {
       rows = assets;
     }
 
+    if (table === "stage_resources")
+      rows = stageMode
+        ? [
+            {
+              stage_id: fixtureStageId,
+              instructions: "Book your discovery call and review this PDF.",
+              booking_url: "https://calendly.com/alex-bell-arts/new-meeting",
+            },
+          ]
+        : [];
     if (table === "stages")
       rows = [
         {
-          id: randomUUID(),
+          id: fixtureStageId,
           project_id: pid,
-          name: "Concept review",
+          name: stageMode ? "Discovery Call" : "Concept review",
           stream: "Brand Identity",
           position: 0,
           status: "Awaiting Client",
           visible: true,
         },
       ];
+    if (stageMode) documents[0].stage_id = fixtureStageId;
     if (table === "documents")
       rows = documents.filter(
         (d) =>
@@ -288,6 +415,88 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (financeMode) {
+      await page
+        .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
+        .waitFor();
+      await page.getByRole("button", { name: "Finance", exact: true }).click();
+      await page
+        .getByRole("heading", { name: "Invoice ledger", exact: true })
+        .waitFor();
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await page
+        .getByText("Optional built-in proposals & invoices", { exact: true })
+        .click();
+      const business = page.locator("#business-documents");
+      await business
+        .getByRole("button", { name: "Create draft proposal", exact: true })
+        .click();
+      const proposal = business
+        .locator(".business-record")
+        .filter({ hasText: "Proposal · revision 1" });
+      await proposal.getByText("Edit draft", { exact: true }).click();
+      for (const label of [
+        "Scope",
+        "Deliverables",
+        "Timeline",
+        "Revision allowance",
+        "Outside scope",
+        "Additional notes",
+      ])
+        await proposal
+          .getByLabel(label, { exact: true })
+          .fill("Fictional " + label + " terms.");
+      await proposal
+        .getByRole("button", { name: "Save draft", exact: true })
+        .click();
+      await proposal
+        .locator(".brief-field p")
+        .filter({ hasText: "Fictional Scope terms." })
+        .waitFor();
+      await proposal
+        .getByRole("button", {
+          name: "Share this revision with client",
+          exact: true,
+        })
+        .click();
+      await proposal.getByText("Shared", { exact: true }).waitFor();
+      const pdf = await page.request.get(
+        new URL(
+          await proposal
+            .getByRole("link", { name: /proposal PDF/ })
+            .getAttribute("href"),
+          page.url(),
+        ).href,
+      );
+      assert.equal(pdf.status(), 200);
+      assert.match(pdf.headers()["content-type"], /application\/pdf/);
+      assert.ok((await pdf.body()).subarray(0, 4).equals(Buffer.from("%PDF")));
+      const invoice = business
+        .locator(".business-record")
+        .filter({ hasText: "Deposit invoice" });
+      await invoice.getByLabel("Due date", { exact: true }).fill("2027-02-01");
+      await invoice
+        .getByRole("button", { name: "Issue invoice", exact: true })
+        .click();
+      await invoice.getByText("Issued", { exact: true }).waitFor();
+      await invoice.locator('input[name="confirmed"]').check();
+      await invoice
+        .getByRole("button", { name: "Record full payment", exact: true })
+        .click();
+      await invoice.getByText("Paid", { exact: true }).waitFor();
+      assert.equal(financeInvoices[0].status, "Paid");
+      assert.equal(project.deposit_paid, true);
+      assert.deepEqual(errors, []);
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+      console.log(
+        "PASS: actual finance UI draft creation/edit/share, protected proposal PDF download, invoice issue and verified full-payment recording, using fictional HTTP services.",
+      );
+      return;
+    }
     if (ownerMode) {
       await page
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
@@ -342,6 +551,39 @@ const server = createServer(async (req, res) => {
         .count(),
       0,
     );
+    if (stageMode) {
+      const stage = page.locator("details.portal-stage-detail").first();
+      await stage.locator("summary").first().click();
+      assert.equal(
+        await stage
+          .getByRole("link", { name: "Book a call with me" })
+          .getAttribute("href"),
+        "https://calendly.com/alex-bell-arts/new-meeting",
+      );
+      await stage
+        .getByRole("link", { name: /Fictional presentation.pdf/ })
+        .waitFor();
+      await stage
+        .getByText("Return a completed PDF or upload a file", { exact: true })
+        .click();
+      await stage.getByLabel("File", { exact: true }).setInputFiles({
+        name: "Fictional signed copy.pdf",
+        mimeType: "application/pdf",
+        buffer: Buffer.from("%PDF-1.4 Fictional return"),
+      });
+      await stage
+        .getByRole("button", { name: "Upload my file to this stage" })
+        .click();
+      await stage
+        .getByRole("link", {
+          name: /Returned client file.*Fictional signed copy.pdf/,
+        })
+        .waitFor();
+      assert.equal(assets[0].stage_id, fixtureStageId);
+      console.log(
+        "PASS: detailed stage disclosure, public Calendly booking link, stage-attached PDF and returned client PDF in actual UI with fictional services.",
+      );
+    }
     if (managementMode) {
       await page
         .getByRole("button", { name: "Mark done", exact: true })

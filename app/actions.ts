@@ -297,6 +297,27 @@ export async function uploadDocument(form: FormData) {
                 .parse(form.get("review_due") ?? "") || null,
           }
         : {};
+    const business = await db.rpc("business_documents_ready");
+    if (business.error && !["PGRST202", "42883"].includes(business.error.code))
+      throw Error("Stage upload settings could not be checked.");
+    const stage =
+      business.data === true
+        ? {
+            stage_id: form.get("stageId")
+              ? uuid.parse(form.get("stageId"))
+              : null,
+            document_role: z
+              .enum([
+                "General",
+                "Proposal",
+                "Contract",
+                "Invoice",
+                "Presentation",
+                "Handover",
+              ])
+              .parse(form.get("document_role") ?? "General"),
+          }
+        : {};
     // Insert unpublished metadata first: policy requires a known project/document path.
     checked(
       (
@@ -308,6 +329,7 @@ export async function uploadDocument(form: FormData) {
           category,
           published: false,
           ...review,
+          ...stage,
         })
       ).error,
     );
@@ -492,6 +514,20 @@ export async function addStage(form: FormData) {
 export async function removeStage(form: FormData) {
   return run(async () => {
     const { db } = await identity(true);
+    const capability = await db.rpc("business_documents_ready");
+    if (capability.data === true) {
+      const stageId = uuid.parse(form.get("id"));
+      const [documents, assets] = await Promise.all([
+        db.from("documents").select("id").eq("stage_id", stageId).limit(1),
+        db.from("client_assets").select("id").eq("stage_id", stageId).limit(1),
+      ]);
+      checked(documents.error);
+      checked(assets.error);
+      if (documents.data?.length || assets.data?.length)
+        throw Error(
+          "This stage has attached files. Keep or hide the stage to preserve its document history.",
+        );
+    }
     checked(
       (
         await db
@@ -715,6 +751,15 @@ export async function uploadClientAsset(form: FormData) {
     const file = form.get("file");
     if (!(file instanceof File)) throw Error("Choose a file.");
     validateFile(file);
+    const business = await db.rpc("business_documents_ready");
+    const stage =
+      business.data === true
+        ? {
+            stage_id: form.get("stageId")
+              ? uuid.parse(form.get("stageId"))
+              : null,
+          }
+        : {};
     const id = crypto.randomUUID(),
       object_path = project_id + "/" + id;
     checked(
@@ -723,6 +768,7 @@ export async function uploadClientAsset(form: FormData) {
           id,
           project_id,
           uploader_id: user.id,
+          ...stage,
           name: file.name.slice(0, 180),
           object_path,
         })
@@ -742,5 +788,31 @@ export async function uploadClientAsset(form: FormData) {
       );
     }
     return "Your asset was uploaded privately.";
+  });
+}
+
+export async function saveStageResources(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const { bookingUrl } = await import("@/lib/stage-links");
+    const stage_id = uuid.parse(form.get("stageId"));
+    const instructions = z
+      .string()
+      .trim()
+      .max(6000)
+      .parse(form.get("instructions") ?? "");
+    const booking_url = bookingUrl(
+      z
+        .string()
+        .max(500)
+        .parse(form.get("booking_url") ?? ""),
+    );
+    checked(
+      (
+        await db
+          .from("stage_resources")
+          .upsert({ stage_id, instructions, booking_url })
+      ).error,
+    );
   });
 }

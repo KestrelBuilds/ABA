@@ -1942,3 +1942,65 @@ nav button {
 .brand-studio {
   color: #111111;
 }
+.business-record {
+  border-top: 1px solid var(--line);
+  margin-top: 25px;
+  padding-top: 24px;
+}
+.business-record h4 {
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+.business-documents > h3 {
+  font-size: 17px;
+  margin: 24px 0 15px;
+}
+.business-documents details {
+  padding: 15px 0;
+}
+.business-documents > .connected-form {
+  padding: 15px;
+  background: #faf7fd;
+  border-radius: 8px;
+}
+.business-record .brief-field p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.connected nav {
+  flex-wrap: wrap;
+}
+.stat strong {
+  overflow-wrap: anywhere;
+}
+.stage-workspace {
+  padding: 0 0 18px;
+}
+.stage-workspace > p {
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+.stage-workspace details {
+  padding: 12px 0;
+}
+.portal-stage-detail {
+  border-top: 1px solid var(--line);
+}
+.portal-stage-detail > .portal-stage {
+  cursor: pointer;
+  border: 0;
+  list-style: none;
+}
+.portal-stage-detail > .portal-stage:after {
+  content: "+";
+  color: var(--muted);
+}
+.portal-stage-detail[open] > .portal-stage:after {
+  content: "−";
+}
+.stage-file {
+  padding: 10px 0;
+}
+.stage-workspace .connected-form {
+  margin: 12px 0;
+}

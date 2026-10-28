@@ -43,6 +43,7 @@ export const config = {
     "/portal/:path*",
     "/files/:path*",
     "/assets/:path*",
+    "/business-pdf/:path*",
     "/login",
     "/auth/:path*",
   ],

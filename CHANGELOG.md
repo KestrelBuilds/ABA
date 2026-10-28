@@ -96,3 +96,11 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 ### Standalone A branding
 - Changed the shared interface logo to the supplied black standalone A mark and removed the adjacent STUDIO text, following Alex's preference.
 - Adjusted responsive logo dimensions for the square artwork; original high-resolution image is unchanged.
+
+## 0.5.0 — PDF-first stage work and optional Phase 3 finance
+- Added expandable stage workspaces with instructions, supplied Calendly booking link, per-stage PDF roles, sharing controls and returned client files.
+- Kept Illustrator-authored proposal/contract/invoice PDFs as the primary supported workflow; built-in generation is optional.
+- Added reusable proposal templates, immutable shared revisions and manual decision recording.
+- Added exact-pence 50/50 invoices, seller/client billing settings, invoice numbering/snapshots, verified full-payment recording, void/replacement flow and invoice finance overview.
+- Added private on-demand multi-page PDFs with the supplied black A logo and licensed Unicode font.
+- Added transactional upgrade 202610280005, local database/PDF tests and browser finance/stage journeys. Hosted activation/acceptance remains pending the upgrade.

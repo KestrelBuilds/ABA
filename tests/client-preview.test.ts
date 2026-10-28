@@ -68,3 +68,34 @@ test("an owner may inspect the planned layout without granting access or reveali
   assert.deepEqual(preview.notes, []);
   assert.equal(data.projects[0].deposit_paid, false);
 });
+
+test("client preview excludes finance drafts, void invoices and internal billing settings", () => {
+  const data = fixture();
+  data.finance = {
+    ready: true,
+    proposals: [
+      { id: "draft", project_id: "p1", status: "Draft" },
+      { id: "shared", project_id: "p1", status: "Shared" },
+      { id: "other", project_id: "p2", status: "Shared" },
+    ],
+    invoices: [
+      { id: "issued", project_id: "p1", status: "Issued" },
+      { id: "void", project_id: "p1", status: "Void" },
+    ],
+    templates: [{ id: "internal" }],
+    seller: { seller_address: "Internal billing settings" },
+    billing: [{ client_id: "c1" }],
+  } as unknown as NonNullable<WorkspaceData["finance"]>;
+  const view = clientPreview(data, "p1").finance!;
+  assert.deepEqual(
+    view.proposals.map((p) => p.id),
+    ["shared"],
+  );
+  assert.deepEqual(
+    view.invoices.map((i) => i.id),
+    ["issued"],
+  );
+  assert.equal(view.seller, null);
+  assert.deepEqual(view.billing, []);
+  assert.deepEqual(view.templates, []);
+});
