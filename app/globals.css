@@ -2004,3 +2004,24 @@ nav button {
 .stage-workspace .connected-form {
   margin: 12px 0;
 }
+
+.project-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.project-focus-grid > div {
+  min-width: 0;
+}
+.project-focus h3 {
+  font-size: 1rem;
+}
+.project-focus p {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 800px) {
+  .project-focus-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

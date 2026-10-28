@@ -88,3 +88,6 @@ Open a project stage to add instructions, the Discovery Call Calendly link and y
 Confirm the actual signed contract and received deposit inside Contract and Deposit to unlock client access. Final approval and final payment use the same explicit verification pattern. A progress change or returned PDF never confirms a signature/payment. Built-in invoices use their Record full payment action. Custom/renamed stages keep their own progress; use the verification section at the top of the journey for the project’s access records. All project files collects the same stage documents, labelled by stage, plus any project-wide files.
 
 Both file views show why a shared file is still locked, including missing contract/deposit verification, an internal stage or final delivery requirements. Publication alone does not unlock access.
+
+### Simpler owner project overview
+Project at a glance shows the next milestone, portal eligibility and final-delivery requirements together. Open next step expands the relevant stage or built-in invoices. Eligibility does not mean an invitation was sent. See [the database/UI review](docs/DATABASE-UX-REVIEW.md) for the schema review and next recommendations.

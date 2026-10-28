@@ -117,3 +117,9 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Verification confirmations reset after each change, requiring fresh acknowledgement before removal. Empty custom-workflow verification panels are hidden; renamed-stage behaviour is explained.
 - Added 128 publication/stage/onboarding/delivery combinations checked against owner-preview filtering, and browser assertions for matching file notices before/after verification and revocation.
 - Validation: 45 automated tests, strict type checking and production build passed; Chromium verification/revocation, stage files, client journey and owner preview passed with fictional services. Hosted acceptance remains pending.
+
+### Database and workspace usability review
+- Reviewed the 20-table schema and documented retained permission/lifecycle boundaries and prioritised improvements in docs/DATABASE-UX-REVIEW.md. No live database inspection or changes.
+- Added an owner-only project-at-a-glance panel with next-milestone navigation, onboarding/delivery requirements and invitation-management shortcut. Stage/invoice links expand their collapsed sections and move keyboard focus.
+- Dashboard project rows show the next milestone; clarified the budget-based balance as Unreceived project value. No new migration required.
+- Validation: 49 automated tests, production build and strict type check passed. Fictional-service Chromium checks passed verification/revocation with next-stage navigation, client journey, owner-preview exclusion, mobile layouts and finance shortcut expansion/keyboard focus. Hosted acceptance remains pending.

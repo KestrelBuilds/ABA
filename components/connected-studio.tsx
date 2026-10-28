@@ -1,5 +1,7 @@
 "use client";
 import { fileVisibility } from "@/lib/file-visibility";
+import ProjectFocus from "./project-focus";
+import { projectFocus } from "@/lib/project-focus";
 import BrandMark from "@/components/brand-mark";
 import {
   useState,
@@ -421,7 +423,7 @@ export default function ConnectedStudio({
                       ).size,
                     ],
                     [
-                      "Outstanding",
+                      "Unreceived project value",
                       money(
                         data.projects.reduce(
                           (n, p) =>
@@ -463,6 +465,7 @@ export default function ConnectedStudio({
                             <small>
                               {clientFor(p)?.name} · {p.type}
                             </small>
+                            <small>{projectFocus(data, p).nextLabel}</small>
                           </div>
                           <span className="pill">{complete(p)}%</span>
                           <ArrowUpRight size={15} />
@@ -671,6 +674,16 @@ export default function ConnectedStudio({
                             <span>visible milestones complete</span>
                           </div>
                         </div>
+                        {admin && (
+                          <ProjectFocus
+                            data={data}
+                            project={project}
+                            onManageClient={() => {
+                              setView("Clients");
+                              setQuery(clientFor(project)?.name ?? "");
+                            }}
+                          />
+                        )}
                         <div className="progress">
                           <i style={{ width: complete(project) + "%" }} />
                         </div>
@@ -740,6 +753,7 @@ export default function ConnectedStudio({
                                   admin ? (
                                     <details
                                       className="milestone-disclosure"
+                                      id={"stage-" + s.id}
                                       key={s.id}
                                     >
                                       <summary>

@@ -436,7 +436,14 @@ const server = createServer(async (req, res) => {
       const stage = page
         .locator(".milestone-disclosure")
         .filter({ hasText: "Contract and Deposit" });
-      await stage.locator("summary").first().click();
+      const focus = page.getByRole("region", { name: "Project at a glance" });
+      await focus.getByRole("link", { name: "Open next step" }).click();
+      assert.equal(await stage.evaluate((el) => el.open), true);
+      assert.match(
+        await focus.innerText(),
+        /Locked — needs signed contract and deposit payment/,
+      );
+
       assert.match(
         await stage.locator("summary").first().innerText(),
         /Awaiting verification/,
@@ -478,6 +485,7 @@ const server = createServer(async (req, res) => {
           ?.textContent.includes("Completed"),
       );
       assert.equal(project.deposit_paid, true);
+      assert.match(await focus.innerText(), /Eligible for client access/);
       assert.equal(
         await confirmations.nth(1).getByRole("checkbox").isChecked(),
         false,
@@ -524,8 +532,19 @@ const server = createServer(async (req, res) => {
         .waitFor();
       await page.getByRole("button", { name: "Projects", exact: true }).click();
       await page
-        .getByText("Optional built-in proposals & invoices", { exact: true })
+        .getByRole("region", { name: "Project at a glance" })
+        .getByRole("link", { name: "Open built-in invoices" })
         .click();
+      assert.equal(
+        await page
+          .locator("#business-documents")
+          .evaluate((el) => el.closest("details").open),
+        true,
+      );
+      assert.equal(
+        await page.evaluate(() => document.activeElement.id),
+        "business-documents",
+      );
       const business = page.locator("#business-documents");
       await business
         .getByRole("button", { name: "Create draft proposal", exact: true })
@@ -611,6 +630,10 @@ const server = createServer(async (req, res) => {
         await page
           .getByRole("button", { name: "Sign out", exact: true })
           .count(),
+        0,
+      );
+      assert.equal(
+        await page.getByRole("region", { name: "Project at a glance" }).count(),
         0,
       );
       const brief = page.locator(".questionnaire").first();
