@@ -24,3 +24,27 @@ test("blank or missing answers cannot be submitted as a complete questionnaire",
     }),
   );
 });
+
+test("combined projects ask shared business questions once while website-only projects retain them", async () => {
+  const { questionnairePrompts } = await import("../lib/questionnaires");
+  const brand = questionnairePrompts("brand", "Both");
+  const website = questionnairePrompts("website", "Both");
+  assert.ok(brand.some(([key]) => key === "business"));
+  assert.ok(!website.some(([key]) => key === "business"));
+  assert.ok(
+    questionnairePrompts("website", "Website Design").some(
+      ([key]) => key === "business",
+    ),
+  );
+  assert.equal(brand.length, 9);
+  assert.equal(website.length, 5);
+});
+
+test("the Notion branding reference question remains optional", () => {
+  const answers = Object.fromEntries(
+    prompts.brand
+      .filter(([key]) => key !== "direction")
+      .map(([key]) => [key, "Fictional answer"]),
+  );
+  assert.doesNotThrow(() => requireCompleteAnswers("brand", answers));
+});

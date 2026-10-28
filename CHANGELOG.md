@@ -67,3 +67,10 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 ### Client journey browser verification
 - Automated Chromium test passed actual app screens/actions for client sign-in, questionnaire submission, revision request, creative approval, payment-only delivery lock and final release/download at mobile size, using a fictional HTTP service fixture.
 - Notion questionnaire/template fidelity remains pending the owner's client-free source content; starter prompts are not represented as copied Notion content.
+
+### Notion master export alignment
+- Read the supplied master portal and subpages; excluded Alex-only setup material from client-facing content.
+- Replaced discovery starter questions with the shared and service-specific questions from the export, avoiding duplicate shared questions in combined projects.
+- Added the six-section client home, content/handover/support guidance and relevant review checklists.
+- Preserved prior submitted answers; documented remaining Notion feature gaps and external Tally question definitions in docs/reference/NOTION-MAPPING.md.
+- Validation: 28 local tests, strict type checks and production build passed. The real client screens/actions passed the automated fictional-service browser journey with the expanded Notion brief and mobile layout. No new database migration is required. Remaining feature gaps are explicitly mapped rather than represented as complete.

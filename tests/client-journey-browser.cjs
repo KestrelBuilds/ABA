@@ -238,8 +238,8 @@ const server = createServer(async (req, res) => {
         .count(),
       0,
     );
-    await page.getByText("Brand discovery", { exact: false }).first().click();
     const discovery = page.locator(".questionnaire").first();
+    await discovery.locator("summary").click();
     for (const textarea of await discovery.locator("textarea").all())
       await textarea.fill("A fictional answer for the browser test.");
     await discovery.getByRole("button", { name: "Send my answers" }).click();

@@ -214,7 +214,12 @@ export async function submitQuestionnaire(form: FormData) {
     const raw = Object.fromEntries(form);
     const answers = Object.fromEntries(
       Object.entries(raw)
-        .filter(([k]) => k.startsWith("answer_"))
+        .filter(
+          ([k, value]) =>
+            k.startsWith("answer_") &&
+            typeof value === "string" &&
+            value.trim().length > 0,
+        )
         .map(([k, v]) => [k.slice(7), v]),
     );
     const v = questionnaireInput.parse({
@@ -222,7 +227,13 @@ export async function submitQuestionnaire(form: FormData) {
       kind: form.get("kind"),
       answers,
     });
-    requireCompleteAnswers(v.kind, v.answers);
+    const project = await db
+      .from("projects")
+      .select("type")
+      .eq("id", v.projectId)
+      .single();
+    checked(project.error);
+    requireCompleteAnswers(v.kind, v.answers, project.data!.type);
     checked(
       (
         await db.from("questionnaires").insert({

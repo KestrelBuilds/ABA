@@ -97,7 +97,8 @@ function ActionForm({
     </form>
   );
 }
-import { prompts } from "@/lib/questionnaires";
+import { questionnairePrompts, optionalQuestion } from "@/lib/questionnaires";
+import PortalGuide, { ReviewChecklist } from "./portal-guide";
 export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
   const admin = data.role === "admin";
   const [view, setView] = useState(admin ? "Overview" : "Projects");
@@ -518,6 +519,9 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                   </label>
                   {project && (
                     <>
+                      {!admin && (
+                        <PortalGuide project={project} stages={data.stages} />
+                      )}
                       <div className="project-summary">
                         <div>
                           <div className="eyebrow">{project.type}</div>
@@ -736,7 +740,16 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                             )}
                           </section>
                           <section className="panel">
-                            <h2 id="questionnaires">Creative questionnaires</h2>
+                            <h2 id="questionnaires">
+                              Project brief & onboarding
+                            </h2>
+                            <p>
+                              This brief builds on your enquiry and initial
+                              chat. Short answers are welcome. For combined
+                              work, complete the shared essentials once in Brand
+                              discovery. Please arrange account invitations
+                              separately rather than sharing passwords.
+                            </p>
                             {(["brand", "website", "goodbye"] as const)
                               .filter((kind) =>
                                 kind === "brand"
@@ -778,7 +791,14 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                                         {Object.entries(response.answers).map(
                                           ([key, value]) => (
                                             <div className="answer" key={key}>
-                                              <b>{key}</b>
+                                              <b>
+                                                {questionnairePrompts(
+                                                  kind,
+                                                  project.type,
+                                                ).find(
+                                                  ([id]) => id === key,
+                                                )?.[1] ?? key}
+                                              </b>
                                               <p>{value}</p>
                                             </div>
                                           ),
@@ -804,12 +824,17 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                                           name="kind"
                                           value={kind}
                                         />
-                                        {prompts[kind].map(([key, prompt]) => (
+                                        {questionnairePrompts(
+                                          kind,
+                                          project.type,
+                                        ).map(([key, prompt]) => (
                                           <label key={key}>
                                             {prompt}
                                             <textarea
                                               name={"answer_" + key}
-                                              required
+                                              required={
+                                                !optionalQuestion(kind, key)
+                                              }
                                               maxLength={4000}
                                             />
                                           </label>
@@ -827,7 +852,7 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                                         target="_blank"
                                         rel="noreferrer"
                                       >
-                                        AI Logo Direction Exercise{" "}
+                                        Logo Direction & Inspiration{" "}
                                         <ArrowUpRight size={14} />
                                       </a>
                                     )}
@@ -1064,6 +1089,18 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                                       </div>
                                     ))}
                                   {!admin && (
+                                    <p>
+                                      What is working well? What needs changing,
+                                      on which page or slide, and what outcome
+                                      should the change achieve? Check any
+                                      incorrect text, images, links or factual
+                                      details.
+                                    </p>
+                                  )}
+                                  {!admin && (
+                                    <ReviewChecklist type={project.type} />
+                                  )}
+                                  {!admin && (
                                     <ActionForm
                                       action={submitFeedback}
                                       label="Send feedback"
@@ -1141,6 +1178,13 @@ export default function ConnectedStudio({ data }: { data: WorkspaceData }) {
                 </section>
               )}
             </>
+          )}
+          {!admin && project && (
+            <PortalGuide
+              project={project}
+              stages={data.stages}
+              part="reference"
+            />
           )}
           <section className="panel account-panel">
             <h2>My account</h2>
