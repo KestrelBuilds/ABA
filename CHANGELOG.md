@@ -104,3 +104,10 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Added exact-pence 50/50 invoices, seller/client billing settings, invoice numbering/snapshots, verified full-payment recording, void/replacement flow and invoice finance overview.
 - Added private on-demand multi-page PDFs with the supplied black A logo and licensed Unicode font.
 - Added transactional upgrade 202610280005, local database/PDF tests and browser finance/stage journeys. Hosted activation/acceptance remains pending the upgrade.
+
+## Journey verification and file clarity — 28 October 2026
+- Put explicit contract, deposit, final approval and final payment verification inside standard journey stages; show verified status instead of contradictory ordinary progress.
+- Added journey verification access for renamed/custom stages without guessing their meaning; existing progress records and payment evidence are preserved.
+- Changed Project controls to read-only access/verification summaries with independent note saving. Built-in invoice payment protections remain authoritative.
+- Renamed the secondary library All project files, labelled each file’s stage and clarified stage/publication/onboarding/final-release restrictions. Both views use the same records.
+- No database migration required. Validation: 42 automated tests, strict types and production build passed. Chromium checks passed for explicit journey verification/revocation, client journey, owner preview, stage files and finance using fictional services. Hosted acceptance remains unverified.

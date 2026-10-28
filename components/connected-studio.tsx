@@ -27,7 +27,7 @@ import {
   editProject,
   addProject,
   saveStage,
-  saveProject,
+  saveProjectNotes,
   submitQuestionnaire,
   submitFeedback,
   uploadDocument,
@@ -40,6 +40,13 @@ import {
   signOut,
   type Result,
 } from "@/app/actions";
+import JourneyVerification from "./journey-verification";
+import {
+  stageVerification,
+  verifiedStageStatus,
+  verificationLabels,
+  type VerificationField,
+} from "@/lib/journey-verification";
 import StageWorkspace from "./stage-workspace";
 import BusinessDocuments from "./business-documents";
 import ProjectManagement from "./project-management";
@@ -123,6 +130,15 @@ export default function ConnectedStudio({
   data: WorkspaceData;
   preview?: boolean;
 }) {
+  data = {
+    ...data,
+    stages: data.stages.map((stage) => {
+      const project = data.projects.find((p) => p.id === stage.project_id);
+      return project
+        ? { ...stage, status: verifiedStageStatus(stage, project) }
+        : stage;
+    }),
+  };
   const admin = data.role === "admin";
   const [showPreview, setShowPreview] = useState(false);
   const [view, setView] = useState(admin ? "Overview" : "Projects");
@@ -687,6 +703,33 @@ export default function ConnectedStudio({
                           <div>
                             <section className="panel">
                               <h2 id="journey">Your project journey</h2>
+                              {admin && (
+                                <details>
+                                  <summary>
+                                    Other verification records for customised
+                                    workflows
+                                  </summary>
+                                  <JourneyVerification
+                                    data={data}
+                                    project={project}
+                                    fields={(
+                                      Object.keys(
+                                        verificationLabels,
+                                      ) as VerificationField[]
+                                    ).filter(
+                                      (field) =>
+                                        !data.stages.some(
+                                          (s) =>
+                                            s.project_id === project.id &&
+                                            stageVerification(s).includes(
+                                              field,
+                                            ),
+                                        ),
+                                    )}
+                                    Form={ActionForm}
+                                  />
+                                </details>
+                              )}
                               {data.stages
                                 .filter((s) => s.project_id === project.id)
                                 .map((s) =>
@@ -730,14 +773,31 @@ export default function ConnectedStudio({
                                             maxLength={120}
                                           />
                                         </label>
+                                        {stageVerification(s).length > 0 && (
+                                          <input
+                                            type="hidden"
+                                            name="status"
+                                            value="Not Started"
+                                          />
+                                        )}
                                         <div className="form-grid">
                                           <label>
                                             Status
                                             <select
                                               name="status"
+                                              disabled={
+                                                stageVerification(s).length > 0
+                                              }
                                               defaultValue={s.status}
                                               key={s.status}
                                             >
+                                              {stageVerification(s).length >
+                                                0 && (
+                                                <option value={s.status}>
+                                                  {s.status} — driven by
+                                                  verified records
+                                                </option>
+                                              )}
                                               {statuses.map((status) => (
                                                 <option key={status}>
                                                   {status}
@@ -1057,8 +1117,8 @@ export default function ConnectedStudio({
                                   </ActionForm>
                                 </details>
                                 <ActionForm
-                                  action={saveProject}
-                                  label="Save project controls"
+                                  action={saveProjectNotes}
+                                  label="Save internal notes"
                                 >
                                   <input
                                     type="hidden"
@@ -1066,38 +1126,28 @@ export default function ConnectedStudio({
                                     value={project.id}
                                   />
                                   <p>
-                                    Confirm payments and approvals externally.
-                                    If invoices exist, use their Record full
-                                    payment action instead of these payment
-                                    checkboxes.
+                                    Access summary:{" "}
+                                    {project.contract_signed &&
+                                    project.deposit_paid
+                                      ? "Client portal unlocked"
+                                      : "Client portal locked"}
+                                    . Final delivery:{" "}
+                                    {project.final_approved &&
+                                    project.final_paid
+                                      ? "unlocked"
+                                      : "locked"}
+                                    . Verify records in the project journey.
                                   </p>
-                                  {[
-                                    ["contract_signed", "Contract signed"],
-                                    ["deposit_paid", "50% deposit received"],
-                                    ["final_paid", "Final 50% received"],
-                                    [
-                                      "final_approved",
-                                      "Final creative approval verified",
-                                    ],
-                                  ].map(([name, label]) => (
-                                    <label
-                                      className="check-row"
-                                      key={
-                                        project.id +
-                                        name +
-                                        String(project[name as keyof DbProject])
-                                      }
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        name={name}
-                                        defaultChecked={Boolean(
-                                          project[name as keyof DbProject],
-                                        )}
-                                      />
-                                      {label}
-                                    </label>
-                                  ))}
+                                  {Object.entries(verificationLabels).map(
+                                    ([field, label]) => (
+                                      <p key={field}>
+                                        {label}:{" "}
+                                        {project[field as VerificationField]
+                                          ? "Verified"
+                                          : "Not verified"}
+                                      </p>
+                                    ),
+                                  )}
                                   <label>
                                     Internal notes
                                     <textarea
@@ -1121,8 +1171,14 @@ export default function ConnectedStudio({
                             <section className="panel">
                               <h2>
                                 <Files size={18} />{" "}
-                                <span id="documents">Project documents</span>
+                                <span id="documents">All project files</span>
                               </h2>
+                              <p>
+                                The same files shown in your journey, collected
+                                here for reference. Upload stage files in their
+                                journey stage; files uploaded here have no
+                                stage.
+                              </p>
                               {admin && (
                                 <ActionForm
                                   action={uploadDocument}
@@ -1185,13 +1241,40 @@ export default function ConnectedStudio({
                                   approval and payment have been confirmed.
                                 </p>
                               )}
+                              {(data.assets ?? [])
+                                .filter((a) => a.project_id === project.id)
+                                .map((a) => (
+                                  <div className="document-item" key={a.id}>
+                                    <b>{a.name}</b>
+                                    <small>
+                                      Returned client file ·{" "}
+                                      {a.stage_id
+                                        ? (data.stages.find(
+                                            (s) => s.id === a.stage_id,
+                                          )?.name ?? "Stage unavailable")
+                                        : "No stage · project-wide"}
+                                    </small>
+                                    <a
+                                      className="resource"
+                                      href={"/assets/" + a.id}
+                                    >
+                                      Download securely{" "}
+                                      <ArrowUpRight size={14} />
+                                    </a>
+                                  </div>
+                                ))}
                               {data.documents
                                 .filter((d) => d.project_id === project.id)
                                 .map((d) => (
                                   <div className="document-item" key={d.id}>
                                     <b>{d.name}</b>
                                     <small>
-                                      {d.category}
+                                      {d.stage_id
+                                        ? (data.stages.find(
+                                            (s) => s.id === d.stage_id,
+                                          )?.name ?? "Stage unavailable")
+                                        : "No stage · project-wide"}{" "}
+                                      · {d.category}
                                       {d.version_label
                                         ? " · " + d.version_label
                                         : ""}

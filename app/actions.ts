@@ -16,6 +16,7 @@ import {
 } from "@/lib/validation";
 import { createStages } from "@/lib/projects";
 import { z } from "zod";
+import { stageVerification } from "@/lib/journey-verification";
 export type Result = { ok: boolean; message: string; link?: string };
 function refresh() {
   revalidatePath("/workspace");
@@ -173,14 +174,69 @@ export async function saveStage(form: FormData) {
       ...Object.fromEntries(form),
       visible: form.get("visible") === "on",
     });
+    const current = await db
+      .from("stages")
+      .select("name,stream,status")
+      .eq("id", v.id)
+      .single();
+    checked(current.error);
+    if (!current.data) throw Error("Milestone not found.");
+    const verified =
+      stageVerification(current.data).length ||
+      stageVerification({ name: v.name, stream: current.data.stream }).length;
     const { data, error } = await db
       .from("stages")
-      .update({ name: v.name, status: v.status, visible: v.visible })
+      .update({
+        name: v.name,
+        status: verified ? current.data.status : v.status,
+        visible: v.visible,
+      })
       .eq("id", v.id)
       .select("id")
       .single();
     checked(error);
     if (!data) throw Error("Milestone not found.");
+  });
+}
+export async function verifyJourneyRecord(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    if (form.get("acknowledged") !== "on")
+      throw Error("Please confirm that you have checked this record.");
+    const id = uuid.parse(form.get("projectId"));
+    const field = z
+      .enum(["contract_signed", "deposit_paid", "final_paid", "final_approved"])
+      .parse(form.get("field"));
+    const confirmed =
+      z.enum(["true", "false"]).parse(form.get("confirmed")) === "true";
+    // Update only the selected record; database invoice guards remain authoritative.
+    checked(
+      (
+        await db
+          .from("projects")
+          .update({ [field]: confirmed })
+          .eq("id", id)
+          .select("id")
+          .single()
+      ).error,
+    );
+    return confirmed
+      ? "Verified record saved. Journey and access now reflect this record."
+      : "Verification removed. Journey and access now reflect this record.";
+  });
+}
+export async function saveProjectNotes(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const project_id = uuid.parse(form.get("id"));
+    const body = z.string().max(10000).parse(form.get("notes"));
+    checked(
+      (
+        await db
+          .from("project_notes")
+          .upsert({ project_id, body }, { onConflict: "project_id" })
+      ).error,
+    );
   });
 }
 export async function saveProject(form: FormData) {

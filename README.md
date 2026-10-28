@@ -83,3 +83,6 @@ The supplied Alex Bell Arts logo and purple/lime palette are now applied. New pr
 
 ## PDF-first project stages and optional finance
 Open a project stage to add instructions, the Discovery Call Calendly link and your own proposal/contract/invoice PDFs. Clients can return completed files once their portal access is enabled. Optional native proposals/invoices, the owner Finance ledger and PDF downloads are also implemented. These features require the one-time SQL upgrade in [BUSINESS-DOCUMENTS.md](docs/BUSINESS-DOCUMENTS.md). No live payments/signatures are connected. Existing projects remain usable before activation, and all Tally links are retained.
+
+### Journey confirmations
+Confirm the actual signed contract and received deposit inside Contract and Deposit to unlock client access. Final approval and final payment use the same explicit verification pattern. A progress change or returned PDF never confirms a signature/payment. Built-in invoices use their Record full payment action. Custom/renamed stages keep their own progress; use the verification section at the top of the journey for the project’s access records. All project files collects the same stage documents, labelled by stage, plus any project-wide files.

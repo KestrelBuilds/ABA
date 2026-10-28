@@ -9,6 +9,8 @@ import {
   uploadClientAsset,
 } from "@/app/actions";
 import { discoveryBookingUrl } from "@/lib/stage-links";
+import JourneyVerification from "./journey-verification";
+import { stageVerification } from "@/lib/journey-verification";
 import { stageGuidance } from "@/lib/stage-copy";
 type FormProps = {
   action: (form: FormData) => Promise<Result>;
@@ -50,6 +52,24 @@ export default function StageWorkspace({
   return (
     <div className="stage-workspace">
       <p>{resource?.instructions || stageGuidance(stage.name)}</p>
+      {admin && project && stageVerification(stage).length > 0 && (
+        <JourneyVerification
+          data={data}
+          project={project}
+          fields={stageVerification(stage)}
+          Form={Form}
+        />
+      )}
+      {admin && project && (
+        <p>
+          Client file access:{" "}
+          {!(project.contract_signed && project.deposit_paid)
+            ? "locked until the signed contract and deposit are verified."
+            : !stage.visible
+              ? "this stage is internal; its files stay private."
+              : "shared files in this stage are available; final deliverables also need verified final approval and payment."}
+        </p>
+      )}
       {booking && (
         <a className="resource" href={booking} target="_blank" rel="noreferrer">
           Book a call with me ↗

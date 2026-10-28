@@ -7,11 +7,13 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const verificationMode = process.argv.includes("--verification");
 const managementMode = process.argv.includes("--management");
 const stageMode = process.argv.includes("--stages");
 const fixtureStageId = randomUUID();
 const financeMode = process.argv.includes("--finance");
-const ownerMode = process.argv.includes("--owner-preview") || financeMode;
+const ownerMode =
+  process.argv.includes("--owner-preview") || financeMode || verificationMode;
 const uid = randomUUID(),
   cid = randomUUID(),
   pid = randomUUID(),
@@ -59,6 +61,10 @@ const project = {
   final_paid: false,
   final_approved: false,
 };
+if (verificationMode) {
+  project.contract_signed = false;
+  project.deposit_paid = false;
+}
 if (financeMode) {
   project.deposit_paid = false;
   project.final_paid = false;
@@ -260,7 +266,10 @@ const server = createServer(async (req, res) => {
           sector: "Design",
         },
       ];
-    if (table === "projects") rows = [project];
+    if (table === "projects") {
+      if (req.method === "PATCH") Object.assign(project, body);
+      rows = [project];
+    }
     if (table === "finance_settings") rows = [seller];
     if (table === "client_billing")
       rows = [
@@ -310,10 +319,14 @@ const server = createServer(async (req, res) => {
         {
           id: fixtureStageId,
           project_id: pid,
-          name: stageMode ? "Discovery Call" : "Concept review",
-          stream: "Brand Identity",
+          name: verificationMode
+            ? "Contract and Deposit"
+            : stageMode
+              ? "Discovery Call"
+              : "Concept review",
+          stream: verificationMode ? "Onboarding" : "Brand Identity",
           position: 0,
-          status: "Awaiting Client",
+          status: verificationMode ? "Completed" : "Awaiting Client",
           visible: true,
         },
       ];
@@ -415,6 +428,75 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (verificationMode) {
+      await page
+        .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
+        .waitFor();
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      const stage = page
+        .locator(".milestone-disclosure")
+        .filter({ hasText: "Contract and Deposit" });
+      await stage.locator("summary").first().click();
+      assert.match(
+        await stage.locator("summary").first().innerText(),
+        /Awaiting verification/,
+      );
+      assert.equal(
+        await stage.locator('select[name="status"]').isDisabled(),
+        true,
+      );
+      const confirmations = stage.locator(".journey-verification form");
+      await confirmations.nth(0).getByRole("checkbox").check();
+      await confirmations
+        .nth(0)
+        .getByRole("button", { name: "Confirm verified record" })
+        .click();
+      await page.waitForFunction(() =>
+        document
+          .querySelector(".milestone-disclosure summary")
+          ?.textContent.includes("In Progress"),
+      );
+      assert.equal(project.contract_signed, true);
+      assert.equal(project.deposit_paid, false);
+      await confirmations.nth(1).getByRole("checkbox").check();
+      await confirmations
+        .nth(1)
+        .getByRole("button", { name: "Confirm verified record" })
+        .click();
+      await page.waitForFunction(() =>
+        document
+          .querySelector(".milestone-disclosure summary")
+          ?.textContent.includes("Completed"),
+      );
+      assert.equal(project.deposit_paid, true);
+      await confirmations.nth(1).getByRole("checkbox").check();
+      await confirmations
+        .nth(1)
+        .getByRole("button", { name: "Remove verification" })
+        .click();
+      await page.waitForFunction(() =>
+        document
+          .querySelector(".milestone-disclosure summary")
+          ?.textContent.includes("In Progress"),
+      );
+      assert.equal(project.deposit_paid, false);
+      assert.equal(
+        await page
+          .locator("#controls")
+          .locator("..")
+          .locator('input[name="deposit_paid"]')
+          .count(),
+        0,
+      );
+      await page
+        .getByRole("heading", { name: "All project files", exact: true })
+        .waitFor();
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: contradictory completed stage requires explicit contract and deposit verification; independent updates complete the stage, revocation restores restrictions; summary has no duplicate checkbox. Fictional services only.",
+      );
+      return;
+    }
     if (financeMode) {
       await page
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
