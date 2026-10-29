@@ -1,6 +1,7 @@
 "use client";
 import { fileVisibility } from "@/lib/file-visibility";
 import Enquiries from "./enquiries";
+import ClientAccess from "./client-access";
 import ProspectArea from "./prospect-area";
 import ProspectManagement from "./prospect-management";
 import {
@@ -17,6 +18,7 @@ import {
   useState,
   useTransition,
   useContext,
+  useEffect,
   createContext,
   type ReactNode,
 } from "react";
@@ -44,8 +46,6 @@ import {
   submitFeedback,
   uploadDocument,
   publishDocument,
-  inviteClient,
-  revokeClientAccess,
   moveStage,
   addStage,
   removeStage,
@@ -156,6 +156,13 @@ export default function ConnectedStudio({
   const [view, setView] = useState(admin ? "Overview" : "Projects");
   const [projectId, setProjectId] = useState(data.projects[0]?.id ?? "");
   const [query, setQuery] = useState("");
+  const [accessClientId, setAccessClientId] = useState("");
+  useEffect(() => {
+    if (view === "Clients" && accessClientId)
+      document
+        .getElementById("client-access-" + accessClientId)
+        ?.scrollIntoView({ block: "start" });
+  }, [view, accessClientId]);
   const [clientNotice, setClientNotice] = useState("");
   const [creating, setCreating] = useState<"client" | "project" | null>(null);
   const project =
@@ -329,9 +336,25 @@ export default function ConnectedStudio({
                 >
                   Preview client portal · {clientFor(project)?.name} ↗
                 </button>
+                {view === "Projects" && (
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      const client = clientFor(project);
+                      if (client) {
+                        setQuery(client.name);
+                        setAccessClientId(client.id);
+                        setView("Clients");
+                      }
+                    }}
+                  >
+                    <Users size={16} aria-hidden="true" /> Invite / manage
+                    client access
+                  </button>
+                )}
                 <p>
-                  See the Notion-style welcome, brief and guidance for the
-                  selected project.
+                  Preview what this client can see, or open their invitation and
+                  account settings.
                 </p>
               </div>
             )}
@@ -610,59 +633,13 @@ export default function ConnectedStudio({
                                 ))}
                               </ActionForm>
                             </details>
-                            <ActionForm
-                              action={inviteClient}
-                              label="Create invitation"
-                            >
-                              <input
-                                type="hidden"
-                                name="clientId"
-                                value={c.id}
-                              />
-                              <label>
-                                Invitation delivery
-                                <select name="delivery">
-                                  <option value="link">
-                                    Create a private link
-                                  </option>
-                                  <option
-                                    value="email"
-                                    disabled={!data.emailInvitesReady}
-                                  >
-                                    Send invitation email
-                                    {!data.emailInvitesReady
-                                      ? " (setup needed)"
-                                      : ""}
-                                  </option>
-                                </select>
-                              </label>
-                              <p>
-                                Requires verified contract/deposit or an enabled
-                                initial contract area with a shared Contract
-                                PDF. Early invitations only open the restricted
-                                contract area. Choose a private link or, after
-                                email-template setup, a Supabase invitation
-                                email.
-                              </p>
-                            </ActionForm>
-                            <details>
-                              <summary>Revoke portal access</summary>
-                              <p>
-                                This removes access for every account associated
-                                with this client. Their current sessions will no
-                                longer return project data.
-                              </p>
-                              <ActionForm
-                                action={revokeClientAccess}
-                                label="Revoke this client’s access"
-                              >
-                                <input
-                                  type="hidden"
-                                  name="clientId"
-                                  value={c.id}
-                                />
-                              </ActionForm>
-                            </details>
+                            <ClientAccess
+                              client={c}
+                              status={data.portalStatuses?.find(
+                                (s) => s.client_id === c.id,
+                              )}
+                              ready={data.invitationsReady ?? false}
+                            />
                           </>
                         )}
                         {data.clientDeletionReady && (

@@ -109,3 +109,6 @@ The connected enquiry inbox, potential-client area and project journey now use g
 
 ### Owner-confirmed hosted checks — 29 October 2026
 Alex reported the combined SQL update succeeded, supplied a screenshot showing a fictional Tally submission with its answers in the live Enquiries inbox, and confirmed enquiry conversion, restricted discovery/agreement previews and independent contract/deposit unlocking worked. This establishes those owner-run checks; actual invited-client signing/return, webhook retry/invalid-signature hosted checks and the remaining security/privacy acceptance are still pending. The subsequent interface update is verified locally, not yet accepted on the hosted app.
+
+### Clear invitations and returning accounts
+Projects now include **Invite / manage client access**. Under Clients, **Client portal** shows invitation/account status, explains sharing eligibility and provides a copyable invitation link. Returning clients reuse their own account; existing accounts are never reset/deleted to make an invitation work. The login page now includes password recovery, and invitation acceptance leads to clear password setup. Apply [migration 010](supabase/migrations/202610290010_client_invitations.sql) after 009. See [owner steps and email setup](docs/CLIENT-INVITATIONS.md). Hosted invitation/recovery acceptance is still required.

@@ -2547,3 +2547,131 @@ summary:focus-visible {
     font-size: 12px;
   }
 }
+
+/* Client access: make the invitation a visible, guided owner action. */
+.client-access {
+  padding-top: 24px;
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 24px;
+}
+.client-access > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.client-access h3 {
+  font-size: 17px;
+  font-weight: 600;
+}
+.invite-recipient {
+  padding: 14px;
+  background: #f8f5fb;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 18px 0;
+  overflow-wrap: anywhere;
+}
+.invite-recipient span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+.invite-recipient b {
+  font-size: 13px;
+  font-weight: 500;
+}
+.invite-guide {
+  padding-left: 21px;
+  margin: 20px 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.invite-guide li {
+  padding-left: 5px;
+  margin-bottom: 12px;
+}
+.invitation-link {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+.invitation-link label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+}
+.invitation-link input {
+  width: 100%;
+  min-width: 0;
+}
+.invitation-link small {
+  line-height: 1.7;
+  color: var(--muted);
+}
+.client-access .form-result p {
+  margin: 0;
+  font-size: 12px;
+}
+.client-access .invitation-note {
+  font-size: 11px;
+  margin-top: 12px;
+}
+.client-access .check-row {
+  line-height: 1.7;
+  align-items: flex-start;
+}
+.client-access .settings-disclosure {
+  padding: 12px;
+}
+.owner-preview-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.owner-preview-entry > p {
+  flex-basis: 100%;
+}
+.auth-help > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+.auth-help > summary::after {
+  content: "+";
+  margin-left: auto;
+  font-size: 18px;
+  color: var(--muted);
+}
+.auth-help[open] > summary::after {
+  content: "−";
+}
+.auth-panel .auth-guidance {
+  padding: 16px;
+  background: #f8f5fb;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.auth-panel input {
+  min-height: 44px;
+}
+.auth-panel button {
+  min-height: 44px;
+  white-space: normal;
+  line-height: 1.5;
+}
+@media (max-width: 520px) {
+  .auth-panel input {
+    font-size: 16px;
+  }
+  .client-access .primary,
+  .client-access .secondary {
+    width: 100%;
+  }
+}

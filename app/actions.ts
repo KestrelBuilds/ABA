@@ -16,6 +16,7 @@ import {
 } from "@/lib/validation";
 import { newProjectStages } from "@/lib/workflow-templates";
 import { z } from "zod";
+import { createClientInvitation } from "@/lib/supabase/client-invitations";
 import { stageVerification } from "@/lib/journey-verification";
 export type Result = { ok: boolean; message: string; link?: string };
 function refresh() {
@@ -69,6 +70,9 @@ export async function signIn(_: Result, form: FormData): Promise<Result> {
       message: "Sign-in is not available until Supabase is connected.",
     };
   }
+  const db = await database();
+  const accepted = await db.rpc("accept_invitation");
+  if (accepted.error) redirect("/access");
   redirect("/portal");
 }
 export async function signOut() {
@@ -115,23 +119,29 @@ export async function confirmInvitation(
 ): Promise<Result> {
   try {
     const token = z.string().min(20).max(2048).parse(form.get("token_hash"));
+    const kind = z
+      .enum(["invite", "recovery"])
+      .parse(form.get("type") ?? "invite");
     const db = await database();
     const { error } = await db.auth.verifyOtp({
       token_hash: token,
-      type: "invite",
+      type: kind,
     });
     if (error)
       return {
         ok: false,
         message:
-          "This invitation has expired or was already used. Ask Alex for a new invitation.",
+          kind === "recovery"
+            ? "This password-reset link has expired or was already used. Request a fresh one from the sign-in page."
+            : "This invitation has expired or was already used. Ask Alex for a new invitation.",
       };
-    const { error: acceptError } = await db.rpc("accept_invitation");
+    const { error: acceptError } =
+      kind === "recovery" ? { error: null } : await db.rpc("accept_invitation");
     if (acceptError)
       return {
         ok: false,
         message:
-          "Your account is signed in, but onboarding is not ready. Please contact Alex.",
+          "You’re signed in, but this invitation cannot open a shared client area yet. Please ask Alex to check your invitation.",
       };
   } catch {
     return {
@@ -139,7 +149,11 @@ export async function confirmInvitation(
       message: "The invitation could not be accepted. Please contact Alex.",
     };
   }
-  redirect("/portal");
+  redirect(
+    form.get("type") === "recovery"
+      ? "/reset-password"
+      : "/reset-password?welcome=1",
+  );
 }
 export async function addClient(form: FormData) {
   return run(async () => {
@@ -425,92 +439,14 @@ export async function inviteClient(form: FormData): Promise<Result> {
   try {
     const { db } = await identity(true);
     const id = uuid.parse(form.get("clientId"));
-    const origin = await appOrigin();
-    const { data: client, error } = await db
-      .from("clients")
-      .select("id,email")
-      .eq("id", id)
-      .single();
-    checked(error);
-    if (!client) throw Error("Client not found.");
-    const { data: eligible, error: projectError } = await db
-      .from("projects")
-      .select("id")
-      .eq("client_id", id)
-      .eq("contract_signed", true)
-      .eq("deposit_paid", true)
-      .limit(1);
-    checked(projectError);
-    if (!eligible?.length) {
-      const contractEligibility = await db.rpc("client_invitation_ready", {
-        target: id,
-      });
-      if (
-        contractEligibility.error &&
-        !["PGRST202", "42883"].includes(contractEligibility.error.code)
-      )
-        throw Error("Invitation eligibility could not be checked.");
-      if (contractEligibility.data !== true)
-        throw Error(
-          "Enable a potential-client area, share an initial contract area, or verify contract/deposit before inviting this client.",
-        );
-    }
-    const service = invitationAdmin();
-    const delivery = z
-      .enum(["link", "email"])
-      .parse(form.get("delivery") ?? "link");
-    if (
-      delivery === "email" &&
-      process.env.SUPABASE_INVITE_EMAIL_READY !== "true"
-    )
-      throw Error(
-        "Invitation emails need the Supabase invite template configured first. Use a private invitation link for now.",
-      );
-    const invitation =
-      delivery === "email"
-        ? await service.auth.admin.inviteUserByEmail(client.email, {
-            redirectTo: origin + "/auth/confirm",
-          })
-        : await service.auth.admin.generateLink({
-            type: "invite",
-            email: client.email,
-          });
-    const { data, error: inviteError } = invitation;
-
-    if (inviteError || !data.user)
-      throw Error(
-        "An invitation could not be created. The email may already have an account; manage existing users in Supabase.",
-      );
-    const { error: saveError } = await db
-      .from("invitations")
-      .insert({ client_id: id, user_id: data.user.id });
-    if (saveError) {
-      await service.auth.admin.deleteUser(data.user.id);
-      throw Error("Invitation could not be saved. No access was granted.");
-    }
+    const result = await createClientInvitation(
+      db,
+      invitationAdmin,
+      id,
+      await appOrigin(),
+    );
     refresh();
-    if (delivery === "email")
-      return {
-        ok: true,
-        message:
-          "Supabase accepted the invitation email request. Confirm receipt with the client; acceptance does not guarantee delivery.",
-      };
-    if (!("properties" in data) || !data.properties)
-      throw Error(
-        "The private invitation link is unavailable. Manage this account in Supabase.",
-      );
-    return {
-      ok: true,
-      message:
-        "Invitation created. Copy this private, single-use link and send it to the client yourself. Do not post it publicly.",
-      link:
-        origin +
-        "/auth/confirm?token_hash=" +
-        encodeURIComponent(
-          z.object({ hashed_token: z.string().min(1) }).parse(data.properties)
-            .hashed_token,
-        ),
-    };
+    return result;
   } catch (e) {
     return {
       ok: false,
@@ -520,8 +456,25 @@ export async function inviteClient(form: FormData): Promise<Result> {
 }
 export async function setPassword(_: Result, form: FormData): Promise<Result> {
   return run(async () => {
-    const { db } = await identity();
+    const db = await database();
+    const {
+      data: { user },
+      error: userError,
+    } = await db.auth.getUser();
+    if (userError || !user)
+      throw Error(
+        "Open a fresh password-reset link or sign in before changing your password.",
+      );
+    const profile = await db
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profile.error) throw Error("Account security could not be checked.");
+    if (profile.data?.role === "admin") await identity();
     const password = z.string().min(12).max(128).parse(form.get("password"));
+    if (password !== form.get("password_confirm"))
+      throw Error("The passwords do not match. Please enter them again.");
     checked((await db.auth.updateUser({ password })).error);
     return "Your password has been updated.";
   });
@@ -529,6 +482,10 @@ export async function setPassword(_: Result, form: FormData): Promise<Result> {
 export async function revokeClientAccess(form: FormData) {
   return run(async () => {
     const { db } = await identity(true);
+    if (form.get("acknowledged") !== "on")
+      throw Error(
+        "Confirm that you want to remove this client’s portal access.",
+      );
     checked(
       (
         await db.rpc("revoke_client_access", {
@@ -1117,15 +1074,13 @@ export async function addManualEnquiry(form: FormData) {
         .parse(form.get("notes") ?? "");
     checked(
       (
-        await db
-          .from("enquiries")
-          .insert({
-            source: "manual",
-            business_name,
-            contact_name,
-            email,
-            fields: notes ? [{ label: "Initial notes", value: notes }] : [],
-          })
+        await db.from("enquiries").insert({
+          source: "manual",
+          business_name,
+          contact_name,
+          email,
+          fields: notes ? [{ label: "Initial notes", value: notes }] : [],
+        })
       ).error,
     );
   });
@@ -1180,4 +1135,26 @@ export async function convertEnquiry(form: FormData) {
       );
     return "Potential project created. Open Projects to enable its discovery view, then create a private invitation under Clients.";
   });
+}
+
+export async function requestPasswordReset(
+  _: Result,
+  form: FormData,
+): Promise<Result> {
+  const email = z.email().safeParse(form.get("email"));
+  if (!email.success)
+    return { ok: false, message: "Enter a valid email address." };
+  try {
+    const db = await database();
+    await db.auth.resetPasswordForEmail(email.data, {
+      redirectTo: (await appOrigin()) + "/auth/callback",
+    });
+  } catch {
+    /* Uniform response: never disclose whether an account exists. */
+  }
+  return {
+    ok: true,
+    message:
+      "If an account exists for this email, a password-reset link will arrive shortly. Check your inbox and spam folder, and open the latest link in this browser.",
+  };
 }

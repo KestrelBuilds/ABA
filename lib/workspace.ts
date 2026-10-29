@@ -1,5 +1,6 @@
 import "server-only";
 import type { ProspectSpace } from "./prospects";
+import type { ClientPortalStatus } from "./invitations";
 import { loadFinance, type FinanceData } from "./finance/data";
 import { identity } from "./supabase/server";
 export type DbClient = {
@@ -82,6 +83,8 @@ export type ClientAsset = {
   created_at: string;
 };
 export type WorkspaceData = {
+  invitationsReady?: boolean;
+  portalStatuses?: ClientPortalStatus[];
   enquiriesReady?: boolean;
   enquiries?: {
     id: string;
@@ -135,6 +138,19 @@ export type WorkspaceData = {
 };
 export async function loadWorkspace(): Promise<WorkspaceData> {
   const { db, profile } = await identity();
+  const invitationCapability =
+    profile.role === "admin" ? await db.rpc("client_invitations_ready") : null;
+  if (
+    invitationCapability?.error &&
+    !["PGRST202", "42883"].includes(invitationCapability.error.code)
+  )
+    throw Error("Client invitation tools could not be checked.");
+  const invitationsReady = invitationCapability?.data === true;
+  const portalStatuses = invitationsReady
+    ? await db.rpc("client_portal_statuses")
+    : null;
+  if (portalStatuses?.error)
+    throw Error("Client access status could not be loaded.");
   const capability = await db.rpc("project_management_ready");
   if (
     capability.error &&
@@ -291,6 +307,8 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       "Workspace data could not be loaded. Check the database migrations and access policies.",
     );
   return {
+    invitationsReady,
+    portalStatuses: portalStatuses?.data ?? [],
     enquiriesReady,
     enquiries: enquiries?.data ?? [],
     prospectReady,

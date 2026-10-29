@@ -7,6 +7,8 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const invitationsMode = process.argv.includes("--invitations");
+const accountMode = process.argv.includes("--account");
 const prospectMode = process.argv.includes("--prospect");
 const prospectOwnerMode = process.argv.includes("--prospect-owner");
 const enquiriesMode = process.argv.includes("--enquiries");
@@ -34,12 +36,21 @@ const ownerMode =
   Boolean(templateMode) ||
   deletionMode ||
   prospectOwnerMode ||
-  enquiriesMode;
+  enquiriesMode ||
+  invitationsMode;
 const uid = randomUUID(),
   cid = randomUUID(),
   pid = randomUUID(),
   presentation = randomUUID(),
   finalDoc = randomUUID();
+const inviteeUid = randomUUID();
+let invitationAccount = null,
+  portalState = "not_invited",
+  generatedInvitations = 0;
+const passwordUpdates = [],
+  recoveryRequests = [],
+  otpRequests = [],
+  verifiedTypes = [];
 const user = {
   id: uid,
   aud: "authenticated",
@@ -327,7 +338,41 @@ const server = createServer(async (req, res) => {
         expires_in: 3600,
         user,
       });
-    if (path === "/auth/v1/user") return json(user);
+    if (path === "/auth/v1/user") {
+      if (req.method === "PUT") passwordUpdates.push(body);
+      return json(user);
+    }
+    if (path === "/auth/v1/recover") {
+      recoveryRequests.push(body);
+      return json({});
+    }
+    if (path === "/auth/v1/otp") {
+      otpRequests.push(body);
+      return json({});
+    }
+    if (path === "/auth/v1/verify") {
+      verifiedTypes.push(body.type);
+      if (body.token_hash === "expired-fictional-token-at-least-20")
+        return json({ msg: "Expired", code: "otp_expired" }, 403);
+      return json({
+        access_token: jwt,
+        refresh_token: "fictional-refresh-token",
+        token_type: "bearer",
+        expires_in: 3600,
+        user,
+      });
+    }
+    if (path === "/auth/v1/admin/generate_link") {
+      generatedInvitations++;
+      invitationAccount = inviteeUid;
+      return json({
+        id: inviteeUid,
+        email: user.email,
+        hashed_token: "fictional-private-token-at-least-20",
+        action_link: "https://unused.example",
+        verification_type: "invite",
+      });
+    }
     if (path === "/auth/v1/logout") return json({});
     if (path.startsWith("/storage/v1/object/sign/")) {
       if (req.method === "POST")
@@ -365,6 +410,29 @@ const server = createServer(async (req, res) => {
       return json([]);
     }
     const table = path.split("/").pop();
+    if (table === "client_invitations_ready") return json(invitationsMode);
+    if (table === "client_portal_statuses")
+      return json([
+        {
+          client_id: cid,
+          eligible: true,
+          state: portalState,
+          invited_at: null,
+          accepted_at: null,
+          expires_at: null,
+        },
+      ]);
+    if (table === "client_invitation_account") return json(invitationAccount);
+    if (table === "record_client_invitation") {
+      portalState = "pending";
+      return json(randomUUID());
+    }
+    if (table === "revoke_client_access") {
+      portalState = "revoked";
+      return json(null);
+    }
+    if (table === "accept_invitation") return json(null);
+
     if (table === "prospect_spaces_ready")
       return json(prospectMode || prospectOwnerMode || enquiriesMode);
     if (table === "enquiries_ready") return json(enquiriesMode);
@@ -812,7 +880,9 @@ const server = createServer(async (req, res) => {
           ...process.env,
           NEXT_PUBLIC_SUPABASE_URL: `http://127.0.0.1:${fixturePort}`,
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "fictional-public-key",
-          SUPABASE_SERVICE_ROLE_KEY: "",
+          SUPABASE_SERVICE_ROLE_KEY: invitationsMode
+            ? "fictional-service-key"
+            : "",
           APP_ORIGIN: `http://127.0.0.1:${appPort}`,
         },
         stdio: ["ignore", "pipe", "pipe"],
@@ -857,6 +927,33 @@ const server = createServer(async (req, res) => {
     };
 
     await page.goto(`http://127.0.0.1:${appPort}/login`);
+    if (accountMode) {
+      await page.goto(`http://127.0.0.1:${appPort}/reset-password`);
+      await page.waitForURL("**/login?error=reset");
+      await page.getByText("Forgot your password?", { exact: true }).click();
+      const reset = page.locator("form").filter({
+        has: page.getByRole("button", { name: "Send password-reset link" }),
+      });
+      await reset.getByLabel("Email address").fill("fictional@example.com");
+      await reset.getByRole("button").click();
+      await reset.getByText(/If an account exists/).waitFor();
+      assert.equal(recoveryRequests.length, 1);
+      await page.getByText("Sign in by email instead", { exact: true }).click();
+      const emailForm = page.locator("form").filter({
+        has: page.getByRole("button", {
+          name: "Request sign-in link",
+          exact: true,
+        }),
+      });
+      await emailForm.getByLabel("Email address").fill("fictional@example.com");
+      await emailForm.getByRole("button").click();
+      await emailForm
+        .getByText(/If this email has an invited account/)
+        .waitFor();
+      assert.equal(otpRequests.length, 1);
+      assert.equal(otpRequests[0].create_user, false);
+      await captureUi("login-help");
+    }
     await page
       .getByLabel("Email address", { exact: true })
       .first()
@@ -867,6 +964,157 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (invitationsMode) {
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await page
+        .getByRole("button", {
+          name: "Invite / manage client access",
+          exact: true,
+        })
+        .click();
+      const access = page.getByRole("region", {
+        name: "Client portal access for Fictional business",
+      });
+      await access.getByText("Not invited", { exact: true }).waitFor();
+      await access
+        .getByRole("button", { name: "Create portal invitation", exact: true })
+        .click();
+      await access.getByText("Invitation pending", { exact: true }).waitFor();
+      const link = access.getByLabel("Link to send to this client", {
+        exact: true,
+      });
+      await expect(link).toHaveValue(/auth\/confirm\?token_hash=/);
+      await page
+        .context()
+        .grantPermissions(["clipboard-read", "clipboard-write"]);
+      await access
+        .getByRole("button", { name: "Copy invitation link", exact: true })
+        .click();
+      await access
+        .getByRole("button", { name: "Link copied", exact: true })
+        .waitFor();
+      assert.equal(
+        await page.evaluate(() => navigator.clipboard.readText()),
+        await link.inputValue(),
+      );
+      assert.equal(generatedInvitations, 1);
+      await captureUi("client-invitation", access);
+      await access.getByText("Remove portal access", { exact: true }).click();
+      await access.getByRole("checkbox").check();
+      await access
+        .getByRole("button", { name: "Remove client access", exact: true })
+        .click();
+      await access.getByText("Access revoked", { exact: true }).waitFor();
+      await access
+        .getByRole("button", { name: "Create fresh invitation", exact: true })
+        .click();
+      await access.getByText("Invitation pending", { exact: true }).waitFor();
+      await expect(link).toHaveValue(
+        `http://127.0.0.1:${appPort}/login?invited=1`,
+      );
+      assert.equal(generatedInvitations, 1);
+      portalState = "connected";
+      await access
+        .getByRole("button", { name: "Refresh access status" })
+        .click();
+      await access.getByText("Account connected", { exact: true }).waitFor();
+      assert.equal(
+        await access
+          .getByRole("button", { name: "Create fresh invitation", exact: true })
+          .count(),
+        0,
+      );
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: owner project shortcut, guided new invite, private copyable link, pending/connected/revoked statuses, and safe reinvitation without another provider token. Fictional services only.",
+      );
+      return;
+    }
+    if (accountMode) {
+      const requestFreshReset = async () => {
+        await page.goto(`http://127.0.0.1:${appPort}/login`);
+        await page.getByText("Forgot your password?", { exact: true }).click();
+        const resetForm = page.locator("form").filter({
+          has: page.getByRole("button", { name: "Send password-reset link" }),
+        });
+        await resetForm
+          .getByLabel("Email address")
+          .fill("fictional@example.com");
+        await resetForm.getByRole("button").click();
+        await resetForm.getByText(/If an account exists/).waitFor();
+      };
+      await requestFreshReset();
+      await page.goto(
+        `http://127.0.0.1:${appPort}/auth/callback?code=fictional-reset`,
+      );
+      await page.waitForURL("**/reset-password");
+      await page
+        .getByLabel("New password (12 characters minimum)", { exact: true })
+        .fill("A-new-fictional-password-123");
+      await page
+        .getByLabel("Confirm new password", { exact: true })
+        .fill("A-different-fictional-password");
+      await page
+        .getByRole("button", { name: "Save password", exact: true })
+        .click();
+      await page.getByText(/The passwords do not match/).waitFor();
+      assert.equal(passwordUpdates.length, 0);
+      await page
+        .getByLabel("New password (12 characters minimum)", { exact: true })
+        .fill("A-new-fictional-password-123");
+      await page
+        .getByLabel("Confirm new password", { exact: true })
+        .fill("A-new-fictional-password-123");
+      await page
+        .getByRole("button", { name: "Save password", exact: true })
+        .click();
+      await page
+        .getByText("Your password has been updated.", { exact: true })
+        .waitFor();
+      assert.equal(passwordUpdates.length, 1);
+      assert.equal(passwordUpdates[0].password, "A-new-fictional-password-123");
+      assert.equal(Object.hasOwn(passwordUpdates[0], "email"), false);
+      await captureUi("password-reset");
+      await requestFreshReset();
+      await page.goto(
+        `http://127.0.0.1:${appPort}/auth/callback?code=fictional-reset&next=https%3A%2F%2Funtrusted.example`,
+      );
+      await page.waitForURL(`http://127.0.0.1:${appPort}/reset-password`);
+      await page.goto(
+        `http://127.0.0.1:${appPort}/auth/confirm?token_hash=fictional-private-token-at-least-20`,
+      );
+      assert.equal(verifiedTypes.length, 0);
+      await page
+        .getByRole("button", {
+          name: "Accept invitation & sign in",
+          exact: true,
+        })
+        .click();
+      await page.waitForURL("**/reset-password?welcome=1");
+      await page
+        .getByRole("heading", {
+          name: "Welcome. Let’s set your password.",
+          exact: true,
+        })
+        .waitFor();
+      assert.deepEqual(verifiedTypes, ["invite"]);
+      await page.goto(
+        `http://127.0.0.1:${appPort}/auth/confirm?token_hash=expired-fictional-token-at-least-20&type=recovery`,
+      );
+      await page
+        .getByRole("button", {
+          name: "Continue to reset password",
+          exact: true,
+        })
+        .click();
+      await page.getByText(/This password-reset link has expired/).waitFor();
+      assert.equal(passwordUpdates.length, 1);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: password/email sign-in help, authenticated recovery, password confirmation, invitation-to-password setup and expired reset feedback. Fictional services only; no email delivery claimed.",
+      );
+      return;
+    }
     if (prospectMode) {
       await page.waitForURL("**/welcome");
       await page

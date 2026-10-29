@@ -24,6 +24,10 @@ const assert = require("node:assert/strict");
       )
       .waitFor();
     assert.equal(await page.getByLabel("Password", { exact: true }).count(), 0);
+    await page.goto("http://127.0.0.1:3000/reset-password");
+    await page.waitForURL("**/login");
+    await page.goto("http://127.0.0.1:3000/access");
+    await page.waitForURL("**/login");
     await page.goto("http://127.0.0.1:3000/welcome");
     await page.waitForURL("**/login");
     await page.goto("http://127.0.0.1:3000/contracts");

@@ -114,3 +114,6 @@ After migration 202610280006, apply only 202610280007_client_deletion.sql once. 
 
 ### Potential-client / Tally setup
 Use supabase/updates/20261029_potential_clients_and_tally.sql after 006. It safely installs only missing 007/008/009, or apply canonical migrations in order through your usual runner. Configure the Tally form ID/signing secret in Vercel and the webhook in Tally as documented in POTENTIAL-CLIENTS-AND-TALLY.md. No live webhook connection has been confirmed from the coding workspace.
+
+### Guided invitation/account update (supersedes the earlier email picker instructions)
+After 009, apply 202610290010_client_invitations.sql. Use Projects → Invite / manage client access or Clients → Client portal to create/copy an invitation and send it yourself. Existing accounts sign themselves in; no passwords/accounts are reset or removed. The optional SUPABASE_INVITE_EMAIL_READY picker is superseded. Keep the existing callback URL allowed and verify provider email settings as described in CLIENT-INVITATIONS.md. No additional credentials or paid service are required. Hosted acceptance remains pending.
