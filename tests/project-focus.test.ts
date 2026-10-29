@@ -102,3 +102,46 @@ test("empty workflows and completed verified workflows have useful next steps", 
   );
   assert.equal(reordered.next?.id, "first");
 });
+
+test("project focus separates an enabled early area, account connection and full journey gates", () => {
+  const currentProject = { ...project, client_id: "c" };
+  const base = {
+    ...data(),
+    projects: [currentProject],
+    clients: [],
+    documents: [],
+    portalStatuses: [{ client_id: "c", state: "connected", eligible: true }],
+    prospectSpaces: [
+      {
+        project_id: "p",
+        enabled: true,
+        enquiry_status: "new",
+        release_step: "discovery",
+      },
+    ],
+  } as unknown as WorkspaceData;
+  assert.equal(projectFocus(base, currentProject).earlyArea, "discovery");
+  assert.equal(
+    projectFocus(base, currentProject).portalStatus?.state,
+    "connected",
+  );
+  assert.equal(projectFocus(base, currentProject).portalMissing.length, 2);
+  base.prospectSpaces![0].enabled = false;
+  assert.equal(projectFocus(base, currentProject).earlyArea, null);
+  base.prospectSpaces![0].enabled = true;
+  base.prospectSpaces![0].enquiry_status = "closed";
+  assert.equal(projectFocus(base, currentProject).earlyArea, null);
+  base.prospectSpaces![0].enquiry_status = "new";
+  base.clients = [
+    {
+      id: "c",
+      name: "Client",
+      contact: "Jamie",
+      email: "client@example.com",
+      sector: "Design",
+      deletion_pending: true,
+    },
+  ];
+  assert.equal(projectFocus(base, currentProject).deletionPending, true);
+  assert.equal(projectFocus(base, currentProject).earlyArea, null);
+});

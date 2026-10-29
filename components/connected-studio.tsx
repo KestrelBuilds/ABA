@@ -11,7 +11,10 @@ import {
   enquiryLabels,
 } from "@/lib/prospects";
 import DeleteClient from "./delete-client";
-import ProjectFocus from "./project-focus";
+import ProjectFocus, { openProjectSection } from "./project-focus";
+import WorkspaceAttention from "./workspace-attention";
+import HandoverPreparation from "./handover-preparation";
+import type { AttentionDestination } from "@/lib/workspace-attention";
 import { projectFocus } from "@/lib/project-focus";
 import BrandMark from "@/components/brand-mark";
 import {
@@ -157,6 +160,13 @@ export default function ConnectedStudio({
   const [projectId, setProjectId] = useState(data.projects[0]?.id ?? "");
   const [query, setQuery] = useState("");
   const [accessClientId, setAccessClientId] = useState("");
+  const [projectJump, setProjectJump] = useState("");
+  useEffect(() => {
+    if (view === "Projects" && projectJump) {
+      openProjectSection(projectJump);
+      setProjectJump("");
+    }
+  }, [view, projectId, projectJump]);
   useEffect(() => {
     if (view === "Clients" && accessClientId)
       document
@@ -180,6 +190,20 @@ export default function ConnectedStudio({
   const clientFor = (p: DbProject) =>
     data.clients.find((c) => c.id === p.client_id);
   const currentClient = project ? clientFor(project) : null;
+  const openAttention = (destination: AttentionDestination) => {
+    if (destination.area === "enquiries") setView("Enquiries");
+    else if (destination.area === "client") {
+      setQuery(
+        data.clients.find((c) => c.id === destination.clientId)?.name ?? "",
+      );
+      setAccessClientId(destination.clientId);
+      setView("Clients");
+    } else {
+      setProjectId(destination.projectId);
+      setView("Projects");
+      setProjectJump(destination.href);
+    }
+  };
   const complete = (p: DbProject) => {
     const stages = data.stages.filter((s) => s.project_id === p.id);
     return stages.length
@@ -450,6 +474,7 @@ export default function ConnectedStudio({
             )}
             {admin && view === "Overview" && (
               <>
+                <WorkspaceAttention data={data} onOpen={openAttention} />
                 <div className="stats">
                   {[
                     ["Projects", data.projects.length],
@@ -718,7 +743,7 @@ export default function ConnectedStudio({
                           />
                         )}
                         <ProjectManagement
-                          key={project.id}
+                          key={"management-" + project.id}
                           data={data}
                           project={project}
                           Form={ActionForm}
@@ -751,7 +776,15 @@ export default function ConnectedStudio({
                             onManageClient={() => {
                               setView("Clients");
                               setQuery(clientFor(project)?.name ?? "");
+                              setAccessClientId(project.client_id);
                             }}
+                          />
+                        )}
+                        {admin && (
+                          <HandoverPreparation
+                            key={"handover-" + project.id}
+                            data={data}
+                            project={project}
                           />
                         )}
                         <div className="progress">
@@ -793,7 +826,10 @@ export default function ConnectedStudio({
                           <a href="#documents">Documents & feedback</a>
                           {admin && <a href="#controls">Project settings</a>}
                         </div>
-                        <div className="two-col detail" key={project.id}>
+                        <div
+                          className="two-col detail"
+                          key={"journey-" + project.id}
+                        >
                           <div>
                             <section className="panel">
                               <h2 id="journey">Your project journey</h2>
@@ -803,7 +839,7 @@ export default function ConnectedStudio({
                                   : "Open each stage for your files, instructions and next steps."}
                               </p>
                               {admin && otherVerificationFields.length > 0 && (
-                                <details>
+                                <details id="project-verification">
                                   <summary>Project verification checks</summary>
                                   <p>
                                     Review final creative approval and payment

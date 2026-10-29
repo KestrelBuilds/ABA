@@ -175,3 +175,13 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Guided copy-and-send replaces the earlier optional invitation-email picker; no invitation emails are sent automatically. Supabase sign-in/reset email settings and hosted delivery still require acceptance. See docs/CLIENT-INVITATIONS.md.
 - Validation: all 70 automated tests passed, including local PostgreSQL invitation binding, expiry/revocation, repeat application and deletion with new metadata. Fictional Chromium checks passed guided invitation/status/reinvitation, password setup/recovery, fixed redirect destinations, restricted owner preview and deletion retry. Hosted delivery and acceptance remain pending SQL activation.
 - Final strict TypeScript, production build and production signed-out/private-route/mobile checks passed. The copy-link browser check read back the fictional link from the clipboard. No live SQL, real invitation, password change or email delivery was performed from this workspace.
+
+## Attention dashboard and handover guidance — 29 October 2026
+
+- Added owner-only Needs your attention with links to new enquiries, referenced contract returns, proposal responses, overdue client actions, invitation follow-ups and final files needing sharing review. Derives from current records without a duplicate task/status table or automatic mutations.
+- Updated Project at a glance to distinguish released discovery/proposal/agreement access, actual invitation/account state and full-journey verification.
+- Added collapsed handover preparation with record-based file/note/support/release checks and copyable branding, Framer and combined goodbye writing outlines. Terms, licences, ownership and support stay editable placeholders; actual client PDFs remain owner-designed/uploaded.
+- New exact-template uploads suggest Proposal/Contract/Invoice types and final-release defaults for Goodbye Packet and Framer Launch & Handover. Existing files and confirmations are untouched.
+- Fixed reused sibling component keys that could duplicate project panels after navigation/rerendering; added browser duplicate-key detection.
+- No new migration or services. Alex confirmed SQL 010 succeeded; hosted invitation/recovery acceptance is deferred at his request.
+- Validation: all 77 automated tests, strict TypeScript, formatting and production build passed. Chromium checked branding and Framer attention-to-stage navigation, clipboard copying, final-upload defaults, owner-only preview filtering, independent verification/revocation and full read-only client preview at mobile/desktop widths. Tests used fictional services; no hosted records were changed.

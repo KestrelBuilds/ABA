@@ -53,11 +53,12 @@ export default function ProjectManagement({
   }).format(new Date());
   return (
     <div className="management-grid">
-      <section className="panel">
-        <h2>Your next actions</h2>
+      <section className="panel" id="client-actions">
+        <h2>{admin ? "Client actions" : "Your next actions"}</h2>
         <p>
-          These are the agreed tasks I need from you. Completing an action does
-          not mark an invoice paid or approve a design.
+          {admin
+            ? "Tasks you’ve requested from this client. Completing an action does not record a payment or approve a design."
+            : "These are the agreed tasks I need from you. Completing an action does not mark an invoice paid or approve a design."}
         </p>
         {actions.length ? (
           actions.map((a) => (
@@ -160,7 +161,7 @@ export default function ProjectManagement({
           </div>
         )}
         {admin && (
-          <details>
+          <details id="edit-project-brief">
             <summary>Edit brief & handover</summary>
             <Form action={saveBrief} label="Save brief">
               <input type="hidden" name="projectId" value={project.id} />

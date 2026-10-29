@@ -32,7 +32,11 @@ export default function ProspectManagement({
     return matching.length === 1 ? matching[0].id : "";
   };
   return (
-    <details className="panel prospect-management" open={!active}>
+    <details
+      className="panel prospect-management"
+      id="potential-client-settings"
+      open={!active}
+    >
       <summary>
         {active
           ? "Pre-project enquiry history"

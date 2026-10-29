@@ -1,5 +1,6 @@
 import type { DbProject, WorkspaceData } from "./workspace";
 import { stageVerification, verifiedStageStatus } from "./journey-verification";
+import { fileVisibility } from "./file-visibility";
 
 export function projectFocus(data: WorkspaceData, project: DbProject) {
   const stages = data.stages
@@ -16,6 +17,33 @@ export function projectFocus(data: WorkspaceData, project: DbProject) {
     !project.contract_signed && "signed contract",
     !project.deposit_paid && "deposit payment",
   ].filter(Boolean) as string[];
+  const space = data.prospectSpaces?.find((s) => s.project_id === project.id);
+  const deletionPending = Boolean(
+    data.clients?.find((c) => c.id === project.client_id)?.deletion_pending,
+  );
+  const earlyArea =
+    !deletionPending && portalMissing.length
+      ? space
+        ? space.enabled && space.enquiry_status !== "closed"
+          ? space.release_step
+          : null
+        : (data.documents ?? []).some(
+              (d) =>
+                d.project_id === project.id &&
+                fileVisibility(
+                  d,
+                  project,
+                  stages,
+                  data.contractExchanges,
+                  data.prospectSpaces,
+                ).available,
+            )
+          ? "contract"
+          : null
+      : null;
+  const portalStatus = data.portalStatuses?.find(
+    (s) => s.client_id === project.client_id,
+  );
   const deliveryMissing = [
     ...portalMissing,
     !project.final_approved && "final creative approval",
@@ -28,6 +56,9 @@ export function projectFocus(data: WorkspaceData, project: DbProject) {
     );
   return {
     portalMissing,
+    earlyArea,
+    deletionPending,
+    portalStatus,
     deliveryMissing,
     next,
     nextHref: next

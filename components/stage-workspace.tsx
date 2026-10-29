@@ -15,6 +15,8 @@ import JourneyVerification from "./journey-verification";
 import { fileVisibility } from "@/lib/file-visibility";
 import { stageVerification } from "@/lib/journey-verification";
 import { stageGuidance } from "@/lib/stage-copy";
+import { stageFileDefaults } from "@/lib/handover";
+import { openProjectSection } from "./project-focus";
 type FormProps = {
   action: (form: FormData) => Promise<Result>;
   children: ReactNode;
@@ -41,6 +43,7 @@ export default function StageWorkspace({
       : "";
   const project = data.projects.find((p) => p.id === stage.project_id);
   const name = stage.name.toLowerCase();
+  const defaults = stageFileDefaults(stage);
   const briefStage =
     /discovery|questionnaire|brief/.test(name) && !name.includes("call");
   const questionnaire = /goodbye/.test(name)
@@ -59,6 +62,15 @@ export default function StageWorkspace({
   return (
     <div className="stage-workspace">
       <p>{resource?.instructions || stageGuidance(stage.name)}</p>
+      {admin && data.managementReady && defaults.category === "final" && (
+        <a
+          className="resource"
+          href="#handover-preparation"
+          onClick={() => openProjectSection("#handover-preparation")}
+        >
+          Prepare handover & goodbye packet ↓
+        </a>
+      )}
       {admin && project && stageVerification(stage).length > 0 && (
         <JourneyVerification
           data={data}
@@ -300,7 +312,7 @@ export default function StageWorkspace({
                   <input type="hidden" name="stageId" value={stage.id} />
                   <label>
                     Document type
-                    <select name="document_role">
+                    <select name="document_role" defaultValue={defaults.role}>
                       <option>General</option>
                       <option>Proposal</option>
                       <option>Contract</option>
@@ -311,7 +323,7 @@ export default function StageWorkspace({
                   </label>
                   <label>
                     Release rule
-                    <select name="category">
+                    <select name="category" defaultValue={defaults.category}>
                       <option value="document">Project document</option>
                       <option value="presentation">Design presentation</option>
                       <option value="final">
@@ -347,6 +359,14 @@ export default function StageWorkspace({
                     PDFs made in Illustrator belong here. Clients can download
                     shared files and return completed copies in this stage.
                   </p>
+                  {defaults.category === "final" && (
+                    <p className="helper-note">
+                      This stage starts with the Final deliverable rule, so
+                      shared files stay locked until final approval and payment
+                      are verified. You can change the rule for a file which
+                      needs earlier review.
+                    </p>
+                  )}
                 </Form>
               </details>
             </>

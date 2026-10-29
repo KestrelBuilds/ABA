@@ -1,6 +1,7 @@
 "use client";
 import type { DbProject, WorkspaceData } from "@/lib/workspace";
 import { projectFocus } from "@/lib/project-focus";
+import { portalStatusLabels } from "@/lib/invitations";
 
 // Open collapsed sections before moving focus, including optional finance tools.
 export function openProjectSection(href: string) {
@@ -51,12 +52,33 @@ export default function ProjectFocus({
         </div>
         <div>
           <h3>Client portal</h3>
+          {focus.portalStatus && (
+            <p>
+              <span className="status-badge">
+                {portalStatusLabels[focus.portalStatus.state]}
+              </span>
+            </p>
+          )}
           <p>
-            {focus.portalMissing.length
-              ? `Locked — needs ${focus.portalMissing.join(" and ")}.`
-              : "Eligible for client access. Invitation and sign-in are still required."}
+            {focus.deletionPending
+              ? "Client deletion is paused. Portal access is revoked; review the client record to retry cleanup."
+              : focus.earlyArea
+                ? `${focus.earlyArea === "discovery" ? "Discovery booking" : focus.earlyArea === "proposal" ? "Proposal" : focus.earlyArea === "contract" ? "Initial contract" : "Contract & deposit"} area available to invited clients. The full creative journey still needs ${focus.portalMissing.join(" and ")}.`
+                : focus.portalMissing.length
+                  ? `Locked — needs ${focus.portalMissing.join(" and ")}.`
+                  : focus.portalStatus?.state === "connected"
+                    ? "Account connected. The full creative journey is available, with shared files following their release rules."
+                    : focus.portalStatus?.state === "pending"
+                      ? "The full journey is ready. Their invitation is waiting to be accepted."
+                      : focus.portalStatus?.state === "expired"
+                        ? "The full journey is ready. Create a fresh invitation so the client can connect their account."
+                        : focus.portalStatus?.state === "revoked"
+                          ? "The full journey is ready, but account access was removed. Reinvite this client only when you’re ready to restore access."
+                          : "Eligible for client access. Invitation and sign-in are still required."}
           </p>
-          {focus.portalMissing.length ? (
+          {focus.portalMissing.length &&
+          !focus.earlyArea &&
+          !focus.deletionPending ? (
             link("#journey", "Review onboarding")
           ) : (
             <button className="secondary" onClick={onManageClient}>

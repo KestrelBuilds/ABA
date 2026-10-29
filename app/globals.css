@@ -2675,3 +2675,141 @@ summary:focus-visible {
     width: 100%;
   }
 }
+
+.workspace-attention > p {
+  max-width: 70ch;
+}
+.attention-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+.attention-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: left;
+  min-width: 0;
+}
+.attention-item:hover {
+  border-color: #b9a0cc;
+  background: #faf7fd;
+}
+.attention-item > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.attention-item b {
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.attention-item small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 7px;
+  overflow-wrap: anywhere;
+}
+.attention-item > svg {
+  flex-shrink: 0;
+  margin-top: 4px;
+  color: #77528f;
+}
+.attention-count {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  min-height: 30px;
+  background: #f0e5fa;
+  border-radius: 7px;
+  color: #6b1a9c;
+  font-weight: 600;
+}
+.attention-empty {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 16px;
+  background: #f8f6fa;
+  border-radius: 8px;
+  margin-top: 18px;
+}
+.attention-empty svg {
+  flex-shrink: 0;
+  color: #7d6b88;
+}
+.attention-empty p {
+  margin: 0;
+}
+.handover-preparation {
+  scroll-margin-top: 24px;
+}
+.handover-preparation > summary {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  min-height: 32px;
+}
+.handover-preparation[open] > summary {
+  margin-bottom: 16px;
+}
+.handover-readiness {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.handover-readiness > div {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 18px;
+  min-width: 0;
+}
+.handover-readiness b {
+  font-size: 13px;
+}
+.handover-readiness .text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  line-height: 1.5;
+  color: #6d1ba3;
+  text-align: left;
+}
+.packet-draft label {
+  display: grid;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 20px 0;
+}
+.connected .packet-draft textarea {
+  width: 100%;
+  min-height: 320px;
+  resize: vertical;
+  font-size: 13px;
+  line-height: 1.7;
+}
+@media (max-width: 800px) {
+  .attention-list,
+  .handover-readiness {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .attention-item,
+  .handover-readiness > div {
+    padding: 15px;
+  }
+  .connected .packet-draft textarea {
+    font-size: 16px;
+  }
+}

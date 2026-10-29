@@ -112,3 +112,10 @@ Alex reported the combined SQL update succeeded, supplied a screenshot showing a
 
 ### Clear invitations and returning accounts
 Projects now include **Invite / manage client access**. Under Clients, **Client portal** shows invitation/account status, explains sharing eligibility and provides a copyable invitation link. Returning clients reuse their own account; existing accounts are never reset/deleted to make an invitation work. The login page now includes password recovery, and invitation acceptance leads to clear password setup. Apply [migration 010](supabase/migrations/202610290010_client_invitations.sql) after 009. See [owner steps and email setup](docs/CLIENT-INVITATIONS.md). Hosted invitation/recovery acceptance is still required.
+
+### Attention dashboard and handover preparation
+Overview now brings together new enquiries, proposal replies, referenced contract returns, overdue client actions, invitation follow-ups and final files needing sharing review. Each item opens its existing project/client section; nothing is auto-verified or sent. The project summary separates the released potential-client area, account connection and full journey gates.
+
+In a project, expand **Prepare handover & goodbye packet** for file/support/release checks and a copyable branding, Framer or combined writing outline. Design the actual PDF in Illustrator, then upload it to the relevant stage. Drafts contain placeholders and do not save/share themselves. New standard proposal/contract/invoice uploads suggest their document type; Goodbye Packet and Framer Launch & Handover suggest final release. No extra SQL is needed. See [handover guidance](docs/HANDOVER-GUIDE.md).
+
+Owner confirmed migration 010 succeeded. Live invitation/password-recovery acceptance is postponed at the owner's request; local/fixture checks are separate from hosted evidence.

@@ -7,6 +7,8 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const workspaceHelpMode = process.argv.includes("--workspace-help");
+const goodbyeStageId = randomUUID();
 const invitationsMode = process.argv.includes("--invitations");
 const accountMode = process.argv.includes("--account");
 const prospectMode = process.argv.includes("--prospect");
@@ -37,7 +39,8 @@ const ownerMode =
   deletionMode ||
   prospectOwnerMode ||
   enquiriesMode ||
-  invitationsMode;
+  invitationsMode ||
+  workspaceHelpMode;
 const uid = randomUUID(),
   cid = randomUUID(),
   pid = randomUUID(),
@@ -311,6 +314,23 @@ const clientActions = [
   },
 ];
 const assets = [];
+if (workspaceHelpMode) {
+  project.contract_signed = false;
+  project.deposit_paid = false;
+  prospective.enabled = true;
+  prospective.release_step = "discovery";
+  documents[0].document_role = "Contract";
+  documents[0].stage_id = fixtureStageId;
+  assets.push({
+    id: randomUUID(),
+    project_id: pid,
+    stage_id: fixtureStageId,
+    contract_document_id: documents[0].id,
+    name: "Returned contract.pdf",
+    created_at: new Date().toISOString(),
+  });
+  clientActions[0].due = "2000-01-01";
+}
 const errors = [];
 let browser, app;
 const server = createServer(async (req, res) => {
@@ -410,7 +430,8 @@ const server = createServer(async (req, res) => {
       return json([]);
     }
     const table = path.split("/").pop();
-    if (table === "client_invitations_ready") return json(invitationsMode);
+    if (table === "client_invitations_ready")
+      return json(invitationsMode || workspaceHelpMode);
     if (table === "client_portal_statuses")
       return json([
         {
@@ -434,7 +455,9 @@ const server = createServer(async (req, res) => {
     if (table === "accept_invitation") return json(null);
 
     if (table === "prospect_spaces_ready")
-      return json(prospectMode || prospectOwnerMode || enquiriesMode);
+      return json(
+        prospectMode || prospectOwnerMode || enquiriesMode || workspaceHelpMode,
+      );
     if (table === "enquiries_ready") return json(enquiriesMode);
     if (table === "set_prospect_space") {
       Object.assign(prospective, {
@@ -530,7 +553,7 @@ const server = createServer(async (req, res) => {
       return json(null);
     }
     if (table === "contract_area_ready")
-      return json(contractMode || contractOwnerMode);
+      return json(contractMode || contractOwnerMode || workspaceHelpMode);
     if (table === "can_read_contract_document")
       return json(exchangeEnabled && body.target === presentation);
     if (table === "contract_area")
@@ -565,7 +588,11 @@ const server = createServer(async (req, res) => {
       );
     if (table === "business_documents_ready")
       return json(
-        financeMode || stageMode || contractMode || contractOwnerMode,
+        financeMode ||
+          stageMode ||
+          contractMode ||
+          contractOwnerMode ||
+          workspaceHelpMode,
       );
     if (table === "new_proposal") {
       const id = randomUUID();
@@ -647,7 +674,11 @@ const server = createServer(async (req, res) => {
     }
     if (table === "project_management_ready")
       return json(
-        managementMode || stageMode || contractMode || contractOwnerMode,
+        managementMode ||
+          stageMode ||
+          contractMode ||
+          contractOwnerMode ||
+          workspaceHelpMode,
       );
     if (table === "complete_client_action") {
       const a = clientActions.find((a) => a.id === body.target);
@@ -658,7 +689,9 @@ const server = createServer(async (req, res) => {
     let rows = [];
     if (table === "prospect_spaces")
       rows =
-        prospectMode || prospectOwnerMode || enquiriesMode ? [prospective] : [];
+        prospectMode || prospectOwnerMode || enquiriesMode || workspaceHelpMode
+          ? [prospective]
+          : [];
     if (table === "proposal_responses") {
       if (req.method === "POST")
         proposalResponses.push({
@@ -725,7 +758,7 @@ const server = createServer(async (req, res) => {
       ];
     if (table === "project_handover")
       rows =
-        project.final_paid && project.final_approved
+        (project.final_paid && project.final_approved) || workspaceHelpMode
           ? [{ project_id: pid, body: "Private final handover guidance" }]
           : [];
     if (table === "client_assets") {
@@ -767,6 +800,27 @@ const server = createServer(async (req, res) => {
     if (table === "stages" && templateMode) rows = liveTemplate;
     if (table === "stages" && (prospectMode || prospectOwnerMode))
       rows = potentialStages;
+    if (workspaceHelpMode && table === "stages")
+      rows = [
+        {
+          id: fixtureStageId,
+          project_id: pid,
+          name: "Contract",
+          stream: "Onboarding",
+          position: 0,
+          status: "Awaiting Client",
+          visible: true,
+        },
+        {
+          id: goodbyeStageId,
+          project_id: pid,
+          name: "Goodbye Packet",
+          stream: "Handover",
+          position: 1,
+          status: "Not Started",
+          visible: true,
+        },
+      ];
     if (stageMode || verificationMode) documents[0].stage_id = fixtureStageId;
     if (table === "documents")
       rows = documents.filter(
@@ -908,6 +962,13 @@ const server = createServer(async (req, res) => {
       viewport: { width: 390, height: 844 },
     });
     page.on("pageerror", (e) => errors.push(e.message));
+    page.on("console", (message) => {
+      if (
+        message.type() === "error" &&
+        /same key|unique .*key/i.test(message.text())
+      )
+        errors.push(message.text());
+    });
     const captureUi = async (name, target = page) => {
       for (const width of [390, 1440, 320]) {
         await page.setViewportSize({ width, height: 900 });
@@ -964,6 +1025,108 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (workspaceHelpMode) {
+      const attention = page.getByRole("region", {
+        name: "Needs your attention",
+      });
+      await attention
+        .getByRole("button", { name: /Review returned contract/ })
+        .waitFor();
+      await captureUi("attention", attention);
+      await attention
+        .getByRole("button", { name: /Review returned contract/ })
+        .click();
+      const contract = page
+        .locator(".milestone-disclosure")
+        .filter({ hasText: "Contract" })
+        .first();
+      await expect(contract).toHaveAttribute("open", "");
+      await contract
+        .getByRole("button", { name: "Verify signed contract", exact: true })
+        .waitFor();
+      assert.equal(project.contract_signed, false);
+      assert.equal(project.deposit_paid, false);
+      await page
+        .getByRole("region", { name: "Project at a glance" })
+        .getByText(/Discovery booking area available/)
+        .waitFor();
+      const goodbye = page
+        .locator(".milestone-disclosure")
+        .filter({ hasText: "Goodbye Packet" });
+      if (!(await goodbye.evaluate((el) => el.open)))
+        await goodbye.locator("summary").first().click();
+      await goodbye
+        .getByRole("link", { name: "Prepare handover & goodbye packet" })
+        .click();
+      const preparation = page.locator("#handover-preparation");
+      await expect(preparation).toHaveAttribute("open", "");
+      await preparation.getByText(/Handover notes saved/).waitFor();
+      await preparation
+        .locator("summary")
+        .filter({ hasText: /Copy a .*goodbye packet outline/ })
+        .click();
+      const draft = preparation.getByLabel("Goodbye packet draft", {
+        exact: true,
+      });
+      const text = await draft.inputValue();
+      assert.match(
+        text,
+        project.type === "Website Design"
+          ? /YOUR FRAMER WEBSITE/
+          : /USING YOUR BRAND FILES/,
+      );
+      if (project.type === "Website Design")
+        assert.doesNotMatch(text, /USING YOUR BRAND FILES/);
+      await page
+        .context()
+        .grantPermissions(["clipboard-read", "clipboard-write"]);
+      await preparation
+        .getByRole("button", { name: "Copy packet outline", exact: true })
+        .click();
+      await preparation
+        .getByRole("button", { name: "Outline copied", exact: true })
+        .waitFor();
+      assert.equal(
+        await page.evaluate(() => navigator.clipboard.readText()),
+        text,
+      );
+      await captureUi(
+        "handover-" + project.type.replaceAll(" ", "-"),
+        preparation,
+      );
+      if (!(await goodbye.evaluate((el) => el.open)))
+        await goodbye.locator("summary").first().click();
+      await goodbye
+        .getByText("Upload my PDF or presentation for this stage", {
+          exact: true,
+        })
+        .click();
+      await expect(goodbye.locator('select[name="document_role"]')).toHaveValue(
+        "Handover",
+      );
+      await expect(goodbye.locator('select[name="category"]')).toHaveValue(
+        "final",
+      );
+      assert.equal(project.final_paid, false);
+      assert.equal(project.final_approved, false);
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      assert.equal(
+        await page
+          .getByRole("region", { name: "Needs your attention" })
+          .count(),
+        0,
+      );
+      assert.equal(await page.locator("#handover-preparation").count(), 0);
+      assert.equal(
+        await page.getByLabel("Goodbye packet draft", { exact: true }).count(),
+        0,
+      );
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: actionable owner dashboard, direct stage navigation, correct early-access summary, copyable scoped goodbye draft, final-file defaults and private read-only preview. Fictional services only.",
+      );
+      return;
+    }
     if (invitationsMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
       await page
