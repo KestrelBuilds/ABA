@@ -1,5 +1,5 @@
 "use client";
-import { fileVisibility } from "@/lib/file-visibility";
+import ProjectFiles from "./project-files";
 import Enquiries from "./enquiries";
 import ClientAccess from "./client-access";
 import ProspectArea from "./prospect-area";
@@ -34,7 +34,6 @@ import {
   FolderKanban,
   Users,
   LogOut,
-  Files,
   LayoutDashboard,
 } from "lucide-react";
 import type { WorkspaceData, DbProject } from "@/lib/workspace";
@@ -46,9 +45,6 @@ import {
   saveStage,
   saveProjectNotes,
   submitQuestionnaire,
-  submitFeedback,
-  uploadDocument,
-  publishDocument,
   moveStage,
   addStage,
   removeStage,
@@ -136,7 +132,7 @@ function ActionForm({
   );
 }
 import { questionnairePrompts, optionalQuestion } from "@/lib/questionnaires";
-import PortalGuide, { ReviewChecklist } from "./portal-guide";
+import PortalGuide from "./portal-guide";
 import { clientPreview } from "@/lib/client-preview";
 export default function ConnectedStudio({
   data,
@@ -1017,6 +1013,7 @@ export default function ConnectedStudio({
                                   ) : (
                                     <details
                                       className="portal-stage-detail"
+                                      id={"stage-" + s.id}
                                       key={s.id}
                                     >
                                       <summary className="portal-stage">
@@ -1315,247 +1312,12 @@ export default function ConnectedStudio({
                                 </ActionForm>
                               </section>
                             )}
-                            <section className="panel">
-                              <h2>
-                                <Files size={18} />{" "}
-                                <span id="documents">All project files</span>
-                              </h2>
-                              <p>
-                                The same files shown in your journey, collected
-                                here for reference. Upload stage files in their
-                                journey stage; files uploaded here have no
-                                stage.
-                              </p>
-                              {admin && (
-                                <ActionForm
-                                  action={uploadDocument}
-                                  label="Upload privately"
-                                >
-                                  <input
-                                    type="hidden"
-                                    name="projectId"
-                                    value={project.id}
-                                  />
-                                  <label>
-                                    Category
-                                    <select name="category">
-                                      <option value="presentation">
-                                        Design presentation
-                                      </option>
-                                      <option value="document">
-                                        Project document
-                                      </option>
-                                      <option value="final">
-                                        Final deliverable
-                                      </option>
-                                    </select>
-                                  </label>
-                                  {data.managementReady && (
-                                    <>
-                                      <label>
-                                        Presentation version
-                                        <input
-                                          name="version_label"
-                                          defaultValue="v1"
-                                          required
-                                          maxLength={40}
-                                        />
-                                      </label>
-                                      <label>
-                                        Feedback due date
-                                        <input name="review_due" type="date" />
-                                      </label>
-                                    </>
-                                  )}
-                                  <label>
-                                    File
-                                    <input
-                                      type="file"
-                                      name="file"
-                                      accept="application/pdf,image/png,image/jpeg,image/webp"
-                                      required
-                                    />
-                                  </label>
-                                  <p>
-                                    PDF, PNG, JPEG or WebP · 3 MB maximum.
-                                    Uploads start unpublished.
-                                  </p>
-                                </ActionForm>
-                              )}
-                              {!admin && (
-                                <p>
-                                  Final deliverables appear after your final
-                                  approval and payment have been confirmed.
-                                </p>
-                              )}
-                              {(data.assets ?? [])
-                                .filter((a) => a.project_id === project.id)
-                                .map((a) => (
-                                  <div className="document-item" key={a.id}>
-                                    <b>{a.name}</b>
-                                    <small>
-                                      Returned client file ·{" "}
-                                      {a.stage_id
-                                        ? (data.stages.find(
-                                            (s) => s.id === a.stage_id,
-                                          )?.name ?? "Stage unavailable")
-                                        : "No stage · project-wide"}
-                                    </small>
-                                    <a
-                                      className="resource"
-                                      href={"/assets/" + a.id}
-                                    >
-                                      Download securely{" "}
-                                      <ArrowUpRight size={14} />
-                                    </a>
-                                  </div>
-                                ))}
-                              {data.documents
-                                .filter((d) => d.project_id === project.id)
-                                .map((d) => (
-                                  <div className="document-item" key={d.id}>
-                                    <b>{d.name}</b>
-                                    <small>
-                                      {d.stage_id
-                                        ? (data.stages.find(
-                                            (s) => s.id === d.stage_id,
-                                          )?.name ?? "Stage unavailable")
-                                        : "No stage · project-wide"}{" "}
-                                      · {d.category}
-                                      {d.version_label
-                                        ? " · " + d.version_label
-                                        : ""}
-                                      {d.review_due
-                                        ? " · Review by " +
-                                          new Date(
-                                            d.review_due + "T12:00:00",
-                                          ).toLocaleDateString("en-GB")
-                                        : ""}{" "}
-                                      {admin &&
-                                        (d.published
-                                          ? "· Published"
-                                          : "· Private draft")}
-                                    </small>
-                                    {admin && (
-                                      <p className="file-visibility">
-                                        {
-                                          fileVisibility(
-                                            d,
-                                            project,
-                                            data.stages,
-                                            data.contractExchanges,
-                                            data.prospectSpaces,
-                                          ).message
-                                        }
-                                      </p>
-                                    )}
-                                    <a
-                                      className="resource"
-                                      href={"/files/" + d.id}
-                                    >
-                                      Download securely{" "}
-                                      <ArrowUpRight size={14} />
-                                    </a>
-                                    {admin && (
-                                      <ActionForm
-                                        action={publishDocument}
-                                        label={
-                                          d.published
-                                            ? "Unpublish"
-                                            : "Publish to client"
-                                        }
-                                      >
-                                        <input
-                                          type="hidden"
-                                          name="id"
-                                          value={d.id}
-                                        />
-                                        <input
-                                          type="hidden"
-                                          name="published"
-                                          value={String(!d.published)}
-                                        />
-                                      </ActionForm>
-                                    )}
-                                    {data.feedback
-                                      .filter((f) => f.document_id === d.id)
-                                      .map((f) => (
-                                        <div
-                                          className="feedback-item"
-                                          key={f.id}
-                                        >
-                                          <span className="pill">
-                                            {f.decision.replaceAll("_", " ")}
-                                          </span>
-                                          <p>{f.body}</p>
-                                          <small>
-                                            {f.approver_name ??
-                                              "Name not recorded"}{" "}
-                                            ·{" "}
-                                            {f.reviewed_version ??
-                                              "Historical version not recorded"}
-                                          </small>
-                                          <small>
-                                            {new Date(
-                                              f.created_at,
-                                            ).toLocaleDateString("en-GB")}
-                                          </small>
-                                        </div>
-                                      ))}
-                                    {!admin && (
-                                      <p>
-                                        What is working well? What needs
-                                        changing, on which page or slide, and
-                                        what outcome should the change achieve?
-                                        Check any incorrect text, images, links
-                                        or factual details.
-                                      </p>
-                                    )}
-                                    {!admin && (
-                                      <ReviewChecklist type={project.type} />
-                                    )}
-                                    {!admin && (
-                                      <ActionForm
-                                        action={submitFeedback}
-                                        label="Send feedback"
-                                      >
-                                        <input
-                                          type="hidden"
-                                          name="documentId"
-                                          value={d.id}
-                                        />
-                                        <label>
-                                          My response
-                                          <select name="decision">
-                                            <option value="comment">
-                                              Comment
-                                            </option>
-                                            <option value="changes_requested">
-                                              Request revisions
-                                            </option>
-                                            <option value="approved">
-                                              Approve this presentation
-                                            </option>
-                                          </select>
-                                        </label>
-                                        <label>
-                                          Feedback
-                                          <textarea
-                                            name="body"
-                                            required
-                                            maxLength={4000}
-                                          />
-                                        </label>
-                                        <p>
-                                          Approvals are recorded as creative
-                                          feedback. They are not legal
-                                          signatures.
-                                        </p>
-                                      </ActionForm>
-                                    )}
-                                  </div>
-                                ))}
-                            </section>
+                            <ProjectFiles
+                              key={"files-" + project.id}
+                              data={data}
+                              project={project}
+                              Form={ActionForm}
+                            />
                             {!admin && (
                               <section className="panel">
                                 <h2>Payment overview</h2>

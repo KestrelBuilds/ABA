@@ -1384,6 +1384,94 @@ details summary {
   color: var(--muted);
   margin-top: 8px;
 }
+.library-upload {
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.library-upload > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.library-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+.library-filters label {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  font-size: 14px;
+}
+.library-search span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.library-filters input,
+.library-filters select {
+  width: 100%;
+  min-width: 0;
+}
+.library-result-summary,
+.library-stage-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.library-result-summary {
+  margin: 12px 0 24px;
+}
+.library-result-summary p {
+  margin: 0;
+  font-size: 14px;
+}
+.library-stage {
+  margin-top: 28px;
+  border-top: 2px solid var(--line);
+  padding-top: 24px;
+}
+.library-stage-heading h3 {
+  margin: 0 0 6px;
+  font-size: 19px;
+  overflow-wrap: anywhere;
+}
+.library-stage-heading small {
+  color: var(--muted);
+}
+.library-stage-heading .resource {
+  margin: 0;
+}
+.library-stage .document-item {
+  margin-top: 20px;
+  padding-top: 20px;
+}
+.project-file-library .document-item > b {
+  font-size: 15px;
+  line-height: 1.5;
+}
+.library-sharing {
+  margin: 12px 0 0;
+}
+.library-empty {
+  padding: 24px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.library-empty h3 {
+  margin-top: 0;
+}
+@media (max-width: 700px) {
+  .library-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .feedback-item {
   padding: 15px;
   background: #f5f7ef;

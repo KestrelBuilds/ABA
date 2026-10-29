@@ -7,6 +7,10 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const fileLibraryMode =
+  process.argv.includes("--file-library") ||
+  process.argv.includes("--file-library-client");
+const fileLibraryClient = process.argv.includes("--file-library-client");
 const workspaceHelpMode = process.argv.includes("--workspace-help");
 const goodbyeStageId = randomUUID();
 const invitationsMode = process.argv.includes("--invitations");
@@ -40,7 +44,8 @@ const ownerMode =
   prospectOwnerMode ||
   enquiriesMode ||
   invitationsMode ||
-  workspaceHelpMode;
+  workspaceHelpMode ||
+  (fileLibraryMode && !fileLibraryClient);
 const uid = randomUUID(),
   cid = randomUUID(),
   pid = randomUUID(),
@@ -330,6 +335,36 @@ if (workspaceHelpMode) {
     created_at: new Date().toISOString(),
   });
   clientActions[0].due = "2000-01-01";
+}
+if (fileLibraryMode) {
+  documents[0].stage_id = fixtureStageId;
+  documents[0].version_label = "v2";
+  documents.push(
+    {
+      id: randomUUID(),
+      project_id: pid,
+      name: "Private agreement.pdf",
+      category: "document",
+      document_role: "Contract",
+      published: false,
+    },
+    {
+      id: randomUUID(),
+      project_id: pid,
+      stage_id: fixtureStageId,
+      name: "Deposit invoice.pdf",
+      category: "document",
+      document_role: "Invoice",
+      published: true,
+    },
+  );
+  assets.push({
+    id: randomUUID(),
+    project_id: pid,
+    stage_id: fixtureStageId,
+    name: "Reference image.jpg",
+    created_at: new Date().toISOString(),
+  });
 }
 const errors = [];
 let browser, app;
@@ -678,7 +713,8 @@ const server = createServer(async (req, res) => {
           stageMode ||
           contractMode ||
           contractOwnerMode ||
-          workspaceHelpMode,
+          workspaceHelpMode ||
+          fileLibraryMode,
       );
     if (table === "complete_client_action") {
       const a = clientActions.find((a) => a.id === body.target);
@@ -827,6 +863,14 @@ const server = createServer(async (req, res) => {
         (d) =>
           d.category !== "final" ||
           (project.final_paid && project.final_approved),
+      );
+    if (fileLibraryMode && table === "documents")
+      rows = documents.filter(
+        (d) =>
+          ownerMode ||
+          (d.published &&
+            (d.category !== "final" ||
+              (project.final_paid && project.final_approved))),
       );
     if (table === "questionnaires") {
       if (req.method === "POST")
@@ -1025,6 +1069,117 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (fileLibraryMode) {
+      if (ownerMode)
+        await page
+          .getByRole("button", { name: "Projects", exact: true })
+          .click();
+      const library = page.getByRole("region", {
+        name: "All project files",
+        exact: true,
+      });
+      await library
+        .getByRole("heading", { name: "Concept review", exact: true })
+        .waitFor();
+      await expect(library.locator(".document-item")).toHaveCount(
+        ownerMode ? 5 : 3,
+      );
+      const search = library.getByRole("searchbox", { name: "Search files" });
+      await search.fill("v2");
+      await expect(library.locator(".document-item")).toHaveCount(1);
+      await library
+        .getByRole("button", { name: "Clear filters", exact: true })
+        .click();
+      await library
+        .getByLabel("File type", { exact: true })
+        .selectOption("returned");
+      await expect(library.locator(".document-item")).toHaveCount(1);
+      await library.getByText("Client upload", { exact: true }).waitFor();
+      await library
+        .getByRole("link", { name: "Open journey stage ↑", exact: true })
+        .click();
+      await expect(page.locator("#stage-" + fixtureStageId)).toHaveAttribute(
+        "open",
+        "",
+      );
+      await library
+        .getByRole("button", { name: "Clear filters", exact: true })
+        .click();
+      if (ownerMode) {
+        await library
+          .getByLabel("Journey stage", { exact: true })
+          .selectOption("project-wide");
+        await expect(library.locator(".document-item")).toHaveCount(2);
+        await library.getByText("Private draft", { exact: true }).waitFor();
+        await library
+          .getByText("Shared · access locked", { exact: true })
+          .waitFor();
+      } else {
+        await expect(
+          library.getByText("Private agreement.pdf", { exact: true }),
+        ).toHaveCount(0);
+        await expect(
+          library.getByRole("option", { name: "Contracts", exact: true }),
+        ).toHaveCount(0);
+        await expect(
+          library.getByRole("option", {
+            name: "Final deliverables",
+            exact: true,
+          }),
+        ).toHaveCount(0);
+        await expect(
+          library.getByRole("button", {
+            name: "Publish to client",
+            exact: true,
+          }),
+        ).toHaveCount(0);
+        const invoice = library
+          .locator(".document-item")
+          .filter({ hasText: "Deposit invoice.pdf" });
+        await expect(
+          invoice.getByRole("option", {
+            name: "Approve this presentation",
+            exact: true,
+          }),
+        ).toHaveCount(0);
+      }
+      await search.fill("no fictional match");
+      await library
+        .getByRole("heading", { name: "No matching files", exact: true })
+        .waitFor();
+      await library
+        .getByRole("button", { name: "Show all files", exact: true })
+        .click();
+      await expect(library.locator(".document-item")).toHaveCount(
+        ownerMode ? 5 : 3,
+      );
+      await captureUi(
+        "file-library-" + (ownerMode ? "owner" : "client"),
+        library,
+      );
+      if (ownerMode) {
+        await page
+          .getByRole("button", { name: /Preview client portal/ })
+          .click();
+        await expect(
+          page
+            .getByRole("region", { name: "All project files", exact: true })
+            .locator(".document-item"),
+        ).toHaveCount(3);
+        await expect(
+          page
+            .getByRole("region", { name: "All project files", exact: true })
+            .getByText("Private agreement.pdf", { exact: true }),
+        ).toHaveCount(0);
+      }
+      assert.equal(project.final_paid, false);
+      assert.equal(project.final_approved, false);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: searchable, stage-grouped same-record file library, combined filters/reset, journey navigation, owner sharing labels, client/preview filtering and mobile layouts. Fictional services only.",
+      );
+      return;
+    }
     if (workspaceHelpMode) {
       const attention = page.getByRole("region", {
         name: "Needs your attention",

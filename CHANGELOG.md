@@ -185,3 +185,11 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Fixed reused sibling component keys that could duplicate project panels after navigation/rerendering; added browser duplicate-key detection.
 - No new migration or services. Alex confirmed SQL 010 succeeded; hosted invitation/recovery acceptance is deferred at his request.
 - Validation: all 77 automated tests, strict TypeScript, formatting and production build passed. Chromium checked branding and Framer attention-to-stage navigation, clipboard copying, final-upload defaults, owner-only preview filtering, independent verification/revocation and full read-only client preview at mobile/desktop widths. Tests used fictional services; no hosted records were changed.
+
+## Searchable files in journey order — 29 October 2026
+
+- Reworked All project files into a same-record library grouped by journey stage, with combined search/type/stage filters, result counts, reset and empty states. Kept project-wide uploads secondary to journey-stage uploads.
+- Added clear owner sharing badges, distinct ordinary client uploads and explicitly linked contract returns, and links that open/focus the existing owner or client journey stage. Fixed missing client-stage anchor targets.
+- Kept feedback and secure download/publication actions on their existing routes. Presentation approval choices now appear only for presentations in this UI; other files retain comments/revision requests and historical feedback. Return/upload/progress actions never verify signatures or payments.
+- Extracted the library into its own component. Client and preview filter choices use only their already permitted records; no permission changes, duplicate uploads, schema migration or new service.
+- Validation: all 80 automated tests, strict TypeScript, formatting and production build passed. Fictional-service Chromium checked owner/client filtering, private/final-file exclusion from client choices, journey navigation, preview restrictions, 320/390/1440 px layouts, independent contract/deposit verification and the full client questionnaire/revision/approval/final-release/download journey. Hosted deployment acceptance remains unverified; no real records or emails were changed.

@@ -89,6 +89,8 @@ Confirm the actual signed contract and received deposit inside Contract and Depo
 
 Both file views show why a shared file is still locked, including missing contract/deposit verification, an internal stage or final delivery requirements. Publication alone does not unlock access.
 
+All project files now groups those records in journey order, with search by file name/stage/version and combined file-type/stage filters. Clear filters restores the list. Open journey stage opens and focuses the existing stage for owners and clients. Project-wide uploads sit in a collapsed section; upload stage-specific work in its stage. Client upload and explicitly linked contract-return labels remain distinct from verified signatures/payments. Creative approval choices apply to presentations; other files accept comments/revision requests. Filters use only records already returned by the current account's permissions or read-only preview, including their available filter choices. No SQL upgrade or duplicate uploads.
+
 ### Simpler owner project overview
 Project at a glance shows the next milestone, portal eligibility and final-delivery requirements together. Open next step expands the relevant stage or built-in invoices. Eligibility does not mean an invitation was sent. See [the database/UI review](docs/DATABASE-UX-REVIEW.md) for the schema review and next recommendations.
 
