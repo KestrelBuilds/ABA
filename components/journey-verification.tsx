@@ -6,6 +6,12 @@ import {
   verificationLabels,
   type VerificationField,
 } from "@/lib/journey-verification";
+const verificationTitles: Record<VerificationField, string> = {
+  contract_signed: "Signed contract",
+  deposit_paid: "50% deposit",
+  final_approved: "Final approval",
+  final_paid: "Final payment",
+};
 export default function JourneyVerification({
   data,
   project,
@@ -19,10 +25,12 @@ export default function JourneyVerification({
     action: (form: FormData) => Promise<Result>;
     children: ReactNode;
     label?: string;
+    className?: string;
   }>;
 }) {
   return (
     <div className="journey-verification">
+      <h3>Review & verify</h3>
       <p>
         Confirm only after checking the actual contract, payment or approval.
         Progress changes and uploaded PDFs do not verify these records.
@@ -34,11 +42,19 @@ export default function JourneyVerification({
             (i) => i.project_id === project.id && i.status !== "Void",
           );
         return (
-          <div key={field}>
-            <p>
-              <b>{verificationLabels[field]}</b> ·{" "}
-              {project[field] ? "Verified" : "Not verified"}
-            </p>
+          <div className="verification-record" key={field}>
+            <div className="verification-heading">
+              <b>{verificationTitles[field]}</b>
+              <span
+                className={
+                  project[field]
+                    ? "status-badge status-verified"
+                    : "status-badge"
+                }
+              >
+                {project[field] ? "Verified" : "Not verified"}
+              </span>
+            </div>
             {invoice ? (
               <p>
                 An existing invoice controls this payment. Use its Record full
@@ -49,10 +65,17 @@ export default function JourneyVerification({
               <Form
                 key={project.id + field + String(project[field])}
                 action={verifyJourneyRecord}
+                className={project[field] ? "verification-remove" : ""}
                 label={
                   project[field]
                     ? "Remove verification"
-                    : "Confirm verified record"
+                    : field === "contract_signed"
+                      ? "Verify signed contract"
+                      : field === "deposit_paid"
+                        ? "Verify 50% deposit"
+                        : field === "final_paid"
+                          ? "Verify final payment"
+                          : "Verify final approval"
                 }
               >
                 <input type="hidden" name="projectId" value={project.id} />

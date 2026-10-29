@@ -820,6 +820,11 @@ export default function ConnectedStudio({
                           <div>
                             <section className="panel">
                               <h2 id="journey">Your project journey</h2>
+                              <p className="section-description">
+                                {admin
+                                  ? "Open a stage to share files, review client returns and manage progress. Contract and payment checks have their own verification buttons."
+                                  : "Open each stage for your files, instructions and next steps."}
+                              </p>
                               {admin && otherVerificationFields.length > 0 && (
                                 <details>
                                   <summary>Project verification checks</summary>
@@ -860,133 +865,141 @@ export default function ConnectedStudio({
                                         </span>
                                         <span className="pill">{s.status}</span>
                                       </summary>
-                                      <ActionForm
-                                        action={saveStage}
-                                        label="Save milestone"
-                                        className="milestone-form"
-                                      >
-                                        <input
-                                          type="hidden"
-                                          name="id"
-                                          value={s.id}
-                                        />
-                                        <div className="eyebrow">
-                                          {s.stream}
-                                        </div>
-                                        <label>
-                                          Milestone name
-                                          <input
-                                            name="name"
-                                            defaultValue={s.name}
-                                            key={s.name}
-                                            required
-                                            maxLength={120}
-                                          />
-                                        </label>
-                                        {stageVerification(s).length > 0 && (
-                                          <p>
-                                            This stage follows the verified
-                                            project records below. Renaming it
-                                            to a custom name restores ordinary
-                                            progress tracking; its verification
-                                            controls move to Project
-                                            verification checks at the top of
-                                            the journey.
-                                          </p>
-                                        )}
-                                        {stageVerification(s).length > 0 && (
-                                          <input
-                                            type="hidden"
-                                            name="status"
-                                            value="Not Started"
-                                          />
-                                        )}
-                                        <div className="form-grid">
-                                          <label>
-                                            Status
-                                            <select
-                                              name="status"
-                                              disabled={
-                                                stageVerification(s).length > 0
-                                              }
-                                              defaultValue={s.status}
-                                              key={s.status}
-                                            >
-                                              {stageVerification(s).length >
-                                                0 && (
-                                                <option value={s.status}>
-                                                  {s.status} — driven by
-                                                  verified records
-                                                </option>
-                                              )}
-                                              {statuses.map((status) => (
-                                                <option key={status}>
-                                                  {status}
-                                                </option>
-                                              ))}
-                                            </select>
-                                          </label>
-                                          <label className="check-row">
-                                            <input
-                                              name="visible"
-                                              type="checkbox"
-                                              defaultChecked={s.visible}
-                                              key={String(s.visible)}
-                                            />
-                                            Client visible
-                                          </label>
-                                        </div>
-                                      </ActionForm>
                                       <StageWorkspace
                                         data={data}
                                         stage={s}
                                         Form={ActionForm}
                                       />
-                                      <div className="stage-tool-row">
+                                      <details className="settings-disclosure">
+                                        <summary>
+                                          {stageVerification(s).length > 0
+                                            ? "Edit stage settings"
+                                            : "Update progress & stage settings"}
+                                        </summary>
                                         <ActionForm
-                                          action={moveStage}
-                                          label="Move up"
+                                          action={saveStage}
+                                          label="Save milestone"
+                                          className="milestone-form"
                                         >
                                           <input
                                             type="hidden"
                                             name="id"
                                             value={s.id}
                                           />
-                                          <input
-                                            type="hidden"
-                                            name="direction"
-                                            value="-1"
-                                          />
+                                          <div className="eyebrow">
+                                            {s.stream}
+                                          </div>
+                                          <label>
+                                            Milestone name
+                                            <input
+                                              name="name"
+                                              defaultValue={s.name}
+                                              key={s.name}
+                                              required
+                                              maxLength={120}
+                                            />
+                                          </label>
+                                          {stageVerification(s).length > 0 && (
+                                            <p>
+                                              This stage follows the verified
+                                              project records below. Renaming it
+                                              to a custom name restores ordinary
+                                              progress tracking; its
+                                              verification controls move to
+                                              Project verification checks at the
+                                              top of the journey.
+                                            </p>
+                                          )}
+                                          {stageVerification(s).length > 0 && (
+                                            <input
+                                              type="hidden"
+                                              name="status"
+                                              value="Not Started"
+                                            />
+                                          )}
+                                          <div className="form-grid">
+                                            <label>
+                                              Status
+                                              <select
+                                                name="status"
+                                                disabled={
+                                                  stageVerification(s).length >
+                                                  0
+                                                }
+                                                defaultValue={s.status}
+                                                key={s.status}
+                                              >
+                                                {stageVerification(s).length >
+                                                  0 && (
+                                                  <option value={s.status}>
+                                                    {s.status} — driven by
+                                                    verified records
+                                                  </option>
+                                                )}
+                                                {statuses.map((status) => (
+                                                  <option key={status}>
+                                                    {status}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </label>
+                                            <label className="check-row">
+                                              <input
+                                                name="visible"
+                                                type="checkbox"
+                                                defaultChecked={s.visible}
+                                                key={String(s.visible)}
+                                              />
+                                              Client visible
+                                            </label>
+                                          </div>
                                         </ActionForm>
-                                        <ActionForm
-                                          action={moveStage}
-                                          label="Move down"
-                                        >
-                                          <input
-                                            type="hidden"
-                                            name="id"
-                                            value={s.id}
-                                          />
-                                          <input
-                                            type="hidden"
-                                            name="direction"
-                                            value="1"
-                                          />
-                                        </ActionForm>
-                                        <details>
-                                          <summary>Remove</summary>
+                                        <div className="stage-tool-row">
                                           <ActionForm
-                                            action={removeStage}
-                                            label="Confirm removal"
+                                            action={moveStage}
+                                            label="Move up"
                                           >
                                             <input
                                               type="hidden"
                                               name="id"
                                               value={s.id}
                                             />
+                                            <input
+                                              type="hidden"
+                                              name="direction"
+                                              value="-1"
+                                            />
                                           </ActionForm>
-                                        </details>
-                                      </div>
+                                          <ActionForm
+                                            action={moveStage}
+                                            label="Move down"
+                                          >
+                                            <input
+                                              type="hidden"
+                                              name="id"
+                                              value={s.id}
+                                            />
+                                            <input
+                                              type="hidden"
+                                              name="direction"
+                                              value="1"
+                                            />
+                                          </ActionForm>
+                                          <details>
+                                            <summary>Remove</summary>
+                                            <ActionForm
+                                              action={removeStage}
+                                              label="Confirm removal"
+                                            >
+                                              <input
+                                                type="hidden"
+                                                name="id"
+                                                value={s.id}
+                                              />
+                                            </ActionForm>
+                                          </details>
+                                        </div>
+                                      </details>
                                     </details>
                                   ) : (
                                     <details

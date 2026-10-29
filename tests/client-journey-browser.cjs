@@ -838,6 +838,24 @@ const server = createServer(async (req, res) => {
       viewport: { width: 390, height: 844 },
     });
     page.on("pageerror", (e) => errors.push(e.message));
+    const captureUi = async (name, target = page) => {
+      for (const width of [390, 1440, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect
+          .poll(() =>
+            page.evaluate(
+              () => document.documentElement.scrollWidth <= innerWidth,
+            ),
+          )
+          .toBe(true);
+        await target.screenshot({
+          path: `/tmp/aba-ui-${name}-${width}.png`,
+          ...(target === page ? { fullPage: true } : {}),
+        });
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
+    };
+
     await page.goto(`http://127.0.0.1:${appPort}/login`);
     await page
       .getByLabel("Email address", { exact: true })
@@ -865,16 +883,18 @@ const server = createServer(async (req, res) => {
         0,
       );
       assert.equal(
-        await page.getByRole("link", { name: /Download.*PDF/ }).count(),
+        await page.getByRole("link", { name: /Download/ }).count(),
         0,
       );
+      await captureUi("discovery");
       prospective.release_step = "proposal";
       await page.reload();
-      await page.getByRole("link", { name: "Download proposal PDF" }).waitFor();
+      await page.getByRole("link", { name: "Download proposal" }).waitFor();
       assert.equal(
-        await page.getByRole("link", { name: "Download contract PDF" }).count(),
+        await page.getByRole("link", { name: "Download contract" }).count(),
         0,
       );
+      await captureUi("proposal");
       await page
         .getByLabel("Message", { exact: true })
         .fill("I would like to proceed after our call");
@@ -889,14 +909,15 @@ const server = createServer(async (req, res) => {
       assert.equal(project.deposit_paid, false);
       prospective.release_step = "agreement";
       await page.reload();
-      await page.getByRole("link", { name: "Download contract PDF" }).waitFor();
-      await page.getByRole("link", { name: "Download invoice PDF" }).waitFor();
+      await page.getByRole("link", { name: "Download contract" }).waitFor();
+      await page.getByRole("link", { name: "Download invoice" }).waitFor();
       assert.equal(
         await page
           .getByRole("heading", { name: "Your project journey", exact: true })
           .count(),
         0,
       );
+      await captureUi("agreement");
       prospective.enquiry_status = "closed";
       await page.goto(`http://127.0.0.1:${appPort}/welcome`);
       await page
@@ -905,7 +926,7 @@ const server = createServer(async (req, res) => {
         )
         .waitFor();
       assert.equal(
-        await page.getByRole("link", { name: /Download.*PDF/ }).count(),
+        await page.getByRole("link", { name: /Download/ }).count(),
         0,
       );
       prospective.enquiry_status = "considering";
@@ -932,6 +953,7 @@ const server = createServer(async (req, res) => {
           { exact: true },
         ),
       });
+      await captureUi("owner-sharing", management);
       await management
         .getByLabel(
           "Allow this client’s invited account into the potential-client area",
@@ -966,7 +988,7 @@ const server = createServer(async (req, res) => {
         0,
       );
       assert.equal(
-        await page.getByRole("link", { name: /Download.*PDF/ }).count(),
+        await page.getByRole("link", { name: /Download/ }).count(),
         0,
       );
       await page
@@ -988,9 +1010,9 @@ const server = createServer(async (req, res) => {
         management.getByRole("button", { name: "Save potential-client area" }),
       ).toBeEnabled();
       await page.getByRole("button", { name: /Preview client portal/ }).click();
-      await page.getByRole("link", { name: "Download proposal PDF" }).waitFor();
+      await page.getByRole("link", { name: "Download proposal" }).waitFor();
       assert.equal(
-        await page.getByRole("link", { name: "Download contract PDF" }).count(),
+        await page.getByRole("link", { name: "Download contract" }).count(),
         0,
       );
       assert.ok(
@@ -1011,16 +1033,21 @@ const server = createServer(async (req, res) => {
       await page
         .getByRole("button", { name: "Enquiries", exact: true })
         .click();
-      await page.getByText(/Tally enquiry company.*Tally.*new/).click();
+      await page
+        .locator(".enquiry-card > summary")
+        .filter({ hasText: "Tally enquiry company" })
+        .click();
+      await page.getByText(/View enquiry answers/).click();
       await page
         .getByText("A design-focused Framer website", { exact: true })
         .waitFor();
       await page
         .getByText("Create a potential project", { exact: true })
         .click();
+      await captureUi("enquiries", page.locator(".enquiries-panel"));
       const form = page.locator("form").filter({
         has: page.getByRole("button", {
-          name: "Create potential client/project",
+          name: "Create potential project",
           exact: true,
         }),
       });
@@ -1032,7 +1059,7 @@ const server = createServer(async (req, res) => {
         .fill("2027-01-01");
       await form
         .getByRole("button", {
-          name: "Create potential client/project",
+          name: "Create potential project",
           exact: true,
         })
         .click();
@@ -1386,10 +1413,17 @@ const server = createServer(async (req, res) => {
         await stage.locator("summary").first().innerText(),
         /Awaiting verification/,
       );
+      const stageSettings = stage.locator("details").filter({
+        has: page
+          .locator("summary")
+          .filter({ hasText: /^Edit stage settings$/ }),
+      });
+      await stageSettings.locator("summary").first().click();
       assert.equal(
         await stage.locator('select[name="status"]').isDisabled(),
         true,
       );
+      await stageSettings.locator("summary").first().click();
       const stageFile = stage.locator(".file-visibility").first();
       const libraryFile = page
         .locator(".document-item .file-visibility")
@@ -1399,11 +1433,12 @@ const server = createServer(async (req, res) => {
         /verify the signed contract; verify the deposit payment/,
       );
       assert.equal(await stageFile.innerText(), await libraryFile.innerText());
+      await captureUi("verification", stage);
       const confirmations = stage.locator(".journey-verification form");
       await confirmations.nth(0).getByRole("checkbox").check();
       await confirmations
         .nth(0)
-        .getByRole("button", { name: "Confirm verified record" })
+        .getByRole("button", { name: "Verify signed contract" })
         .click();
       await page.waitForFunction(() =>
         document
@@ -1415,7 +1450,7 @@ const server = createServer(async (req, res) => {
       await confirmations.nth(1).getByRole("checkbox").check();
       await confirmations
         .nth(1)
-        .getByRole("button", { name: "Confirm verified record" })
+        .getByRole("button", { name: "Verify 50% deposit" })
         .click();
       await page.waitForFunction(() =>
         document

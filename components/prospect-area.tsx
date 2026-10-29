@@ -2,6 +2,14 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  ArrowDownToLine,
+  ArrowUpRight,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  FileText,
+} from "lucide-react";
 import BrandMark from "./brand-mark";
 import { PasswordForm } from "./auth-forms";
 import type { ProspectEntry } from "@/lib/prospects";
@@ -41,10 +49,11 @@ function ProspectForm({
         })
       }
     >
-      <fieldset disabled={pending}>
+      <fieldset disabled={pending} className="action-fields">
         <input name="documentId" type="hidden" value={documentId} />
         {kind === "proposal" ? (
           <>
+            <h4>Let me know what you think</h4>
             <label>
               My response
               <select name="decision">
@@ -64,6 +73,11 @@ function ProspectForm({
           </>
         ) : (
           <>
+            <h4>Return your signed contract</h4>
+            <p>
+              Download the contract, complete/sign it in Acrobat or our agreed
+              tool, then save and return the PDF here. PDF only, up to 3 MB.
+            </p>
             <label>
               Signed or completed PDF
               <input
@@ -73,10 +87,6 @@ function ProspectForm({
                 required
               />
             </label>
-            <p>
-              Download the contract, complete/sign it in Acrobat or our agreed
-              tool, then save and return the PDF here. PDF only, up to 3 MB.
-            </p>
           </>
         )}
         <button className="primary">
@@ -87,7 +97,12 @@ function ProspectForm({
               : "Send signed PDF for review"}
         </button>
         {result && (
-          <p role={result.ok ? "status" : "alert"}>{result.message}</p>
+          <p
+            className={result.ok ? "form-result" : "form-result error"}
+            role={result.ok ? "status" : "alert"}
+          >
+            {result.message}
+          </p>
         )}
       </fieldset>
     </form>
@@ -103,17 +118,22 @@ export default function ProspectArea({
   ready?: boolean;
 }) {
   return (
-    <main className="auth-page contract-area-page">
-      <Link className="logo" href="/">
+    <main className="auth-page contract-area-page prospect-page">
+      <Link className="logo" href="/" aria-label="Alex Bell Arts home">
         <BrandMark />
       </Link>
       <div className="contract-area-content">
-        <h1>Let’s explore your project</h1>
-        <p>
-          A place to arrange our discovery call and review the next steps. Your
-          creative project journey opens after I verify the signed contract and
-          50% deposit.
-        </p>
+        <header className="prospect-intro">
+          <span className="section-kicker">
+            ALEX BELL ARTS · YOUR CLIENT SPACE
+          </span>
+          <h1>Let’s explore your project</h1>
+          <p>
+            Everything you need to get started, one step at a time. Your
+            creative journey opens after I verify your signed contract and 50%
+            deposit.
+          </p>
+        </header>
         {!ready && (
           <p>
             The potential-client area needs its setup update before it can be
@@ -127,8 +147,11 @@ export default function ProspectArea({
           </p>
         )}
         {entries.map((p) => (
-          <section className="panel" key={p.project_id}>
-            <h2>{p.name}</h2>
+          <section className="panel prospect-project" key={p.project_id}>
+            <header className="prospect-project-heading">
+              <span className="section-kicker">YOUR PROJECT</span>
+              <h2>{p.name}</h2>
+            </header>
             {preview && !p.enabled && (
               <div className="banner">
                 Not shared yet. Enable this potential-client area before
@@ -152,87 +175,151 @@ export default function ProspectArea({
                   </Link>
                 ) : (
                   <>
-                    <h3>
-                      {p.release_step === "discovery"
-                        ? "Book our discovery call"
-                        : p.release_step === "proposal"
-                          ? "Your project proposal"
-                          : "Contract & deposit"}
-                    </h3>
-                    <a
-                      className="resource"
-                      href={p.booking_url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Book a discovery call ↗
-                    </a>
-                    {p.release_step === "discovery" && (
+                    <div className="prospect-next-step">
+                      <span className="section-kicker">
+                        {p.release_step === "discovery"
+                          ? "STEP 1 OF 3"
+                          : p.release_step === "proposal"
+                            ? "STEP 2 OF 3"
+                            : "STEP 3 OF 3"}{" "}
+                        · GETTING STARTED
+                      </span>
+                      <h3>
+                        {p.release_step === "discovery"
+                          ? "Book our discovery call"
+                          : p.release_step === "proposal"
+                            ? "Your project proposal"
+                            : "Contract & deposit"}
+                      </h3>
                       <p>
-                        We’ll discuss your goals and whether we’re a good fit.
-                        I’ll share a proposal here when it’s ready.
+                        {p.release_step === "discovery"
+                          ? "We’ll discuss your goals and whether we’re a good fit. I’ll share a proposal here when it’s ready."
+                          : p.release_step === "proposal"
+                            ? "Take a look at the proposal below, then let me know if you’d like to go ahead or have any questions."
+                            : "Download your contract and invoice below. Return your signed PDF and arrange the 50% deposit using the details in the invoice."}
                       </p>
-                    )}
+                      <a
+                        className={
+                          p.release_step === "discovery"
+                            ? "primary action-link"
+                            : "secondary action-link"
+                        }
+                        href={p.booking_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <CalendarDays size={18} aria-hidden="true" /> Book a
+                        discovery call{" "}
+                        <ArrowUpRight size={16} aria-hidden="true" />
+                      </a>
+                    </div>
                     {p.release_step === "agreement" && (
-                      <p>
-                        Signed contract:{" "}
-                        {p.contract_signed
-                          ? "verified"
-                          : "awaiting my verification"}
-                        . Deposit:{" "}
-                        {p.deposit_paid
-                          ? "verified"
-                          : "awaiting my verification"}
-                        . Your full journey remains hidden until both are
-                        verified.
-                      </p>
-                    )}
-                    {p.documents.map((d) => (
-                      <article className="business-record" key={d.id}>
-                        <h3>
-                          {d.document_role} · {d.name} · {d.version_label}
-                        </h3>
-                        <a className="resource" href={"/files/" + d.id}>
-                          Download {d.document_role.toLowerCase()} PDF ↗
-                        </a>
-                        {d.document_role === "Proposal" &&
-                          (p.responses.some((r) => r.document_id === d.id) ? (
-                            <p>
-                              Your proposal response has been sent. Contact me
-                              if you’d like to change it.
-                            </p>
-                          ) : (
-                            !preview && (
-                              <ProspectForm documentId={d.id} kind="proposal" />
-                            )
-                          ))}
-                        {d.document_role === "Contract" && (
-                          <>
-                            {p.returns
-                              .filter((a) => a.contract_document_id === d.id)
-                              .map((a) => (
-                                <a
-                                  className="resource"
-                                  key={a.id}
-                                  href={"/assets/" + a.id}
-                                >
-                                  Your returned copy · {a.name} ↗
-                                </a>
-                              ))}
-                            {!preview && (
-                              <ProspectForm documentId={d.id} kind="contract" />
+                      <div
+                        className="prospect-checks"
+                        aria-label="Project access checks"
+                      >
+                        {[
+                          ["Signed contract", p.contract_signed],
+                          ["50% deposit", p.deposit_paid],
+                        ].map(([label, verified]) => (
+                          <div
+                            className={
+                              verified
+                                ? "access-check is-verified"
+                                : "access-check"
+                            }
+                            key={String(label)}
+                          >
+                            {verified ? (
+                              <CheckCircle2 size={20} aria-hidden="true" />
+                            ) : (
+                              <Clock3 size={20} aria-hidden="true" />
                             )}
-                          </>
-                        )}
-                        {d.document_role === "Invoice" && (
-                          <p>
-                            Follow the payment details in my invoice. I’ll
-                            verify receipt; uploading a file does not record a
-                            payment.
-                          </p>
-                        )}
-                      </article>
-                    ))}
+                            <div>
+                              <b>{label}</b>
+                              <span>
+                                {verified
+                                  ? "Verified"
+                                  : "Awaiting my verification"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        <p>
+                          Your full journey remains hidden until both are
+                          verified.
+                        </p>
+                      </div>
+                    )}
+                    {p.documents.length > 0 && (
+                      <h3 className="files-heading">Your documents</h3>
+                    )}
+                    <div className="prospect-documents">
+                      {p.documents.map((d) => (
+                        <article className="prospect-document" key={d.id}>
+                          <header className="document-heading">
+                            <span className="document-icon">
+                              <FileText size={22} aria-hidden="true" />
+                            </span>
+                            <div>
+                              <h4>{d.document_role}</h4>
+                              <p>
+                                {d.name} <span>· {d.version_label}</span>
+                              </p>
+                            </div>
+                          </header>
+                          <a
+                            className="secondary action-link"
+                            href={"/files/" + d.id}
+                          >
+                            <ArrowDownToLine size={17} aria-hidden="true" />{" "}
+                            Download {d.document_role.toLowerCase()}
+                          </a>
+                          {d.document_role === "Proposal" &&
+                            (p.responses.some((r) => r.document_id === d.id) ? (
+                              <p>
+                                Your proposal response has been sent. Contact me
+                                if you’d like to change it.
+                              </p>
+                            ) : (
+                              !preview && (
+                                <ProspectForm
+                                  documentId={d.id}
+                                  kind="proposal"
+                                />
+                              )
+                            ))}
+                          {d.document_role === "Contract" && (
+                            <>
+                              {p.returns
+                                .filter((a) => a.contract_document_id === d.id)
+                                .map((a) => (
+                                  <a
+                                    className="resource"
+                                    key={a.id}
+                                    href={"/assets/" + a.id}
+                                  >
+                                    Your returned copy · {a.name} ↗
+                                  </a>
+                                ))}
+                              {!preview && (
+                                <ProspectForm
+                                  documentId={d.id}
+                                  kind="contract"
+                                />
+                              )}
+                            </>
+                          )}
+                          {d.document_role === "Invoice" && (
+                            <p>
+                              Follow the payment details in my invoice. I’ll
+                              verify receipt; uploading a file does not record a
+                              payment.
+                            </p>
+                          )}
+                        </article>
+                      ))}
+                    </div>
                     {p.release_step !== "discovery" && !p.documents.length && (
                       <p>
                         I’ll share the relevant PDFs here when they’re ready.
@@ -245,7 +332,7 @@ export default function ProspectArea({
           </section>
         ))}
         {preview ? (
-          <p>
+          <p className="preview-note">
             This preview is read-only. The full creative journey is deliberately
             hidden before onboarding.
           </p>

@@ -103,3 +103,9 @@ After applying migration 202610280007, use Clients → Delete client permanently
 
 ### Potential clients and automatic enquiries
 The pre-onboarding view now starts with discovery booking and shows proposal/contract/deposit PDFs only as the owner releases each step. Full creative stages stay hidden until verified contract/deposit. Track non-proceeding enquiries without deleting them. The owner Enquiries inbox supports manual word-of-mouth records and authenticated Tally webhooks; no invitation is automatic. See [single setup update and Tally connection steps](docs/POTENTIAL-CLIENTS-AND-TALLY.md). Hosted configuration/acceptance remains required.
+
+### Clearer everyday screens
+The connected enquiry inbox, potential-client area and project journey now use grouped settings, distinct document cards and clearer action labels. Enquiry answers expand separately from project creation; sharing, verification and stage progress have separate visual treatments. Mobile controls are larger, and download labels work for both PDFs and supported images. No additional SQL is required.
+
+### Owner-confirmed hosted checks — 29 October 2026
+Alex reported the combined SQL update succeeded, supplied a screenshot showing a fictional Tally submission with its answers in the live Enquiries inbox, and confirmed enquiry conversion, restricted discovery/agreement previews and independent contract/deposit unlocking worked. This establishes those owner-run checks; actual invited-client signing/return, webhook retry/invalid-signature hosted checks and the remaining security/privacy acceptance are still pending. The subsequent interface update is verified locally, not yet accepted on the hosted app.

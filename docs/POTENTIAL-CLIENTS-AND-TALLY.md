@@ -53,3 +53,9 @@ Incoming payloads are limited to 64 KiB, 100 fields and bounded text. Enquiries 
 - Confirm deletion still removes linked prospect spaces/responses and converted enquiry content before deleting dependent stages; audit/Auth records and minimal webhook receipt IDs remain.
 
 Local SQL tests cover these database boundaries; Chromium and webhook route tests use fictional services. They do not establish hosted delivery, booking completion or production privacy/security approval.
+
+## Owner-confirmed checks — 29 October 2026
+
+Alex confirmed the combined SQL completed and supplied a live Enquiries screenshot showing the fictional Tally submission and answers. He also confirmed conversion, discovery and agreement owner previews, and separate contract/deposit verification unlocking. Tally and Vercel secrets were configured by Alex; no secrets were supplied to the coding workspace. These confirmations do not establish webhook retries, hosted rejection of invalid signatures, a real invited-client contract return or the remaining isolation/privacy checks.
+
+The interface follow-up groups answers, release settings and document cards and uses larger mobile controls; it requires no additional SQL. Owner preview remains read-only.

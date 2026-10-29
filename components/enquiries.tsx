@@ -1,6 +1,7 @@
 "use client";
 import { useState, type ComponentType, type ReactNode } from "react";
 import type { WorkspaceData } from "@/lib/workspace";
+import { Inbox, MessageSquare, UserPlus } from "lucide-react";
 import {
   addManualEnquiry,
   convertEnquiry,
@@ -16,13 +17,28 @@ export default function Enquiries({
     action: (form: FormData) => Promise<Result>;
     children: ReactNode;
     label?: string;
+    className?: string;
   }>;
 }) {
   const [filter, setFilter] = useState("open");
   const [notice, setNotice] = useState("");
   return (
-    <section className="panel">
-      <h2>Enquiries</h2>
+    <section className="panel enquiries-panel">
+      <header className="section-heading">
+        <div>
+          <span className="section-kicker">NEW CONVERSATIONS</span>
+          <h2>Enquiries</h2>
+        </div>
+        <span className="status-badge">
+          <Inbox size={15} aria-hidden="true" />
+          {
+            (data.enquiries ?? []).filter((e) =>
+              ["new", "reviewing"].includes(e.status),
+            ).length
+          }{" "}
+          to review
+        </span>
+      </header>
       {notice && (
         <p className="banner" role="status">
           {notice}
@@ -36,8 +52,11 @@ export default function Enquiries({
         <p>The enquiries SQL update is needed to connect this inbox.</p>
       ) : (
         <>
-          <details>
-            <summary>Add a word-of-mouth enquiry</summary>
+          <details className="settings-disclosure manual-enquiry">
+            <summary>
+              <MessageSquare size={17} aria-hidden="true" /> Add a word-of-mouth
+              enquiry
+            </summary>
             <Form action={addManualEnquiry} label="Save enquiry">
               <label>
                 Business name
@@ -57,7 +76,7 @@ export default function Enquiries({
               </label>
             </Form>
           </details>
-          <label>
+          <label className="enquiry-filter">
             Show enquiries
             <select value={filter} onChange={(e) => setFilter(e.target.value)}>
               <option value="open">New / reviewing</option>
@@ -75,35 +94,74 @@ export default function Enquiries({
                   : e.status === filter),
             )
             .map((e) => (
-              <details className="business-record" key={e.id}>
+              <details className="enquiry-card" key={e.id}>
                 <summary>
-                  {e.business_name || e.contact_name || "New enquiry"} ·{" "}
-                  {e.source === "tally" ? "Tally" : "Manual"} · {e.status}
+                  <span className="enquiry-title">
+                    {e.business_name || e.contact_name || "New enquiry"}
+                    <small>
+                      {e.source === "tally"
+                        ? "Tally submission"
+                        : "Word of mouth"}
+                    </small>
+                  </span>
+                  <span
+                    className={
+                      e.status === "new"
+                        ? "status-badge status-new"
+                        : "status-badge"
+                    }
+                  >
+                    {e.status === "closed"
+                      ? "Not proceeding"
+                      : e.status === "converted"
+                        ? "Project created"
+                        : e.status === "reviewing"
+                          ? "Reviewing"
+                          : "New"}
+                  </span>
                 </summary>
-                <p>
+                <p className="enquiry-contact">
                   {e.contact_name} · {e.email}
                 </p>
-                {e.fields.map((f, i) => (
-                  <div className="brief-field" key={i}>
-                    <b>{f.label}</b>
-                    <p>{f.value}</p>
-                  </div>
-                ))}
+                <details className="settings-disclosure enquiry-answers">
+                  <summary>View enquiry answers ({e.fields.length})</summary>
+                  {e.fields.map((f, i) => (
+                    <div className="brief-field" key={i}>
+                      <b>{f.label}</b>
+                      <p>{f.value || "Not provided"}</p>
+                    </div>
+                  ))}
+                </details>
                 {e.status !== "converted" ? (
                   <>
-                    <Form action={updateEnquiry} label="Update enquiry">
-                      <input type="hidden" name="id" value={e.id} />
-                      <label>
-                        Enquiry status
-                        <select name="status" defaultValue={e.status}>
-                          <option value="new">New</option>
-                          <option value="reviewing">Reviewing</option>
-                          <option value="closed">Not proceeding</option>
-                        </select>
-                      </label>
-                    </Form>
-                    <details>
-                      <summary>Create a potential project</summary>
+                    <section className="form-section enquiry-status">
+                      <h3>Track this conversation</h3>
+                      <Form
+                        action={updateEnquiry}
+                        label="Update enquiry"
+                        className="secondary-action"
+                      >
+                        <input type="hidden" name="id" value={e.id} />
+                        <label>
+                          Enquiry status
+                          <select name="status" defaultValue={e.status}>
+                            <option value="new">New</option>
+                            <option value="reviewing">Reviewing</option>
+                            <option value="closed">Not proceeding</option>
+                          </select>
+                        </label>
+                      </Form>
+                    </section>
+                    <details className="settings-disclosure enquiry-convert">
+                      <summary>
+                        <UserPlus size={18} aria-hidden="true" /> Create a
+                        potential project
+                      </summary>
+                      <p>
+                        Ready for a discovery call? Create the project first,
+                        then choose what to share and invite the client
+                        separately.
+                      </p>
                       <Form
                         action={async (form) => {
                           const result = await convertEnquiry(form);
@@ -115,7 +173,7 @@ export default function Enquiries({
                               }
                             : result;
                         }}
-                        label="Create potential client/project"
+                        label="Create potential project"
                       >
                         <input type="hidden" name="id" value={e.id} />
                         <label>
@@ -214,7 +272,16 @@ export default function Enquiries({
               (filter === "open"
                 ? ["new", "reviewing"].includes(e.status)
                 : e.status === filter),
-          ) && <p>No enquiries in this view.</p>}
+          ) && (
+            <div className="enquiry-empty">
+              <Inbox size={28} aria-hidden="true" />
+              <h3>You’re all caught up</h3>
+              <p>
+                No enquiries in this view. New form submissions will appear in
+                your inbox.
+              </p>
+            </div>
+          )}
         </>
       )}
     </section>

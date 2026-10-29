@@ -1,5 +1,6 @@
 "use client";
 import type { ComponentType, ReactNode } from "react";
+import { ArrowDownToLine, FileText } from "lucide-react";
 import type { WorkspaceData, DbStage } from "@/lib/workspace";
 import type { Result } from "@/app/actions";
 import {
@@ -67,10 +68,12 @@ export default function StageWorkspace({
         />
       )}
       {admin && project && (
-        <p>
+        <p className="helper-note stage-access-note">
           Full portal file access:{" "}
           {!(project.contract_signed && project.deposit_paid)
-            ? "locked until the signed contract and deposit are verified. An enabled initial contract area is separate and only exposes shared contracts."
+            ? data.prospectSpaces?.some((s) => s.project_id === project.id)
+              ? "locked until the signed contract and deposit are verified. Early documents follow the step released in the potential-client area."
+              : "locked until the signed contract and deposit are verified. An enabled initial contract area is separate and only exposes shared contracts."
             : !stage.visible
               ? "this stage is internal; its files stay private."
               : "shared files in this stage are available; final deliverables also need verified final approval and payment."}
@@ -190,6 +193,7 @@ export default function StageWorkspace({
           )}
         </>
       )}
+      <h3 className="files-heading">Files for this stage</h3>
       {documents.length === 0 && (
         <p>
           No documents have been {admin ? "uploaded" : "shared"} for this stage
@@ -198,9 +202,23 @@ export default function StageWorkspace({
       )}
       {documents.map((d) => (
         <article className="stage-file" key={d.id}>
-          <a className="resource" href={"/files/" + d.id}>
-            {d.document_role ?? "Document"} · {d.name} ·{" "}
-            {d.version_label ?? "v1"} ↗
+          <header className="document-heading">
+            <span className="document-icon">
+              <FileText size={22} aria-hidden="true" />
+            </span>
+            <div>
+              <h4>{d.document_role ?? "Document"}</h4>
+              <p>
+                {d.name} · {d.version_label ?? "v1"}
+              </p>
+            </div>
+          </header>
+          <a
+            className="secondary action-link"
+            href={"/files/" + d.id}
+            aria-label={"Download " + d.name}
+          >
+            <ArrowDownToLine size={17} aria-hidden="true" /> Download file
           </a>
           {admin && project && (
             <p className="file-visibility">
@@ -219,6 +237,7 @@ export default function StageWorkspace({
             <Form
               action={publishDocument}
               label={d.published ? "Unpublish file" : "Share file with client"}
+              className={d.published ? "secondary-action" : ""}
             >
               <input type="hidden" name="id" value={d.id} />
               <input
@@ -236,6 +255,7 @@ export default function StageWorkspace({
           )}
         </article>
       ))}
+      {assets.length > 0 && <h3 className="files-heading">Client returns</h3>}
       {assets.map((a) => (
         <a className="resource" key={a.id} href={"/assets/" + a.id}>
           Returned client file · {a.name} ↗
@@ -245,7 +265,7 @@ export default function StageWorkspace({
         <>
           {admin && (
             <>
-              <details>
+              <details className="settings-disclosure">
                 <summary>Edit stage instructions & booking link</summary>
                 <Form action={saveStageResources} label="Save stage details">
                   <input type="hidden" name="stageId" value={stage.id} />
@@ -269,7 +289,7 @@ export default function StageWorkspace({
                   </label>
                 </Form>
               </details>
-              <details>
+              <details className="settings-disclosure stage-upload">
                 <summary>Upload my PDF or presentation for this stage</summary>
                 <Form action={uploadDocument} label="Upload to this stage">
                   <input

@@ -156,3 +156,12 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Added private Enquiries inbox with manual records, explicit atomic conversion and a signed/size-limited, form-scoped Tally webhook. Transactional minimal receipts deduplicate retries even after source content deletion. No automatic invitation/email/access changes.
 - Added canonical migrations 008/009 and a tested convenience setup that applies only missing 007/008/009, preserving existing data and flags. Hosted setup and acceptance remain pending.
 - Validation: 66 automated tests, strict type checking and production build passed. Chromium verified discovery/proposal/agreement progression, owner release controls and restricted preview, explicit enquiry conversion, and existing deletion-retry/contract-return/website-template flows with fictional services. No live Tally delivery, secret configuration or hosted migration was performed.
+
+## Clearer everyday interface — 29 October 2026
+
+- Reworked potential-client screens with a compact welcome, clear next step, individual document cards and separate contract/deposit status checks. Download labels no longer incorrectly call JPG/image uploads PDFs.
+- Grouped owner sharing/status and next-step settings; moved document-stage mappings behind an expandable section while preserving saved selections and form submission.
+- Gave enquiry cards readable status badges, an inbox count, expandable answers and distinct conversation/project-creation controls.
+- Added explicit signed-contract, deposit, final-payment and approval verification button labels; separated verification removal, shared files and returned files visually. Stage editing/reordering now sits in an expandable settings section after the stage’s main work. Improved contrast, focus states, mobile text/control sizes and spacing. No migration, payment/signature inference or permission changes.
+- Owner confirmed the prior hosted combined SQL, fictional Tally delivery, conversion, limited previews and independent contract/deposit gates. Actual invited-client returns and remaining hosted acceptance are still pending.
+- Validation: all 66 automated tests, strict TypeScript and production build passed. Fictional Chromium journeys covered prospective phases, owner release/preview, enquiry conversion, contract/deposit verification and revocation, Framer stages and client file returns. Layout captures checked 320/390/1440 px widths with no horizontal page overflow on the updated screens. Hosted acceptance of this interface update remains pending.
