@@ -22,6 +22,7 @@ function refresh() {
   revalidatePath("/workspace");
   revalidatePath("/portal");
   revalidatePath("/contracts");
+  revalidatePath("/welcome");
 }
 async function run(fn: () => Promise<string | void>): Promise<Result> {
   try {
@@ -451,7 +452,7 @@ export async function inviteClient(form: FormData): Promise<Result> {
         throw Error("Invitation eligibility could not be checked.");
       if (contractEligibility.data !== true)
         throw Error(
-          "Verify contract/deposit or enable an initial contract area with a shared Contract PDF before inviting this client.",
+          "Enable a potential-client area, share an initial contract area, or verify contract/deposit before inviting this client.",
         );
     }
     const service = invitationAdmin();
@@ -1029,4 +1030,154 @@ export async function deleteClient(form: FormData): Promise<Result> {
   } finally {
     refresh();
   }
+}
+
+export async function saveProspectSpace(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const { bookingUrl } = await import("@/lib/stage-links");
+    const stage = (name: string) =>
+      form.get(name) ? uuid.parse(form.get(name)) : null;
+    const result = await db.rpc("set_prospect_space", {
+      target: uuid.parse(form.get("projectId")),
+      shared: form.get("enabled") === "on",
+      step: z
+        .enum(["discovery", "proposal", "agreement"])
+        .parse(form.get("release_step")),
+      status: z
+        .enum(["new", "discovery", "proposal", "considering", "closed"])
+        .parse(form.get("enquiry_status")),
+      booking: bookingUrl(z.string().min(1).parse(form.get("booking_url"))),
+      proposal_stage: stage("proposal_stage_id"),
+      contract_stage: stage("contract_stage_id"),
+      invoice_stage: stage("invoice_stage_id"),
+    });
+    if (result.error)
+      throw Error(
+        "Potential-client settings could not be saved. Check the selected stages and apply the potential-client SQL update. Active projects cannot be marked Not proceeding.",
+      );
+    return "Enquiry status and client step saved. Create a private invitation under Clients when you are ready; no email was sent.";
+  });
+}
+export async function respondToProposal(form: FormData) {
+  return run(async () => {
+    const { db, user, profile } = await identity();
+    if (profile.role !== "client")
+      throw Error("Use a client account to send a proposal response.");
+    const document_id = uuid.parse(form.get("documentId"));
+    const original = await db
+      .from("documents")
+      .select("project_id,document_role")
+      .eq("id", document_id)
+      .single();
+    checked(original.error);
+    if (original.data?.document_role !== "Proposal")
+      throw Error("Proposal unavailable.");
+    const result = await db.from("proposal_responses").insert({
+      document_id,
+      project_id: original.data.project_id,
+      actor_id: user.id,
+      decision: z
+        .enum(["interested", "question", "declined"])
+        .parse(form.get("decision")),
+      message: z
+        .string()
+        .trim()
+        .max(2000)
+        .parse(form.get("message") ?? ""),
+    });
+    if (result.error)
+      throw Error(
+        "Your response could not be saved, or one has already been sent. Please contact me if you need to change it.",
+      );
+    return "Your proposal response has been sent to me. No contract or payment has been confirmed.";
+  });
+}
+
+export async function addManualEnquiry(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const business_name = z
+        .string()
+        .trim()
+        .min(1)
+        .max(120)
+        .parse(form.get("business_name")),
+      contact_name = z
+        .string()
+        .trim()
+        .min(1)
+        .max(120)
+        .parse(form.get("contact_name")),
+      email = z.email().parse(form.get("email")),
+      notes = z
+        .string()
+        .trim()
+        .max(4000)
+        .parse(form.get("notes") ?? "");
+    checked(
+      (
+        await db
+          .from("enquiries")
+          .insert({
+            source: "manual",
+            business_name,
+            contact_name,
+            email,
+            fields: notes ? [{ label: "Initial notes", value: notes }] : [],
+          })
+      ).error,
+    );
+  });
+}
+export async function updateEnquiry(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const id = uuid.parse(form.get("id")),
+      status = z.enum(["new", "reviewing", "closed"]).parse(form.get("status"));
+    checked(
+      (
+        await db
+          .from("enquiries")
+          .update({ status })
+          .eq("id", id)
+          .neq("status", "converted")
+          .select("id")
+          .single()
+      ).error,
+    );
+  });
+}
+export async function convertEnquiry(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const client = clientInput.parse(Object.fromEntries(form));
+    const project = projectInput.parse({
+      name: form.get("project_name"),
+      clientId: form.get("id"),
+      type: form.get("type"),
+      due: form.get("due"),
+      budget: form.get("budget"),
+    });
+    const converted = await db.rpc("convert_enquiry", {
+      target: uuid.parse(form.get("id")),
+      business: client.name,
+      contact: client.contact,
+      address: client.email,
+      sector_name: client.sector,
+      project_name: project.name,
+      project_type: project.type,
+      due_date: project.due,
+      project_budget: project.budget,
+      template: newProjectStages(project.type),
+      existing_client: form.get("existing_client")
+        ? uuid.parse(form.get("existing_client"))
+        : null,
+    });
+    if (converted.error)
+      throw Error(
+        "The enquiry could not be converted, or it has already been converted. Check the fields and SQL setup.",
+      );
+    return "Potential project created. Open Projects to enable its discovery view, then create a private invitation under Clients.";
+  });
 }

@@ -78,6 +78,7 @@ export default function StageWorkspace({
       )}
       {admin &&
         data.contractReady &&
+        !data.prospectSpaces?.some((x) => x.project_id === stage.project_id) &&
         (documents.some((d) => d.document_role === "Contract") ||
           data.contractExchanges?.some((x) => x.stage_id === stage.id)) && (
           <details>
@@ -204,8 +205,13 @@ export default function StageWorkspace({
           {admin && project && (
             <p className="file-visibility">
               {
-                fileVisibility(d, project, data.stages, data.contractExchanges)
-                  .message
+                fileVisibility(
+                  d,
+                  project,
+                  data.stages,
+                  data.contractExchanges,
+                  data.prospectSpaces,
+                ).message
               }
             </p>
           )}

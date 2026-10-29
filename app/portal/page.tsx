@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { configured, identity } from "@/lib/supabase/server";
 import { loadWorkspace } from "@/lib/workspace";
 import Link from "next/link";
+import { loadProspectArea } from "@/lib/supabase/prospects";
 import { loadContractArea } from "@/lib/contracts";
 import ConnectedStudio from "@/components/connected-studio";
 export const dynamic = "force-dynamic";
@@ -21,10 +22,20 @@ export default async function Portal() {
   }
   if (role === "admin") redirect("/workspace");
   const data = await loadWorkspace();
-  const contracts = await loadContractArea((await identity()).db);
+  const session = await identity();
+  const prospects = await loadProspectArea(session.db);
+  if (!data.projects.length && prospects.entries.length) redirect("/welcome");
+  const contracts = await loadContractArea(session.db);
   if (!data.projects.length && contracts.entries.length) redirect("/contracts");
   return (
     <>
+      {prospects.entries.some(
+        (p) => !(p.contract_signed && p.deposit_paid),
+      ) && (
+        <div className="banner">
+          <Link href="/welcome">Open my potential-client area →</Link>
+        </div>
+      )}
       {contracts.entries.some(
         (p) => !(p.contract_signed && p.deposit_paid),
       ) && (

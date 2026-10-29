@@ -2,11 +2,14 @@
 // fixture. This tests UI integration, not hosted provider security or email delivery.
 const { createServer } = require("node:http");
 const { spawn } = require("node:child_process");
-const { chromium } = require("@playwright/test");
+const { chromium, expect } = require("@playwright/test");
 const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const prospectMode = process.argv.includes("--prospect");
+const prospectOwnerMode = process.argv.includes("--prospect-owner");
+const enquiriesMode = process.argv.includes("--enquiries");
 const deletionMode =
   process.argv.includes("--delete-client") ||
   process.argv.includes("--delete-client-retry");
@@ -29,7 +32,9 @@ const ownerMode =
   verificationMode ||
   contractOwnerMode ||
   Boolean(templateMode) ||
-  deletionMode;
+  deletionMode ||
+  prospectOwnerMode ||
+  enquiriesMode;
 const uid = randomUUID(),
   cid = randomUUID(),
   pid = randomUUID(),
@@ -196,6 +201,93 @@ if (contractMode || contractOwnerMode)
     stage_id: fixtureStageId,
   });
 const remainingDeletionPaths = new Set(documents.map((d) => d.object_path));
+const prospective = {
+  project_id: pid,
+  enabled: prospectMode,
+  release_step: "discovery",
+  enquiry_status: "new",
+  booking_url: "https://calendly.com/alex-bell-arts/new-meeting",
+  proposal_stage_id: randomUUID(),
+  contract_stage_id: randomUUID(),
+  invoice_stage_id: randomUUID(),
+};
+const potentialStages = [
+  { id: prospective.proposal_stage_id, name: "Project Proposal" },
+  { id: prospective.contract_stage_id, name: "Contract" },
+  { id: prospective.invoice_stage_id, name: "Invoice" },
+].map((s, position) => ({
+  ...s,
+  project_id: pid,
+  stream: "Onboarding",
+  position,
+  status: "Not Started",
+  visible: true,
+}));
+const incoming = [
+  {
+    id: randomUUID(),
+    source: "tally",
+    business_name: "Tally enquiry company",
+    contact_name: "Taylor",
+    email: "tally@example.com",
+    status: "new",
+    fields: [{ label: "Your goals", value: "A design-focused Framer website" }],
+    linked_client_id: null,
+    linked_project_id: null,
+  },
+];
+const proposalResponses = [];
+if (prospectMode || prospectOwnerMode) {
+  project.contract_signed = false;
+  project.deposit_paid = false;
+  Object.assign(documents[0], {
+    name: "Proposal.pdf",
+    category: "document",
+    document_role: "Proposal",
+    version_label: "v1",
+    stage_id: prospective.proposal_stage_id,
+  });
+  documents.push(
+    {
+      id: randomUUID(),
+      project_id: pid,
+      name: "Agreement.pdf",
+      object_path: pid + "/" + randomUUID(),
+      category: "document",
+      published: true,
+      document_role: "Contract",
+      version_label: "v1",
+      stage_id: prospective.contract_stage_id,
+    },
+    {
+      id: randomUUID(),
+      project_id: pid,
+      name: "Deposit.pdf",
+      object_path: pid + "/" + randomUUID(),
+      category: "document",
+      published: true,
+      document_role: "Invoice",
+      version_label: "v1",
+      stage_id: prospective.invoice_stage_id,
+    },
+  );
+}
+const prospectDocuments = () =>
+  documents.filter(
+    (d) =>
+      d.published &&
+      d.category === "document" &&
+      prospective.enabled &&
+      prospective.enquiry_status !== "closed" &&
+      ((prospective.release_step !== "discovery" &&
+        d.document_role === "Proposal" &&
+        d.stage_id === prospective.proposal_stage_id) ||
+        (prospective.release_step === "agreement" &&
+          ((d.document_role === "Contract" &&
+            d.stage_id === prospective.contract_stage_id) ||
+            (d.document_role === "Invoice" &&
+              d.stage_id === prospective.invoice_stage_id)))),
+  );
 const questionnaires = [],
   feedback = [];
 const clientActions = [
@@ -273,6 +365,76 @@ const server = createServer(async (req, res) => {
       return json([]);
     }
     const table = path.split("/").pop();
+    if (table === "prospect_spaces_ready")
+      return json(prospectMode || prospectOwnerMode || enquiriesMode);
+    if (table === "enquiries_ready") return json(enquiriesMode);
+    if (table === "set_prospect_space") {
+      Object.assign(prospective, {
+        enabled: body.shared,
+        release_step: body.step,
+        enquiry_status: body.status,
+        booking_url: body.booking,
+        proposal_stage_id: body.proposal_stage,
+        contract_stage_id: body.contract_stage,
+        invoice_stage_id: body.invoice_stage,
+      });
+      return json(null);
+    }
+    if (table === "prospect_area")
+      return json(
+        (prospectMode || prospectOwnerMode) &&
+          prospective.enabled &&
+          prospective.enquiry_status !== "closed"
+          ? [
+              {
+                project_id: pid,
+                name: project.name,
+                enabled: prospective.enabled,
+                release_step: prospective.release_step,
+                enquiry_status: prospective.enquiry_status,
+                booking_url: prospective.booking_url,
+                contract_signed: project.contract_signed,
+                deposit_paid: project.deposit_paid,
+                documents: prospectDocuments().map(
+                  ({ id, name, version_label, document_role }) => ({
+                    id,
+                    name,
+                    version_label,
+                    document_role,
+                  }),
+                ),
+                returns: assets.map(
+                  ({ id, name, contract_document_id, created_at }) => ({
+                    id,
+                    name,
+                    contract_document_id,
+                    created_at,
+                  }),
+                ),
+                responses: proposalResponses.map(
+                  ({ document_id, decision, message }) => ({
+                    document_id,
+                    decision,
+                    message,
+                  }),
+                ),
+              },
+            ]
+          : [],
+      );
+    if (table === "convert_enquiry") {
+      const e = incoming.find((e) => e.id === body.target);
+      e.status = "converted";
+      e.linked_client_id = cid;
+      e.linked_project_id = pid;
+      Object.assign(project, {
+        name: body.project_name,
+        type: body.project_type,
+        contract_signed: false,
+        deposit_paid: false,
+      });
+      return json(pid);
+    }
     if (table === "client_deletion_ready") return json(deletionMode);
     if (table === "prepare_client_deletion") {
       if (body.target !== cid || body.confirmation !== "Fictional business")
@@ -426,6 +588,19 @@ const server = createServer(async (req, res) => {
     }
 
     let rows = [];
+    if (table === "prospect_spaces")
+      rows =
+        prospectMode || prospectOwnerMode || enquiriesMode ? [prospective] : [];
+    if (table === "proposal_responses") {
+      if (req.method === "POST")
+        proposalResponses.push({
+          ...body,
+          id: randomUUID(),
+          created_at: new Date().toISOString(),
+        });
+      rows = proposalResponses;
+    }
+    if (table === "enquiries") rows = incoming;
     if (table === "profiles")
       rows = [
         {
@@ -522,6 +697,8 @@ const server = createServer(async (req, res) => {
         },
       ];
     if (table === "stages" && templateMode) rows = liveTemplate;
+    if (table === "stages" && (prospectMode || prospectOwnerMode))
+      rows = potentialStages;
     if (stageMode || verificationMode) documents[0].stage_id = fixtureStageId;
     if (table === "documents")
       rows = documents.filter(
@@ -584,6 +761,24 @@ const server = createServer(async (req, res) => {
       ].includes(table)
     )
       rows = [];
+    if (prospectMode && !(project.contract_signed && project.deposit_paid)) {
+      if (
+        [
+          "projects",
+          "stages",
+          "project_details",
+          "project_handover",
+          "client_actions",
+          "questionnaires",
+          "feedback",
+          "stage_resources",
+          "invoices",
+          "proposals",
+        ].includes(table)
+      )
+        rows = [];
+      if (table === "documents") rows = prospectDocuments();
+    }
     for (const [key, value] of url.searchParams)
       if (value.startsWith("eq."))
         rows = rows.filter((r) => String(r[key]) === value.slice(3));
@@ -654,6 +849,203 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (prospectMode) {
+      await page.waitForURL("**/welcome");
+      await page
+        .getByRole("heading", {
+          name: "Let’s explore your project",
+          exact: true,
+        })
+        .waitFor();
+      await page.getByRole("link", { name: "Book a discovery call" }).waitFor();
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Your project journey", exact: true })
+          .count(),
+        0,
+      );
+      assert.equal(
+        await page.getByRole("link", { name: /Download.*PDF/ }).count(),
+        0,
+      );
+      prospective.release_step = "proposal";
+      await page.reload();
+      await page.getByRole("link", { name: "Download proposal PDF" }).waitFor();
+      assert.equal(
+        await page.getByRole("link", { name: "Download contract PDF" }).count(),
+        0,
+      );
+      await page
+        .getByLabel("Message", { exact: true })
+        .fill("I would like to proceed after our call");
+      await page
+        .getByRole("button", { name: "Send my proposal response" })
+        .click();
+      await page
+        .getByText(/Your proposal response has been sent to me/)
+        .waitFor();
+      assert.equal(proposalResponses.length, 1);
+      assert.equal(project.contract_signed, false);
+      assert.equal(project.deposit_paid, false);
+      prospective.release_step = "agreement";
+      await page.reload();
+      await page.getByRole("link", { name: "Download contract PDF" }).waitFor();
+      await page.getByRole("link", { name: "Download invoice PDF" }).waitFor();
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Your project journey", exact: true })
+          .count(),
+        0,
+      );
+      prospective.enquiry_status = "closed";
+      await page.goto(`http://127.0.0.1:${appPort}/welcome`);
+      await page
+        .getByText(
+          "No enquiries are currently shared with this account. Please contact me if you expected an invitation.",
+        )
+        .waitFor();
+      assert.equal(
+        await page.getByRole("link", { name: /Download.*PDF/ }).count(),
+        0,
+      );
+      prospective.enquiry_status = "considering";
+      project.contract_signed = true;
+      project.deposit_paid = true;
+      await page.goto(`http://127.0.0.1:${appPort}/portal`);
+      await page
+        .getByRole("heading", { name: "Your project journey", exact: true })
+        .waitFor();
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: potential client sees booking, then only released proposal/agreement PDFs; proposal interest does not verify contract/payment, closed enquiries stop sharing, both gates unlock full journey. Fictional services only.",
+      );
+      return;
+    }
+    if (prospectOwnerMode) {
+      await page
+        .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
+        .waitFor();
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      const management = page.locator("details.panel").filter({
+        has: page.getByText(
+          "Potential client · discovery, proposal & onboarding",
+          { exact: true },
+        ),
+      });
+      await management
+        .getByLabel(
+          "Allow this client’s invited account into the potential-client area",
+        )
+        .check();
+      await management
+        .getByRole("button", { name: "Save potential-client area" })
+        .click();
+      await management
+        .getByText(/Enquiry status and client step saved/)
+        .waitFor();
+      await expect(
+        management.getByRole("button", { name: "Save potential-client area" }),
+      ).toBeEnabled();
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await page
+        .getByRole("heading", {
+          name: "Let’s explore your project",
+          exact: true,
+        })
+        .waitFor();
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Your project journey", exact: true })
+          .count(),
+        0,
+      );
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Send my proposal response" })
+          .count(),
+        0,
+      );
+      assert.equal(
+        await page.getByRole("link", { name: /Download.*PDF/ }).count(),
+        0,
+      );
+      await page
+        .getByRole("button", { name: "Back to owner workspace" })
+        .click();
+      await management
+        .getByLabel(
+          "Allow this client’s invited account into the potential-client area",
+        )
+        .check();
+      await management
+        .getByLabel("What the potential client can see")
+        .selectOption("proposal");
+      await management
+        .getByRole("button", { name: "Save potential-client area" })
+        .click();
+      await expect.poll(() => prospective.release_step).toBe("proposal");
+      await expect(
+        management.getByRole("button", { name: "Save potential-client area" }),
+      ).toBeEnabled();
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await page.getByRole("link", { name: "Download proposal PDF" }).waitFor();
+      assert.equal(
+        await page.getByRole("link", { name: "Download contract PDF" }).count(),
+        0,
+      );
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: owner enables/release-controls prospective view and preview matches limited client screens instead of planned full journey. Fictional services only.",
+      );
+      return;
+    }
+    if (enquiriesMode) {
+      await page
+        .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
+        .waitFor();
+      await page
+        .getByRole("button", { name: "Enquiries", exact: true })
+        .click();
+      await page.getByText(/Tally enquiry company.*Tally.*new/).click();
+      await page
+        .getByText("A design-focused Framer website", { exact: true })
+        .waitFor();
+      await page
+        .getByText("Create a potential project", { exact: true })
+        .click();
+      const form = page.locator("form").filter({
+        has: page.getByRole("button", {
+          name: "Create potential client/project",
+          exact: true,
+        }),
+      });
+      await form
+        .getByLabel("Project name", { exact: true })
+        .fill("Fictional potential site");
+      await form
+        .getByLabel("Estimated completion", { exact: true })
+        .fill("2027-01-01");
+      await form
+        .getByRole("button", {
+          name: "Create potential client/project",
+          exact: true,
+        })
+        .click();
+      await page.getByText(/Potential project created/).waitFor();
+      assert.equal(incoming[0].status, "converted");
+      assert.equal(project.contract_signed, false);
+      assert.equal(prospective.enabled, false);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: owner reviews a Tally enquiry and explicitly converts it into a potential project; no invitation is sent. Fictional services only.",
+      );
+      return;
+    }
     if (deletionMode) {
       await page
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })

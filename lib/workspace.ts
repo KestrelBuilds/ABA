@@ -1,4 +1,5 @@
 import "server-only";
+import type { ProspectSpace } from "./prospects";
 import { loadFinance, type FinanceData } from "./finance/data";
 import { identity } from "./supabase/server";
 export type DbClient = {
@@ -81,6 +82,28 @@ export type ClientAsset = {
   created_at: string;
 };
 export type WorkspaceData = {
+  enquiriesReady?: boolean;
+  enquiries?: {
+    id: string;
+    source: string;
+    business_name: string;
+    contact_name: string;
+    email: string;
+    status: string;
+    fields: { label: string; value: string }[];
+    linked_client_id: string | null;
+    linked_project_id: string | null;
+  }[];
+  prospectReady?: boolean;
+  prospectSpaces?: ProspectSpace[];
+  proposalResponses?: {
+    id: string;
+    project_id: string;
+    document_id: string;
+    decision: string;
+    message: string;
+    created_at: string;
+  }[];
   clientDeletionReady?: boolean;
   contractReady?: boolean;
   contractExchanges?: {
@@ -119,6 +142,46 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
   )
     throw Error("Project tools could not be checked. Please retry.");
   const managementReady = capability.data === true;
+  const enquiryCapability = await db.rpc("enquiries_ready");
+  if (
+    enquiryCapability.error &&
+    !["PGRST202", "42883"].includes(enquiryCapability.error.code)
+  )
+    throw Error("Enquiries availability could not be checked.");
+  const enquiriesReady = enquiryCapability.data === true;
+  const enquiries =
+    enquiriesReady && profile.role === "admin"
+      ? await db
+          .from("enquiries")
+          .select(
+            "id,source,business_name,contact_name,email,status,fields,linked_client_id,linked_project_id",
+          )
+          .order("received_at", { ascending: false })
+      : null;
+  if (enquiries?.error) throw Error("Enquiries could not be loaded.");
+  const prospectCapability = await db.rpc("prospect_spaces_ready");
+  if (
+    prospectCapability.error &&
+    !["PGRST202", "42883"].includes(prospectCapability.error.code)
+  )
+    throw Error("Potential-client access could not be checked.");
+  const prospectReady = prospectCapability.data === true;
+  const prospectData =
+    prospectReady && profile.role === "admin"
+      ? await Promise.all([
+          db
+            .from("prospect_spaces")
+            .select(
+              "project_id,enabled,release_step,enquiry_status,booking_url,proposal_stage_id,contract_stage_id,invoice_stage_id",
+            ),
+          db
+            .from("proposal_responses")
+            .select("id,project_id,document_id,decision,message,created_at")
+            .order("created_at", { ascending: false }),
+        ])
+      : [];
+  if (prospectData.some((r) => r.error))
+    throw Error("Enquiry tracking could not be loaded.");
   const deletionCapability = await db.rpc("client_deletion_ready");
   if (
     deletionCapability.error &&
@@ -228,6 +291,11 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       "Workspace data could not be loaded. Check the database migrations and access policies.",
     );
   return {
+    enquiriesReady,
+    enquiries: enquiries?.data ?? [],
+    prospectReady,
+    prospectSpaces: prospectData[0]?.data ?? [],
+    proposalResponses: prospectData[1]?.data ?? [],
     clientDeletionReady,
     contractReady,
     contractExchanges: contractExchanges?.data ?? [],

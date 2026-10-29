@@ -43,3 +43,6 @@ Migration 202610280006 is an explicit, scoped exception to the earlier blanket o
 
 ### Owner-confirmed client deletion
 Migration 202610280007 adds a scoped prepare/finish workflow. Exact-name confirmation and owner MFA are checked on the server/database. Profiles/invitations are revoked before file removal. Private retry manifests are owner-readable, non-client-writable, and Storage deletion is restricted to frozen project paths. Pending clients reject metadata/storage writes. Finalization verifies Storage metadata absence; audit/Auth users and native financial records are retained. This is not a full personal-data erasure service. See CLIENT-DELETION.md for retry/hosted acceptance limits.
+
+### Potential clients and Tally intake
+008 scopes prospective project metadata through a minimal DTO and explicit released document bindings; it does not broaden full projects/stages/briefs/financial tables. Prospect configurations override legacy early-contract permissions. Proposal responses record non-contractual intent and cannot alter payment/contract flags. 009 authenticates inbound Tally bodies with HMAC before a server-only fixed-table intake. Private enquiry content is removed with its converted client; minimal non-contact webhook receipt IDs persist to prevent replay recreation. See POTENTIAL-CLIENTS-AND-TALLY.md for precise boundaries and hosted checks.

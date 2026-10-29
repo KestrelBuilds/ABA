@@ -111,3 +111,6 @@ After migrations through 202610280005, apply only 202610280006_contract_area.sql
 
 ### Client deletion upgrade
 After migration 202610280006, apply only 202610280007_client_deletion.sql once. It adds the confirmed client/project/file cleanup workflow without new credentials. Follow CLIENT-DELETION.md and verify it on fictional hosted data before real client use.
+
+### Potential-client / Tally setup
+Use supabase/updates/20261029_potential_clients_and_tally.sql after 006. It safely installs only missing 007/008/009, or apply canonical migrations in order through your usual runner. Configure the Tally form ID/signing secret in Vercel and the webhook in Tally as documented in POTENTIAL-CLIENTS-AND-TALLY.md. No live webhook connection has been confirmed from the coding workspace.

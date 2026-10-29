@@ -58,12 +58,12 @@ test("preview respects onboarding and final-payment/approval gates", () => {
   assert.equal(clientPreview(data, "p1").documents.length, 2);
 });
 
-test("an owner may inspect the planned layout without granting access or revealing locked files", () => {
+test("the full-journey projection stays hidden before onboarding even when a planned layout is requested", () => {
   const data = fixture();
   data.projects[0].deposit_paid = false;
   const preview = clientPreview(data, "p1", true);
-  assert.equal(preview.projects.length, 1);
-  assert.equal(preview.projects[0].deposit_paid, false);
+  assert.equal(preview.projects.length, 0);
+  assert.equal(preview.stages.length, 0);
   assert.equal(preview.documents.length, 0);
   assert.deepEqual(preview.notes, []);
   assert.equal(data.projects[0].deposit_paid, false);

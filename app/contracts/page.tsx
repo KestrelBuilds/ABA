@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { configured, identity } from "@/lib/supabase/server";
+import { loadProspectArea } from "@/lib/supabase/prospects";
 import { loadContractArea } from "@/lib/contracts";
 import { MfaRequiredError } from "@/lib/mfa";
 import ContractArea from "@/components/contract-area";
@@ -27,6 +28,8 @@ export default async function Contracts({
   const query = await searchParams;
   const target = z.uuid().safeParse(query.projectId);
   if (preview && !target.success) redirect("/workspace");
+  if (!preview && (await loadProspectArea(session.db)).entries.length)
+    redirect("/welcome");
   const result = await loadContractArea(
     session.db,
     preview && target.success ? target.data : undefined,

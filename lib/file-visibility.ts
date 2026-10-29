@@ -1,3 +1,4 @@
+import { prospectDocumentVisible, type ProspectSpace } from "./prospects";
 import type { DbDocument, DbProject, DbStage } from "./workspace";
 
 // Describes the existing access rules; authorisation stays on the server/in RLS.
@@ -6,8 +7,21 @@ export function fileVisibility(
   project: DbProject,
   stages: DbStage[],
   exchanges: { project_id: string; stage_id: string; enabled: boolean }[] = [],
+  prospects: ProspectSpace[] = [],
 ): { available: boolean; message: string } {
+  const prospect = prospects.find((x) => x.project_id === project.id);
+  if (
+    prospect &&
+    prospectDocumentVisible(document, project, stages, prospect) &&
+    !(project.contract_signed && project.deposit_paid)
+  )
+    return {
+      available: true,
+      message:
+        "Available in the potential-client area at the released step. The full creative journey remains hidden until contract and deposit verification.",
+    };
   const restricted =
+    !prospect &&
     document.published &&
     document.document_role === "Contract" &&
     document.category === "document" &&

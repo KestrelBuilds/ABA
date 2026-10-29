@@ -1,5 +1,14 @@
 "use client";
 import { fileVisibility } from "@/lib/file-visibility";
+import Enquiries from "./enquiries";
+import ProspectArea from "./prospect-area";
+import ProspectManagement from "./prospect-management";
+import {
+  previewProspect,
+  projectRelationship,
+  clientRelationship,
+  enquiryLabels,
+} from "@/lib/prospects";
 import DeleteClient from "./delete-client";
 import ProjectFocus from "./project-focus";
 import { projectFocus } from "@/lib/project-focus";
@@ -183,14 +192,22 @@ export default function ConnectedStudio({
             <span>
               {project.contract_signed && project.deposit_paid
                 ? "Read-only preview. You are still signed in as the owner."
-                : "Layout preview only: client access is still locked until contract and deposit are recorded."}
+                : "Read-only potential-client preview. The creative journey is hidden until contract and deposit verification."}
             </span>
           </div>
           <button className="primary" onClick={() => setShowPreview(false)}>
             Back to owner workspace
           </button>
         </div>
-        <ConnectedStudio data={clientPreview(data, project.id, true)} preview />
+        {project.contract_signed && project.deposit_paid ? (
+          <ConnectedStudio data={clientPreview(data, project.id)} preview />
+        ) : (
+          <ProspectArea
+            entries={[previewProspect(data, project)]}
+            preview
+            ready={data.prospectReady ?? false}
+          />
+        )}
       </>
     );
   return (
@@ -208,6 +225,7 @@ export default function ConnectedStudio({
             {(admin
               ? ([
                   ["Overview", LayoutDashboard],
+                  ["Enquiries", Users],
                   ["Projects", FolderKanban],
                   ["Clients", Users],
                 ] as const)
@@ -268,9 +286,11 @@ export default function ConnectedStudio({
                   {admin
                     ? view === "Overview"
                       ? "ABA Owner Dashboard"
-                      : view === "Clients"
-                        ? "Good people. Great possibilities."
-                        : "Every project, in perspective."
+                      : view === "Enquiries"
+                        ? "New conversations start here."
+                        : view === "Clients"
+                          ? "Good people. Great possibilities."
+                          : "Every project, in perspective."
                     : `Hello${currentClient ? ", " + currentClient.contact.split(" ")[0] : ""}.`}
                 </h1>
                 <p>
@@ -279,7 +299,7 @@ export default function ConnectedStudio({
                     : "A little clarity for every step of your project with me."}
                 </p>
               </div>
-              {admin && (
+              {admin && view !== "Enquiries" && (
                 <button
                   className="primary"
                   onClick={() =>
@@ -301,7 +321,7 @@ export default function ConnectedStudio({
                 </button>
               )}
             </div>
-            {admin && project && (
+            {admin && project && view !== "Enquiries" && (
               <div className="owner-preview-entry">
                 <button
                   className="secondary"
@@ -465,6 +485,18 @@ export default function ConnectedStudio({
                             <small>
                               {clientFor(p)?.name} · {p.type}
                             </small>
+                            <small>
+                              {projectRelationship(data, p)} ·{" "}
+                              {data.prospectSpaces?.find(
+                                (s) => s.project_id === p.id,
+                              )
+                                ? enquiryLabels[
+                                    data.prospectSpaces.find(
+                                      (s) => s.project_id === p.id,
+                                    )!.enquiry_status
+                                  ]
+                                : ""}
+                            </small>
                             <small>{projectFocus(data, p).nextLabel}</small>
                           </div>
                           <span className="pill">{complete(p)}%</span>
@@ -496,6 +528,9 @@ export default function ConnectedStudio({
                 </div>
               </>
             )}
+            {admin && view === "Enquiries" && (
+              <Enquiries data={data} Form={ActionForm} />
+            )}
             {admin && view === "Clients" && (
               <>
                 {clientNotice && (
@@ -522,6 +557,9 @@ export default function ConnectedStudio({
                       <section className="panel client-card" key={c.id}>
                         <span className="avatar pale">{c.name[0]}</span>
                         <h2>{c.name}</h2>
+                        <span className="pill">
+                          {clientRelationship(data, c.id)}
+                        </span>
                         <p>
                           {c.contact}
                           <br />
@@ -693,6 +731,13 @@ export default function ConnectedStudio({
                             stages={data.stages}
                             assetsReady={data.managementReady}
                             clientActions={data.clientActions}
+                          />
+                        )}
+                        {admin && (
+                          <ProspectManagement
+                            data={data}
+                            project={project}
+                            Form={ActionForm}
                           />
                         )}
                         <ProjectManagement
@@ -1373,6 +1418,7 @@ export default function ConnectedStudio({
                                             project,
                                             data.stages,
                                             data.contractExchanges,
+                                            data.prospectSpaces,
                                           ).message
                                         }
                                       </p>

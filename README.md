@@ -100,3 +100,6 @@ New branding projects follow Alex’s supplied 10-folder layout plus Goodbye Pac
 
 ### Removing fictional clients
 After applying migration 202610280007, use Clients → Delete client permanently. Exact-name confirmation is required. Linked projects/uploads are removed with retry support; financial records block deletion and audit/sign-in-account history is retained. See [deletion setup and behaviour](docs/CLIENT-DELETION.md).
+
+### Potential clients and automatic enquiries
+The pre-onboarding view now starts with discovery booking and shows proposal/contract/deposit PDFs only as the owner releases each step. Full creative stages stay hidden until verified contract/deposit. Track non-proceeding enquiries without deleting them. The owner Enquiries inbox supports manual word-of-mouth records and authenticated Tally webhooks; no invitation is automatic. See [single setup update and Tally connection steps](docs/POTENTIAL-CLIENTS-AND-TALLY.md). Hosted configuration/acceptance remains required.
