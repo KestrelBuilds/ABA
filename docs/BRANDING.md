@@ -19,3 +19,6 @@ Higher-resolution update: wordmark 1302×640, primary mark 641×640 and favicon 
 
 
 Current logo choice: Alex requested only the standalone black A symbol, with no ABA wordmark or STUDIO text beside it. BrandMark now uses the supplied higher-resolution primary transparent PNG. The wordmark source is retained for future use; the interface palette and accessible Alex Bell Arts label remain.
+
+
+Workspace hierarchy update — 30 October 2026: connected owner/client pages now use a pale purple workspace background, stronger purple panel edges, tinted stage cards and lime-accented handover/project checks. Overview totals use carbon black with a lime accent. Chart data uses the same purple/lime/black palette and related purple tints, with labels and values independently readable; no colour-only meaning. Payment progress uses purple for value marked received and lime for value not marked received. Controls retain readable dark text and visible keyboard focus.

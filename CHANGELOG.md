@@ -200,3 +200,12 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Kept older installations usable before migration, with unexpected capability failures surfaced. Preserved progress and verification records, client access rules, publication and native invoice payment guards.
 - Added SQL, logic and fictional-browser regression coverage. Hosted SQL activation and acceptance remain pending; no live records or emails changed.
 - Validation: 83 automated tests passed, including the additive upgrade and existing native invoice guards. Fictional Chromium checks passed fixed-purpose renaming and purpose selection, legacy fallback, historical invoice actions and client final release/download; layout checks covered 320/390/1440 px widths. Strict TypeScript, formatting, production build and a production-server rendered-demo request also passed.
+
+## Overview charts and clearer brand colours — 30 October 2026
+
+- Added owner-only projects-by-phase bars with project drill-down, service filters and empty states. Uses next stages plus verified access checks without assuming completed milestones mean delivery.
+- Added project-value payment progress using verified deposit/final-payment flags, with integer-penny 50/50 splits. Clearly labelled as planning figures, not bank totals or invoice balances; no invented monthly payment dates.
+- Applied purple workspace/stage tints, stronger panel borders, lime highlights and a black totals strip across the connected owner/client UI. Graph data uses the brand palette, with independent text labels and amounts.
+- Corrected next-step routing for renamed fixed contract/deposit stages: check the contract first, then use historical native-invoice full-payment actions.
+- Replaced the stale launch checklist with current evidence, remaining hosted/operational requirements and a clearly subjective 80% planning estimate. No new service, database migration or automatic record changes for charts/colours.
+- Validation: 87 automated tests passed. Strict TypeScript, formatting and production build passed. Fictional Chromium checked Overview filtering/empty states/drill-down, owner-only chart visibility, client preview, stage verification and the client approval/final-download journey at 320/390/1440 px. Hosted acceptance remains separate.

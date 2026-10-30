@@ -64,7 +64,7 @@ export function projectFocus(data: WorkspaceData, project: DbProject) {
     nextHref: next
       ? invoiceManaged &&
         paymentStep &&
-        (next.name.trim().toLowerCase() !== "contract and deposit" ||
+        (!stageVerification(next).includes("contract_signed") ||
           project.contract_signed)
         ? "#existing-invoices"
         : "#stage-" + next.id

@@ -145,3 +145,20 @@ test("project focus separates an enabled early area, account connection and full
   assert.equal(projectFocus(base, currentProject).deletionPending, true);
   assert.equal(projectFocus(base, currentProject).earlyArea, null);
 });
+
+test("renamed fixed contract/deposit stages retain contract-first routing with native invoices", () => {
+  const renamed = {
+    ...stage,
+    name: "Agreement review",
+    purpose: "contract_deposit" as const,
+  };
+  const native = data(
+    [renamed],
+    [{ project_id: "p", kind: "Deposit", status: "Issued" }],
+  );
+  assert.equal(projectFocus(native, project).nextHref, "#stage-s");
+  assert.equal(
+    projectFocus(native, { ...project, contract_signed: true }).nextHref,
+    "#existing-invoices",
+  );
+});

@@ -13,6 +13,8 @@ import {
 import DeleteClient from "./delete-client";
 import ProjectFocus, { openProjectSection } from "./project-focus";
 import WorkspaceAttention from "./workspace-attention";
+import WorkspaceInsights from "./workspace-insights";
+import { workspaceInsights } from "@/lib/workspace-insights";
 import HandoverPreparation from "./handover-preparation";
 import type { AttentionDestination } from "@/lib/workspace-attention";
 import { projectFocus } from "@/lib/project-focus";
@@ -490,17 +492,7 @@ export default function ConnectedStudio({
                     ],
                     [
                       "Unreceived project value",
-                      money(
-                        data.projects.reduce(
-                          (n, p) =>
-                            n +
-                            p.budget *
-                              (1 -
-                                (p.deposit_paid ? 0.5 : 0) -
-                                (p.final_paid ? 0.5 : 0)),
-                          0,
-                        ),
-                      ),
+                      money(workspaceInsights(data).value.outstanding / 100),
                     ],
                     ["Clients", data.clients.length],
                   ].map(([label, value]) => (
@@ -510,6 +502,14 @@ export default function ConnectedStudio({
                     </div>
                   ))}
                 </div>
+                <WorkspaceInsights
+                  data={data}
+                  onOpenProject={(id) => {
+                    setProjectId(id);
+                    setView("Projects");
+                    setProjectJump("#journey");
+                  }}
+                />
                 <div className="two-col">
                   <section className="panel">
                     <h2>Current projects</h2>

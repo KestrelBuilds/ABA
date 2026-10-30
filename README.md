@@ -124,3 +124,8 @@ Owner confirmed migration 010 succeeded. Live invitation/password-recovery accep
 
 ### Stage purposes independent of names
 After [migration 011](supabase/migrations/202610300011_stage_purposes.sql), stages have a separate **Stage purpose** setting. Renaming preserves their contract/payment/approval checks. Only unambiguous standard verification stages are mapped; choose purposes explicitly for custom/ambiguous stages. Existing verification records, progress, native invoice protections and access rules remain unchanged. Before activation the previous workflow remains usable. See [activation and validation](docs/STAGE-PURPOSES.md).
+
+### Overview charts and clearer panels
+The owner Overview now shows projects by their next phase and project-value payment progress. Filter by branding, websites or combined work, then select a phase bar to open its projects. Payment figures use current project values and explicit payment checks; they are not an invoice ledger or bank total. The purple/lime/black palette now gives panels, stages and nested controls clearer separation. No extra database update is needed for charts or colours. See [the current launch checklist](docs/LAUNCH-CHECKLIST.md) for what remains before real client use.
+
+To check charts and responsive panel styling with fictional records, run `node tests/client-journey-browser.cjs --insights` on its own, without another Next server/build sharing `.next`.

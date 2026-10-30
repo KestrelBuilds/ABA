@@ -7,6 +7,7 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const insightsMode = process.argv.includes("--insights");
 const fileLibraryMode =
   process.argv.includes("--file-library") ||
   process.argv.includes("--file-library-client");
@@ -40,6 +41,7 @@ const fixtureStageId = randomUUID();
 const financeMode = process.argv.includes("--finance");
 const ownerMode =
   process.argv.includes("--owner-preview") ||
+  insightsMode ||
   financeMode ||
   verificationMode ||
   contractOwnerMode ||
@@ -1190,6 +1192,84 @@ const server = createServer(async (req, res) => {
       assert.deepEqual(errors, []);
       console.log(
         "PASS: searchable, stage-grouped same-record file library, combined filters/reset, journey navigation, owner sharing labels, client/preview filtering and mobile layouts. Fictional services only.",
+      );
+      return;
+    }
+    if (insightsMode) {
+      const insights = page.getByRole("region", {
+        name: "Studio insights",
+        exact: true,
+      });
+      await insights
+        .getByRole("heading", { name: "Studio at a glance", exact: true })
+        .waitFor();
+      const pipeline = insights.getByRole("region", {
+        name: "Projects by phase",
+        exact: true,
+      });
+      const payment = insights.getByRole("region", {
+        name: "Project payment progress",
+        exact: true,
+      });
+      await expect(payment).toContainText("£1,000.00");
+      await expect(payment).toContainText("50%");
+      await expect(payment.locator("dd").first()).toHaveText("£500.00");
+      await expect(payment.locator("dd").last()).toHaveText("£500.00");
+      await expect(payment).toContainText(
+        "not an invoice balance or bank total",
+      );
+      const filter = insights.locator("select");
+      await filter.selectOption("Website Design");
+      await expect(pipeline).toContainText("No projects in this view yet");
+      await expect(payment).toContainText("No project value recorded");
+      await expect(payment).toContainText("0%");
+      await filter.selectOption("All projects");
+      const branding = pipeline.getByRole("button", { name: /^Branding/ });
+      await branding.click();
+      await expect(branding).toHaveAttribute("aria-expanded", "true");
+      await expect(
+        pipeline.getByRole("button", { name: /Fictional client journey/ }),
+      ).toBeVisible();
+      await captureUi("overview-charts", page);
+      assert.equal(
+        await page
+          .locator(".workspace-attention")
+          .evaluate(
+            (el) =>
+              !!(
+                el.compareDocumentPosition(
+                  document.querySelector(".workspace-insights"),
+                ) & Node.DOCUMENT_POSITION_FOLLOWING
+              ),
+          ),
+        true,
+      );
+      await pipeline
+        .getByRole("button", { name: /Fictional client journey/ })
+        .click();
+      await expect(
+        page.getByRole("heading", {
+          name: "Your project journey",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await captureUi("branded-owner-project", page);
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await expect(
+        page.getByRole("heading", {
+          name: "Your project journey",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("region", { name: "Studio insights", exact: true }),
+      ).toHaveCount(0);
+      await captureUi("branded-client-preview", page);
+      assert.equal(project.deposit_paid, true);
+      assert.equal(project.final_paid, false);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: branded owner-only charts, consistent service filters, zero-data states, £500/£500 payment split, phase drill-down/project navigation, client-preview exclusion and 320/390/1440 layouts. Fictional records only.",
       );
       return;
     }
