@@ -1,5 +1,5 @@
 :root {
-  --bg: #efebf4;
+  --bg: #f1f0f3;
   --paper: #f9f9f9;
   --ink: #111111;
   --muted: #68636f;
@@ -15,7 +15,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: "DM Sans", Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 14px;
 }
 button,
@@ -2907,7 +2907,7 @@ summary:focus-visible {
 /* Branded surfaces distinguish the workspace, panels and nested stage cards. */
 .connected,
 .prospect-page {
-  --bg: #efebf4;
+  --bg: #f1f0f3;
   --line: #d1c3df;
   background: var(--bg);
 }
@@ -3479,5 +3479,104 @@ summary:focus-visible {
   }
   .stage-internal-badge {
     white-space: nowrap;
+  }
+}
+
+/* Moodboard 02: bold display type, mono labels and a monochrome foundation. */
+h1,
+h2 {
+  font-family: var(--font-display), Impact, "Arial Narrow", sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-synthesis: none;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+h3 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 600;
+}
+.page-heading h1 {
+  font-size: clamp(34px, 4.5vw, 56px);
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+}
+.auth-panel h1 {
+  font-size: clamp(42px, 6vw, 62px);
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+}
+.prospect-intro h1 {
+  font-size: clamp(38px, 5vw, 58px);
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+}
+h2,
+.panel .section-heading h2,
+.connected .panel > h2,
+.connected .enquiries-panel .section-heading h2 {
+  font-size: 27px;
+  line-height: 1.1;
+}
+.eyebrow,
+.section-kicker,
+.workspace-label,
+.brand-signature,
+.stat > div {
+  font-family: var(--font-mono), "Courier New", monospace;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+}
+.shell .sidebar {
+  background: #e9e6ed;
+}
+.brand-signature {
+  border-top: 2px solid #111;
+  color: #51475b;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  padding: 18px 0 24px;
+}
+.brand-signature > span:last-child {
+  background: #111;
+  color: #d4e600;
+  font-family: var(--font-mono), "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 6px 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.brand-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0;
+}
+.brand-values span {
+  font-family: var(--font-mono), "Courier New", monospace;
+  font-size: 10px;
+  line-height: 1.6;
+  background: #eee4f7;
+  color: #4c286a;
+  border: 1px solid #d1bce2;
+  border-radius: 3px;
+  padding: 5px 8px;
+}
+@media (max-width: 520px) {
+  .page-heading {
+    flex-wrap: wrap;
+  }
+  .page-heading > div {
+    min-width: 0;
+  }
+  .brand-signature {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .connected .client-card > h2 {
+    font-size: 27px;
   }
 }

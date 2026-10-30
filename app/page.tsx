@@ -1,3 +1,4 @@
+import BrandSignature from "@/components/brand-signature";
 import BrandMark from "@/components/brand-mark";
 import Link from "next/link";
 export default function Home() {
@@ -8,11 +9,24 @@ export default function Home() {
       </Link>
       <section className="panel auth-panel">
         <div className="eyebrow">ALEX BELL ARTS</div>
-        <h1>A considered space for good things.</h1>
+        <h1>Your vision. My creative direction.</h1>
         <p>
-          Your creative project, from the first conversation to the final
-          detail.
+          A personalised creative journey, built on research and clear
+          communication. Explore the thinking behind the design, share your
+          feedback and see what happens next.
         </p>
+        <div className="brand-values" aria-label="Brand values">
+          {[
+            "Loyalty",
+            "Inspiration",
+            "Diversity",
+            "Courage",
+            "Communication",
+            "Integrity",
+          ].map((value) => (
+            <span key={value}>{value}</span>
+          ))}
+        </div>
         <Link className="primary full" href="/portal">
           Open my workspace →
         </Link>
@@ -24,6 +38,7 @@ export default function Home() {
           deployment checks are complete.
         </p>
       </section>
+      <BrandSignature />
     </main>
   );
 }

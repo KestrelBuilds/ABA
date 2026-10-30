@@ -10,6 +10,7 @@ import {
   Clock3,
   FileText,
 } from "lucide-react";
+import BrandSignature from "./brand-signature";
 import BrandMark from "./brand-mark";
 import { PasswordForm } from "./auth-forms";
 import type { ProspectEntry } from "@/lib/prospects";
@@ -129,9 +130,9 @@ export default function ProspectArea({
           </span>
           <h1>Let’s explore your project</h1>
           <p>
-            Everything you need to get started, one step at a time. Your
-            creative journey opens after I verify your signed contract and 50%
-            deposit.
+            Let’s understand your goals and shape a direction that is right for
+            you. Your creative journey opens after I verify your signed contract
+            and 50% deposit.
           </p>
         </header>
         {!ready && (
@@ -347,6 +348,7 @@ export default function ProspectArea({
             </form>
           </>
         )}
+        <BrandSignature />
       </div>
     </main>
   );

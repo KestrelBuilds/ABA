@@ -129,3 +129,6 @@ After [migration 011](supabase/migrations/202610300011_stage_purposes.sql), stag
 The owner Overview now shows projects by their next phase and project-value payment progress. Filter by branding, websites or combined work, then select a phase bar to open its projects. Payment figures use current project values and explicit payment checks; they are not an invoice ledger or bank total. The purple/lime/black palette now gives panels, stages and nested controls clearer separation. No extra database update is needed for charts or colours. See [the current launch checklist](docs/LAUNCH-CHECKLIST.md) for what remains before real client use.
 
 To check charts and responsive panel styling with fictional records, run `node tests/client-journey-browser.cjs --insights` on its own, without another Next server/build sharing `.next`.
+
+### ABA creative direction
+The Studio follows Alex's selected **Moodboard 02**: bold display headings, mono labels, a black/white foundation and purple/lime accents. “Loyalty is key” and the personalised, research-led design approach now inform the welcome/client copy and shared signature. Fonts are served locally with open licences. See [creative-direction mapping](docs/reference/ABA-CREATIVE-DIRECTION.md); no SQL or external font service is required.

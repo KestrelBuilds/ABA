@@ -1,4 +1,5 @@
 "use client";
+import BrandSignature from "./brand-signature";
 import BrandMark from "@/components/brand-mark";
 import { useEffect, useState, type FormEvent } from "react";
 import {
@@ -1125,12 +1126,7 @@ export default function Studio() {
               )}
             </>
           )}
-          <footer>
-            <span>
-              ABA STUDIO <span className="muted">/</span> ALEX BELL ARTS
-            </span>
-            <span>Thoughtfully made. Independently run.</span>
-          </footer>
+          <BrandSignature />
         </main>
       </div>
       {modal && (

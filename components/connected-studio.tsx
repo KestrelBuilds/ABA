@@ -18,6 +18,7 @@ import { workspaceInsights } from "@/lib/workspace-insights";
 import HandoverPreparation from "./handover-preparation";
 import type { AttentionDestination } from "@/lib/workspace-attention";
 import { projectFocus } from "@/lib/project-focus";
+import BrandSignature from "./brand-signature";
 import BrandMark from "@/components/brand-mark";
 import {
   useState,
@@ -321,14 +322,14 @@ export default function ConnectedStudio({
                       : view === "Enquiries"
                         ? "New conversations start here."
                         : view === "Clients"
-                          ? "Good people. Great possibilities."
-                          : "Every project, in perspective."
+                          ? "Clients & connections."
+                          : "Ideas into action."
                     : `Hello${currentClient ? ", " + currentClient.contact.split(" ")[0] : ""}.`}
                 </h1>
                 <p>
                   {admin
                     ? "Projects, people and the details that keep everything moving."
-                    : "A little clarity for every step of your project with me."}
+                    : "Your ideas, my thinking and a clear next step. Let’s create something with purpose."}
                 </p>
               </div>
               {admin && view !== "Enquiries" && (
@@ -410,7 +411,7 @@ export default function ConnectedStudio({
             )}
             {creating === "project" && (
               <section className="panel">
-                <h2>Make room for something good.</h2>
+                <h2>Shape the next project.</h2>
                 {data.clients.length ? (
                   <ActionForm action={addProject} label="Create project">
                     <div className="form-grid">
@@ -1450,10 +1451,7 @@ export default function ConnectedStudio({
                 {admin && <PortalCheck />}
               </section>
             )}
-            <footer>
-              <span>ABA STUDIO / ALEX BELL ARTS</span>
-              <span>Thoughtfully made. Independently run.</span>
-            </footer>
+            <BrandSignature />
           </main>
         </div>
       </div>

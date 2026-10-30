@@ -1,3 +1,4 @@
+import BrandSignature from "@/components/brand-signature";
 import BrandMark from "@/components/brand-mark";
 import Link from "next/link";
 import { LoginForms } from "@/components/auth-forms";
@@ -16,7 +17,10 @@ export default async function Login({
       <section className="panel auth-panel">
         <div className="eyebrow">YOUR CREATIVE JOURNEY</div>
         <h1>Sign in to ABA Studio.</h1>
-        <p>A private space for your project with Alex Bell Arts.</p>
+        <p>
+          Your private space to explore ideas, share feedback and follow your
+          project with me.
+        </p>
         {invited === "1" && (
           <p className="helper-note">
             Alex has invited your existing account. Use the email from your
@@ -48,6 +52,7 @@ export default async function Login({
           Explore the fictional demonstration →
         </Link>
       </section>
+      <BrandSignature />
     </main>
   );
 }

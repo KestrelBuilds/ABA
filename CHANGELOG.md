@@ -224,3 +224,11 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Owner journey stages now show a charcoal header, muted body and lime lock badge when Client visible is off. Client-visible stages keep the purple treatment; progress and verification badges remain separate. Styling follows the saved visibility setting without changing permissions.
 - Alex confirmed database update 011 completed successfully; hosted behaviour acceptance remains separate. No SQL is required for this styling change.
 - Validation: 87 existing automated tests, strict TypeScript, formatting and production build passed. A fictional browser check saved visibility off/on, checked the badge and colour reset, and inspected open/closed stages at 320/390/1440 px while retaining independent verification behaviour.
+
+## ABA Moodboard 02 creative direction — 30 October 2026
+
+- Applied the owner-selected Moodboard 02 through bold display headings, mono labels and a quieter monochrome foundation alongside the approved purple/lime/black section styling.
+- Added locally hosted, openly licensed Vina Sans and Fira Code with pinned source/provenance and OFL licences. Kept detailed text and controls in readable sans-serif; preserved the standalone A.
+- Updated welcome/client copy around personalised, research-led work and clear communication. Added the supplied values and shared “Loyalty is key” signature. Did not expose competitor/persona notes, copy moodboard imagery or invent ongoing-support commitments.
+- No SQL, external font service, purchases, changed client records or altered access/verification rules.
+- Validation: 87 automated tests, strict TypeScript, formatting and production build passed. Fictional Chromium checked owner charts, enquiry conversion, client invitations, password recovery, restricted access and the complete client approval/final-download journey. Production welcome/login/setup/invitation/demo pages passed local-display-font loading, standalone A and 320/390/1440 px layout checks, plus the existing signed-out/private-route checks. Hosted acceptance remains separate.

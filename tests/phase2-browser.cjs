@@ -14,7 +14,7 @@ const assert = require("node:assert/strict");
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto("http://127.0.0.1:3000");
     await page
-      .getByRole("heading", { name: "A considered space for good things." })
+      .getByRole("heading", { name: "Your vision. My creative direction." })
       .waitFor();
     await page.getByRole("link", { name: "Open my workspace" }).click();
     await page.waitForURL("**/login");
