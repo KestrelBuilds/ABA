@@ -14,6 +14,7 @@ import {
   uuid,
   validateFile,
 } from "@/lib/validation";
+import { stagePurposes } from "@/lib/stage-purpose";
 import { newProjectStages } from "@/lib/workflow-templates";
 import { z } from "zod";
 import { createClientInvitation } from "@/lib/supabase/client-invitations";
@@ -177,6 +178,7 @@ export async function addProject(form: FormData) {
           template: newProjectStages(v.type).map((s) => ({
             name: s.name,
             stream: s.stream,
+            purpose: s.purpose,
           })),
         })
       ).error,
@@ -190,16 +192,33 @@ export async function saveStage(form: FormData) {
       ...Object.fromEntries(form),
       visible: form.get("visible") === "on",
     });
+    const capability = await db.rpc("stage_purposes_ready");
+    if (
+      capability.error &&
+      !["PGRST202", "42883"].includes(capability.error.code)
+    )
+      throw Error("Stage purposes could not be checked.");
     const current = await db
       .from("stages")
-      .select("name,stream,status")
+      .select(
+        capability.data === true
+          ? "name,stream,status,purpose"
+          : "name,stream,status",
+      )
       .eq("id", v.id)
-      .single();
+      .single()
+      .overrideTypes<
+        Pick<
+          import("@/lib/workspace").DbStage,
+          "name" | "stream" | "status" | "purpose"
+        >,
+        { merge: false }
+      >();
     checked(current.error);
     if (!current.data) throw Error("Milestone not found.");
     const verified =
       stageVerification(current.data).length ||
-      stageVerification({ name: v.name, stream: current.data.stream }).length;
+      stageVerification({ ...current.data, name: v.name }).length;
     const { data, error } = await db
       .from("stages")
       .update({
@@ -212,6 +231,40 @@ export async function saveStage(form: FormData) {
       .single();
     checked(error);
     if (!data) throw Error("Milestone not found.");
+  });
+}
+export async function saveStagePurpose(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const id = uuid.parse(form.get("id"));
+    const purpose = z
+      .enum(
+        Object.keys(stagePurposes) as [
+          keyof typeof stagePurposes,
+          ...(keyof typeof stagePurposes)[],
+        ],
+      )
+      .parse(form.get("purpose"));
+    if (form.get("acknowledged") !== "on")
+      throw Error(
+        "Confirm that this choice does not verify a contract, approval or payment.",
+      );
+    const capability = await db.rpc("stage_purposes_ready");
+    if (capability.error || capability.data !== true)
+      throw Error(
+        "Apply the stage-purpose database upgrade before choosing a purpose.",
+      );
+    checked(
+      (
+        await db
+          .from("stages")
+          .update({ purpose })
+          .eq("id", id)
+          .select("id")
+          .single()
+      ).error,
+    );
+    return "Stage purpose saved. Existing verification and access records are unchanged.";
   });
 }
 export async function verifyJourneyRecord(form: FormData) {

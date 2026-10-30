@@ -1,4 +1,5 @@
 import "server-only";
+import type { StagePurpose } from "./stage-purpose";
 import type { ProspectSpace } from "./prospects";
 import type { ClientPortalStatus } from "./invitations";
 import { loadFinance, type FinanceData } from "./finance/data";
@@ -24,6 +25,7 @@ export type DbProject = {
   final_approved: boolean;
 };
 export type DbStage = {
+  purpose?: StagePurpose | null;
   id: string;
   project_id: string;
   name: string;
@@ -83,6 +85,7 @@ export type ClientAsset = {
   created_at: string;
 };
 export type WorkspaceData = {
+  stagePurposesReady?: boolean;
   invitationsReady?: boolean;
   portalStatuses?: ClientPortalStatus[];
   enquiriesReady?: boolean;
@@ -151,6 +154,13 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
     : null;
   if (portalStatuses?.error)
     throw Error("Client access status could not be loaded.");
+  const purposeCapability = await db.rpc("stage_purposes_ready");
+  if (
+    purposeCapability.error &&
+    !["PGRST202", "42883"].includes(purposeCapability.error.code)
+  )
+    throw Error("Stage purposes could not be checked. Please retry.");
+  const stagePurposesReady = purposeCapability.data === true;
   const capability = await db.rpc("project_management_ready");
   if (
     capability.error &&
@@ -268,8 +278,13 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       .order("created_at"),
     db
       .from("stages")
-      .select("id,project_id,name,stream,position,status,visible")
-      .order("position"),
+      .select(
+        stagePurposesReady
+          ? "id,project_id,name,stream,position,status,visible,purpose"
+          : "id,project_id,name,stream,position,status,visible",
+      )
+      .order("position")
+      .overrideTypes<DbStage[], { merge: false }>(),
     db
       .from("documents")
       .select(
@@ -307,6 +322,7 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       "Workspace data could not be loaded. Check the database migrations and access policies.",
     );
   return {
+    stagePurposesReady,
     invitationsReady,
     portalStatuses: portalStatuses?.data ?? [],
     enquiriesReady,

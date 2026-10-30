@@ -47,11 +47,13 @@ import {
   submitQuestionnaire,
   moveStage,
   addStage,
+  saveStagePurpose,
   removeStage,
   signOut,
   type Result,
 } from "@/app/actions";
 import JourneyVerification from "./journey-verification";
+import { stagePurposes } from "@/lib/stage-purpose";
 import {
   stageVerification,
   verifiedStageStatus,
@@ -879,6 +881,67 @@ export default function ConnectedStudio({
                                         stage={s}
                                         Form={ActionForm}
                                       />
+                                      {data.stagePurposesReady && (
+                                        <details className="settings-disclosure">
+                                          <summary>
+                                            Stage purpose
+                                            {s.purpose == null
+                                              ? " — choose purpose"
+                                              : ""}
+                                          </summary>
+                                          <p>
+                                            Choose what this stage tracks. Its
+                                            name can then change freely. This
+                                            choice does not verify a signature,
+                                            payment or approval, change sharing,
+                                            or release files. Project
+                                            verification checks remain available
+                                            for unassigned stages.
+                                          </p>
+                                          <ActionForm
+                                            action={saveStagePurpose}
+                                            label="Save stage purpose"
+                                            key={s.id + String(s.purpose)}
+                                          >
+                                            <input
+                                              type="hidden"
+                                              name="id"
+                                              value={s.id}
+                                            />
+                                            <label>
+                                              Purpose
+                                              <select
+                                                name="purpose"
+                                                defaultValue={s.purpose ?? ""}
+                                                required
+                                              >
+                                                <option value="" disabled>
+                                                  Choose purpose
+                                                </option>
+                                                {Object.entries(
+                                                  stagePurposes,
+                                                ).map(([value, label]) => (
+                                                  <option
+                                                    key={value}
+                                                    value={value}
+                                                  >
+                                                    {label}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </label>
+                                            <label className="check-row">
+                                              <input
+                                                name="acknowledged"
+                                                type="checkbox"
+                                                required
+                                              />
+                                              I understand this does not verify
+                                              a contract, approval or payment.
+                                            </label>
+                                          </ActionForm>
+                                        </details>
+                                      )}
                                       <details className="settings-disclosure">
                                         <summary>
                                           {stageVerification(s).length > 0
@@ -910,13 +973,9 @@ export default function ConnectedStudio({
                                           </label>
                                           {stageVerification(s).length > 0 && (
                                             <p>
-                                              This stage follows the verified
-                                              project records below. Renaming it
-                                              to a custom name restores ordinary
-                                              progress tracking; its
-                                              verification controls move to
-                                              Project verification checks at the
-                                              top of the journey.
+                                              {data.stagePurposesReady
+                                                ? "This stage follows its fixed purpose. Renaming it keeps the same verification checks."
+                                                : "This installation still uses standard stage names for these checks. Renamed stages use Project verification checks until the stage-purpose upgrade is applied."}
                                             </p>
                                           )}
                                           {stageVerification(s).length > 0 && (

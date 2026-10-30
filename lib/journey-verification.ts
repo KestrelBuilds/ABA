@@ -7,10 +7,26 @@ export const verificationLabels = {
   final_paid: "Final 50% received — I have verified the payment",
 } as const;
 export type VerificationField = keyof typeof verificationLabels;
-// Match only known template labels. Never guess legal/payment meaning from arbitrary names.
+// Legacy installations use exact known labels until the additive upgrade is available.
 export function stageVerification(
-  stage: Pick<DbStage, "name" | "stream">,
+  stage: Pick<DbStage, "name" | "stream" | "purpose">,
 ): VerificationField[] {
+  if (stage.purpose !== undefined) {
+    switch (stage.purpose) {
+      case "contract":
+        return ["contract_signed"];
+      case "deposit":
+        return ["deposit_paid"];
+      case "contract_deposit":
+        return ["contract_signed", "deposit_paid"];
+      case "final_approval":
+        return ["final_approved"];
+      case "final_payment":
+        return ["final_paid"];
+      default:
+        return [];
+    }
+  }
   const name = stage.name.trim().toLowerCase();
   if (stage.stream === "Onboarding" && name === "contract")
     return ["contract_signed"];

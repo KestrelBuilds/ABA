@@ -1,3 +1,4 @@
+import type { StagePurpose } from "./stage-purpose";
 import type { ProjectType } from "./projects";
 // Live project templates follow Alex's supplied folder order. Existing projects
 // and the separate fictional demo snapshot are never rewritten by template edits.
@@ -24,7 +25,15 @@ export const websiteProjectStages = [
 ] as const;
 export function newProjectStages(type: ProjectType) {
   return [
-    ...sharedProjectStages.map((name) => ({ name, stream: "Onboarding" })),
+    ...sharedProjectStages.map((name) => ({
+      name,
+      stream: "Onboarding",
+      purpose: (name === "Contract"
+        ? "contract"
+        : name === "Invoice"
+          ? "deposit"
+          : "progress") as StagePurpose,
+    })),
     ...(type !== "Website Design"
       ? brandProjectStages.map((name) => ({ name, stream: "Brand Identity" }))
       : []),
@@ -32,5 +41,5 @@ export function newProjectStages(type: ProjectType) {
       ? websiteProjectStages.map((name) => ({ name, stream: "Website Design" }))
       : []),
     { name: "Goodbye Packet", stream: "Delivery" },
-  ];
+  ].map((stage) => ({ purpose: "progress" as StagePurpose, ...stage }));
 }

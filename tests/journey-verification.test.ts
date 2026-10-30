@@ -107,3 +107,43 @@ test("separate Contract and Invoice template stages follow their own verificatio
     [],
   );
 });
+
+test("fixed purposes survive renaming and use only the corresponding verified record", () => {
+  for (const [purpose, fields] of Object.entries({
+    contract: ["contract_signed"],
+    deposit: ["deposit_paid"],
+    contract_deposit: ["contract_signed", "deposit_paid"],
+    final_approval: ["final_approved"],
+    final_payment: ["final_paid"],
+  })) {
+    const fixed = {
+      ...stage,
+      name: "Alex's custom stage",
+      stream: "Custom",
+      purpose,
+    } as DbStage;
+    assert.deepEqual(stageVerification(fixed), fields);
+    assert.equal(verifiedStageStatus(fixed, project), "Awaiting verification");
+    const confirmed = {
+      ...project,
+      ...Object.fromEntries(fields.map((f) => [f, true])),
+    };
+    assert.equal(verifiedStageStatus(fixed, confirmed), "Completed");
+    assert.deepEqual(stageVerification({ ...fixed, name: "Invoice" }), fields);
+    assert.equal(stage.status, "Completed");
+    assert.equal(project.contract_signed, false);
+  }
+});
+test("unassigned and ordinary migrated stages never infer verification from a name", () => {
+  for (const purpose of [null, "progress"] as const) {
+    assert.deepEqual(stageVerification({ ...stage, purpose }), []);
+    assert.equal(
+      verifiedStageStatus({ ...stage, purpose }, project),
+      "Completed",
+    );
+  }
+  assert.deepEqual(stageVerification(stage), [
+    "contract_signed",
+    "deposit_paid",
+  ]);
+});

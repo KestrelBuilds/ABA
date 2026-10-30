@@ -121,3 +121,6 @@ Overview now brings together new enquiries, proposal replies, referenced contrac
 In a project, expand **Prepare handover & goodbye packet** for file/support/release checks and a copyable branding, Framer or combined writing outline. Design the actual PDF in Illustrator, then upload it to the relevant stage. Drafts contain placeholders and do not save/share themselves. New standard proposal/contract/invoice uploads suggest their document type; Goodbye Packet and Framer Launch & Handover suggest final release. No extra SQL is needed. See [handover guidance](docs/HANDOVER-GUIDE.md).
 
 Owner confirmed migration 010 succeeded. Live invitation/password-recovery acceptance is postponed at the owner's request; local/fixture checks are separate from hosted evidence.
+
+### Stage purposes independent of names
+After [migration 011](supabase/migrations/202610300011_stage_purposes.sql), stages have a separate **Stage purpose** setting. Renaming preserves their contract/payment/approval checks. Only unambiguous standard verification stages are mapped; choose purposes explicitly for custom/ambiguous stages. Existing verification records, progress, native invoice protections and access rules remain unchanged. Before activation the previous workflow remains usable. See [activation and validation](docs/STAGE-PURPOSES.md).

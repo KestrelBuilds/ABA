@@ -29,7 +29,11 @@ const templateMode = process.argv
   ?.split("=")[1];
 const contractMode = process.argv.includes("--contracts");
 const contractOwnerMode = process.argv.includes("--contract-owner");
-const verificationMode = process.argv.includes("--verification");
+const purposesMode = process.argv.includes("--stage-purposes");
+const verificationMode =
+  process.argv.includes("--verification") || purposesMode;
+let stageName = "Contract and Deposit",
+  stagePurpose = "contract_deposit";
 const managementMode = process.argv.includes("--management");
 const stageMode = process.argv.includes("--stages");
 const fixtureStageId = randomUUID();
@@ -465,6 +469,10 @@ const server = createServer(async (req, res) => {
       return json([]);
     }
     const table = path.split("/").pop();
+    if (table === "stage_purposes_ready")
+      return purposesMode
+        ? json(true)
+        : json({ code: "PGRST202", message: "Function unavailable" }, 404);
     if (table === "client_invitations_ready")
       return json(invitationsMode || workspaceHelpMode);
     if (table === "client_portal_statuses")
@@ -813,14 +821,19 @@ const server = createServer(async (req, res) => {
             },
           ]
         : [];
+    if (purposesMode && table === "stages" && req.method === "PATCH") {
+      if (body.name !== undefined) stageName = body.name;
+      if (body.purpose !== undefined) stagePurpose = body.purpose;
+    }
     if (table === "stages")
       rows = [
         {
           id: fixtureStageId,
           project_id: pid,
+          ...(purposesMode ? { purpose: stagePurpose } : {}),
           name:
             verificationMode || contractOwnerMode || contractMode
-              ? "Contract and Deposit"
+              ? stageName
               : stageMode
                 ? "Discovery Call"
                 : "Concept review",
@@ -1901,9 +1914,7 @@ const server = createServer(async (req, res) => {
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
       await page.getByRole("button", { name: "Projects", exact: true }).click();
-      const stage = page
-        .locator(".milestone-disclosure")
-        .filter({ hasText: "Contract and Deposit" });
+      const stage = page.locator("#stage-" + fixtureStageId);
       await stage.locator("summary").first().click();
       await stage.getByText("Initial contract area", { exact: true }).click();
       await stage.locator('input[type="checkbox"][name="confirmed"]').check();
@@ -1952,9 +1963,7 @@ const server = createServer(async (req, res) => {
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
       await page.getByRole("button", { name: "Projects", exact: true }).click();
-      const stage = page
-        .locator(".milestone-disclosure")
-        .filter({ hasText: "Contract and Deposit" });
+      const stage = page.locator("#stage-" + fixtureStageId);
       assert.equal(
         await page
           .getByRole("button", { name: "Finance", exact: true })
@@ -1989,6 +1998,67 @@ const server = createServer(async (req, res) => {
         await stage.locator('select[name="status"]').isDisabled(),
         true,
       );
+      if (purposesMode) {
+        await stageSettings
+          .getByLabel("Milestone name")
+          .fill("Agreement review — renamed");
+        await stageSettings
+          .getByRole("button", { name: "Save milestone", exact: true })
+          .click();
+        await expect(stage.locator("summary").first()).toContainText(
+          "Agreement review — renamed",
+        );
+        assert.equal(stagePurpose, "contract_deposit");
+        assert.equal(project.contract_signed, false);
+        assert.equal(project.deposit_paid, false);
+        await expect(stage.locator("summary").first()).toContainText(
+          "Awaiting verification",
+        );
+        const purposeSettings = stage.locator("details").filter({
+          has: page.locator("summary").filter({ hasText: /^Stage purpose/ }),
+        });
+        await purposeSettings.locator("summary").first().click();
+        for (const purpose of [
+          "progress",
+          "final_approval",
+          "final_payment",
+          "contract_deposit",
+        ]) {
+          await purposeSettings
+            .locator('select[name="purpose"]')
+            .selectOption(purpose);
+          await purposeSettings.getByRole("checkbox").check();
+          await purposeSettings
+            .getByRole("button", { name: "Save stage purpose", exact: true })
+            .click();
+          await expect(purposeSettings.getByRole("checkbox")).not.toBeChecked();
+          assert.equal(stagePurpose, purpose);
+          assert.equal(project.contract_signed, false);
+          assert.equal(project.deposit_paid, false);
+          assert.equal(project.final_paid, false);
+          assert.equal(project.final_approved, false);
+          await expect(focus).toContainText(
+            "Locked — needs signed contract and deposit payment",
+          );
+          if (purpose === "progress")
+            await expect(stage.locator(".journey-verification")).toHaveCount(0);
+          if (purpose === "final_approval")
+            await expect(
+              stage.getByRole("button", {
+                name: "Verify final approval",
+                exact: true,
+              }),
+            ).toBeVisible();
+          if (purpose === "final_payment")
+            await expect(
+              stage.getByRole("button", {
+                name: "Verify final payment",
+                exact: true,
+              }),
+            ).toBeVisible();
+        }
+        await purposeSettings.locator("summary").first().click();
+      }
       await stageSettings.locator("summary").first().click();
       const stageFile = stage.locator(".file-visibility").first();
       const libraryFile = page
