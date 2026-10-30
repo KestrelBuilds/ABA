@@ -26,3 +26,7 @@ Only this client’s UUID-scoped paths are eligible. Other clients, global setti
 Local SQL tests cover owner-only/exact-name/MFA checks, dependency deletion, cross-client isolation, orphan cleanup, refusal to finalize with remaining files, write/upload freezing, retries, native financial blocking, audit/Auth preservation and empty clients. Server-helper tests cover scope validation, batching and failures. Browser tests use fictional services for incorrect-name refusal, successful removal and a simulated storage failure followed by a successful retry.
 
 After applying the migration, test on a fictional client in the hosted app: create a project with owner and returned files, delete it, verify files/metadata and access are gone, and verify an unrelated fictional client is unchanged. No real clients have been deleted from this coding workspace. Local fixture tests do not establish hosted Storage behaviour.
+
+## Optional 013 upload-security extension
+
+The no-service-account instructions above describe installations before 013. With 013, a narrowly scoped server worker removes only the validated frozen manifest (including quarantined/reserved paths). Recent two-hour upload-only tokens cause final cleanup to wait until the displayed retry time, including a five-minute margin; access revocation is immediate. Discarded upload intake tombstones remain lease evidence. Auth/audit history and financial blockers remain. See SECURE-UPLOADS.md; do not apply 013 until the approved real scanner and worker configuration are ready.

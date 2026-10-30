@@ -20,6 +20,7 @@ export function workspaceAttention(
   const items: AttentionItem[] = [];
   const activeProjects = data.projects.filter(
     (p) =>
+      !p.archived_at &&
       !data.clients.find((c) => c.id === p.client_id)?.deletion_pending &&
       !(
         data.prospectSpaces?.some(

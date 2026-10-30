@@ -18,7 +18,7 @@ function ReturnContract({ id }: { id: string }) {
           try {
             const r = await uploadSignedContract(form);
             setResult(r);
-            if (r.ok) router.refresh();
+            if (r.ok || r.refresh) router.refresh();
           } catch {
             setResult({
               ok: false,
@@ -91,6 +91,9 @@ export default function ContractArea({
           entries.map((entry) => (
             <section className="panel" key={entry.project_id}>
               <h2>{entry.name}</h2>
+              {entry.archived_at && (
+                <p className="banner">Archived project — read-only access.</p>
+              )}
               <p>{entry.stage_name}</p>
               <p>
                 Contract:{" "}
@@ -140,7 +143,9 @@ export default function ContractArea({
                         </small>
                       </div>
                     ))}
-                  {!preview && <ReturnContract id={doc.id} />}
+                  {!preview && !entry.archived_at && (
+                    <ReturnContract id={doc.id} />
+                  )}
                 </article>
               ))}
             </section>

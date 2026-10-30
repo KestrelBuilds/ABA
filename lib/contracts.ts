@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 const contractEntry = z.object({
   project_id: z.uuid(),
+  archived_at: z.string().nullable().optional(),
   name: z.string(),
   stage_id: z.uuid(),
   stage_name: z.string(),

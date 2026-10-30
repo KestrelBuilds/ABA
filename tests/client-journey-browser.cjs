@@ -7,6 +7,8 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const secureMode = process.argv.includes("--secure-uploads");
+const lifecycleMode = process.argv.includes("--lifecycle");
 const insightsMode = process.argv.includes("--insights");
 const fileLibraryMode =
   process.argv.includes("--file-library") ||
@@ -41,6 +43,8 @@ const fixtureStageId = randomUUID();
 const financeMode = process.argv.includes("--finance");
 const ownerMode =
   process.argv.includes("--owner-preview") ||
+  secureMode ||
+  lifecycleMode ||
   insightsMode ||
   financeMode ||
   verificationMode ||
@@ -107,6 +111,21 @@ const project = {
   final_paid: false,
   final_approved: false,
 };
+const intakes = [],
+  storedUploads = new Map();
+let scannerOutage = false,
+  scannerInfected = false,
+  scanRequests = 0;
+const verificationHistory = [],
+  streamApprovals = [];
+if (lifecycleMode)
+  Object.assign(project, {
+    type: "Both",
+    archived_at: null,
+    archived_client_access: "retain",
+    separate_approvals: false,
+    final_approved: true,
+  });
 if (verificationMode || contractMode || contractOwnerMode) {
   project.contract_signed = false;
   project.deposit_paid = false;
@@ -378,8 +397,23 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://127.0.0.1:${fixturePort}`);
     const path = url.pathname;
-    let text = "";
-    for await (const chunk of req) text += chunk;
+    res.setHeader("Access-Control-Allow-Origin", `http://127.0.0.1:${appPort}`);
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "authorization,apikey,x-client-info,content-type,x-upsert,cache-control",
+    );
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,DELETE,OPTIONS",
+    );
+    if (req.method === "OPTIONS") {
+      res.writeHead(204);
+      return res.end();
+    }
+    const parts = [];
+    for await (const chunk of req) parts.push(chunk);
+    const raw = Buffer.concat(parts),
+      text = raw.toString();
     const body =
       text && (req.headers["content-type"] || "").includes("application/json")
         ? JSON.parse(text)
@@ -391,6 +425,59 @@ const server = createServer(async (req, res) => {
       });
       res.end(JSON.stringify(data));
     };
+    if (secureMode && path === "/scan") {
+      scanRequests++;
+      assert.equal(req.headers.authorization, "Bearer fictional-scan-key");
+      return json(
+        {
+          sha256: req.headers["x-file-sha256"],
+          status: scannerInfected ? "infected" : "clean",
+        },
+        scannerOutage ? 503 : 200,
+      );
+    }
+    if (secureMode && path.startsWith("/storage/v1/object/upload/sign/")) {
+      const objectPath = path.split("/object/upload/sign/")[1];
+      if (req.method === "POST")
+        return json({
+          url:
+            "/object/upload/sign/" +
+            objectPath +
+            "?token=fictional-upload-only-token",
+        });
+      if (req.method === "PUT") {
+        const boundary = (req.headers["content-type"] || "").split(
+          "boundary=",
+        )[1];
+        const filePart = raw.indexOf("filename=");
+        const start = raw.indexOf("\r\n\r\n", filePart) + 4;
+        const end = raw.indexOf("\r\n--" + boundary, start);
+        assert.ok(start > 3 && end > start);
+        storedUploads.set(objectPath, raw.subarray(start, end));
+        return json({ Key: objectPath });
+      }
+    }
+    if (
+      secureMode &&
+      path.startsWith("/storage/v1/object/project-files/") &&
+      req.method === "GET"
+    ) {
+      const bytes = storedUploads.get(path.split("/object/")[1]);
+      if (!bytes) return json({ message: "Not found" }, 404);
+      res.writeHead(200, { "Content-Type": "application/octet-stream" });
+      return res.end(bytes);
+    }
+    if (
+      secureMode &&
+      path === "/storage/v1/object/project-files" &&
+      req.method === "DELETE"
+    ) {
+      for (const path of body.prefixes)
+        storedUploads.delete("project-files/" + path);
+      return json([]);
+    }
+    if (secureMode && path === "/storage/v1/object/list/project-files")
+      return json([]);
     if (path === "/auth/v1/token")
       return json({
         access_token: jwt,
@@ -471,6 +558,121 @@ const server = createServer(async (req, res) => {
       return json([]);
     }
     const table = path.split("/").pop();
+    if (table === "project_lifecycle_ready") return json(lifecycleMode);
+    if (table === "file_security_ready") return json(secureMode);
+    if (table === "reserve_file_upload") {
+      intakes.push({
+        id: body.upload_id,
+        project_id: body.target,
+        stage_id: body.stage,
+        kind: body.upload_kind,
+        bucket: "project-files",
+        object_path: body.target + "/" + body.upload_id,
+        name: body.file_name,
+        expected_size: body.file_size,
+        expected_sha256: body.file_hash,
+        content_type: body.mime,
+        status: "pending",
+        expires_at: new Date(Date.now() + 7200000).toISOString(),
+        discarded_at: null,
+      });
+      documents.push({
+        id: body.upload_id,
+        project_id: body.target,
+        stage_id: body.stage,
+        name: body.file_name,
+        object_path: body.target + "/" + body.upload_id,
+        category: body.category_name,
+        document_role: body.role_name,
+        version_label: body.version,
+        published: false,
+        scan_state: "pending",
+      });
+      return json(null);
+    }
+    if (table === "file_intake_for_check")
+      return json(intakes.find((u) => u.id === body.target));
+    if (table === "complete_file_check") {
+      const u = intakes.find((u) => u.id === body.target),
+        d = documents.find((d) => d.id === body.target);
+      assert.equal(req.headers.apikey, "fictional-service-key");
+      Object.assign(u, { status: body.verdict });
+      Object.assign(d, { scan_state: body.verdict });
+      return json(null);
+    }
+    if (table === "discard_file_intake") {
+      const u = intakes.find((u) => u.id === body.target);
+      u.discarded_at = new Date().toISOString();
+      documents.splice(
+        documents.findIndex((d) => d.id === u.id),
+        1,
+      );
+      return json(null);
+    }
+    if (table === "archive_project") {
+      Object.assign(project, {
+        archived_at: body.archived ? new Date().toISOString() : null,
+        archived_client_access: body.archived ? body.client_access : "retain",
+      });
+      return json(null);
+    }
+    if (table === "enable_stream_approvals") {
+      project.separate_approvals = true;
+      project.final_approved = false;
+      return json(null);
+    }
+    if (table === "verify_stream_approval") {
+      const existing = streamApprovals.find(
+        (a) => a.stream === body.workstream,
+      );
+      if (existing) existing.confirmed = body.confirmed;
+      else
+        streamApprovals.push({
+          project_id: pid,
+          stream: body.workstream,
+          confirmed: body.confirmed,
+          checked_at: new Date().toISOString(),
+          checked_by: uid,
+        });
+      project.final_approved =
+        streamApprovals.filter((a) => a.confirmed).length === 2;
+      verificationHistory.unshift({
+        id: randomUUID(),
+        project_id: pid,
+        field:
+          body.workstream === "Brand Identity"
+            ? "brand_approved"
+            : "website_approved",
+        confirmed: body.confirmed,
+        recorded_at: new Date().toISOString(),
+        actor_id: uid,
+        reference: body.reference,
+        occurred_on: null,
+        document_id: null,
+        document_label: null,
+        invoice_id: null,
+        source: "stream_approval",
+      });
+      return json(null);
+    }
+    if (table === "verify_project_record") {
+      project[body.record_field] = body.confirmed;
+      verificationHistory.unshift({
+        id: randomUUID(),
+        project_id: pid,
+        field: body.record_field,
+        confirmed: body.confirmed,
+        recorded_at: new Date().toISOString(),
+        actor_id: uid,
+        reference: body.reference,
+        occurred_on: body.occurred_on,
+        document_id: null,
+        document_label: null,
+        invoice_id: null,
+        source: "owner_check",
+      });
+      return json(null);
+    }
     if (table === "stage_purposes_ready")
       return purposesMode
         ? json(true)
@@ -719,7 +921,8 @@ const server = createServer(async (req, res) => {
     }
     if (table === "project_management_ready")
       return json(
-        managementMode ||
+        secureMode ||
+          managementMode ||
           stageMode ||
           contractMode ||
           contractOwnerMode ||
@@ -775,6 +978,10 @@ const server = createServer(async (req, res) => {
         { project_id: pid, stage_id: fixtureStageId, enabled: exchangeEnabled },
       ];
     }
+    if (table === "upload_intakes")
+      rows = intakes.filter((u) => u.status !== "clean" && !u.discarded_at);
+    if (table === "project_verifications") rows = verificationHistory;
+    if (table === "project_stream_approvals") rows = streamApprovals;
     if (table === "projects") {
       if (req.method === "PATCH") Object.assign(project, body);
       rows = [project];
@@ -993,9 +1200,12 @@ const server = createServer(async (req, res) => {
           ...process.env,
           NEXT_PUBLIC_SUPABASE_URL: `http://127.0.0.1:${fixturePort}`,
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "fictional-public-key",
-          SUPABASE_SERVICE_ROLE_KEY: invitationsMode
-            ? "fictional-service-key"
+          UPLOAD_SCAN_URL: secureMode
+            ? `http://127.0.0.1:${fixturePort}/scan`
             : "",
+          UPLOAD_SCAN_KEY: secureMode ? "fictional-scan-key" : "",
+          SUPABASE_SERVICE_ROLE_KEY:
+            invitationsMode || secureMode ? "fictional-service-key" : "",
           APP_ORIGIN: `http://127.0.0.1:${appPort}`,
         },
         stdio: ["ignore", "pipe", "pipe"],
@@ -1084,6 +1294,222 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (secureMode) {
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      const library = page.getByRole("region", {
+        name: "All project files",
+        exact: true,
+      });
+      await library
+        .locator("details")
+        .filter({
+          has: page.getByText("Upload a project-wide file", { exact: true }),
+        })
+        .locator("summary")
+        .click();
+      const upload = library.locator("form.secure-upload");
+      const large = Buffer.concat([
+        Buffer.from("%PDF-1.7\n"),
+        Buffer.alloc(5 * 1024 * 1024, 32),
+        Buffer.from("\n%%EOF"),
+      ]);
+      await upload.getByLabel("File", { exact: true }).setInputFiles({
+        name: "Fictional large proof.pdf",
+        mimeType: "application/pdf",
+        buffer: large,
+      });
+      await upload
+        .getByRole("button", { name: "Upload file securely", exact: true })
+        .click();
+      await expect(upload.getByRole("status")).toContainText(
+        "File checked and ready",
+        { timeout: 20000 },
+      );
+      assert.equal(intakes[0].status, "clean");
+      assert.equal(
+        storedUploads.get("project-files/" + intakes[0].object_path).length,
+        large.length,
+      );
+      assert.equal(documents.at(-1).published, false);
+      const item = library
+        .locator(".document-item")
+        .filter({ hasText: "Fictional large proof.pdf" });
+      await expect(
+        item.getByRole("link", { name: /Download securely/ }),
+      ).toBeVisible();
+      scannerOutage = true;
+      await upload.getByLabel("File", { exact: true }).setInputFiles({
+        name: "Fictional retry.pdf",
+        mimeType: "application/pdf",
+        buffer: Buffer.from("%PDF-1.7\nFictional retry\n%%EOF"),
+      });
+      await upload
+        .getByRole("button", { name: "Upload file securely", exact: true })
+        .click();
+      await expect(upload.getByRole("status")).toContainText(
+        "remains quarantined",
+        { timeout: 20000 },
+      );
+      const blocked = library
+        .locator(".document-item")
+        .filter({ hasText: "Fictional retry.pdf" });
+      await expect(
+        blocked.getByRole("link", { name: /Download securely/ }),
+      ).toHaveCount(0);
+      await expect(
+        blocked.getByRole("button", { name: "Publish to client", exact: true }),
+      ).toHaveCount(0);
+      scannerOutage = false;
+      scannerInfected = true;
+      const queue = library.locator(".upload-queue");
+      await queue.locator("summary").click();
+      await queue
+        .getByRole("button", { name: "Retry security check", exact: true })
+        .click();
+      await expect(queue).toContainText("Blocked — choose another file.");
+      await queue
+        .getByRole("button", {
+          name: "Discard quarantined upload",
+          exact: true,
+        })
+        .click();
+      await expect(blocked).toHaveCount(0);
+      assert.ok(intakes[1].discarded_at);
+      assert.equal(scanRequests, 3);
+      assert.equal(project.contract_signed, true);
+      assert.equal(project.deposit_paid, true);
+      assert.equal(project.final_approved, false);
+      assert.equal(project.final_paid, false);
+      await captureUi("secure-upload-library");
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: 5 MB direct private upload, server byte/hash check, scanner outage quarantine, blocked verdict, retry/discard, unchanged sharing/release controls and responsive layouts. Fictional scanner only.",
+      );
+      return;
+    }
+    if (lifecycleMode) {
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      const history = page.locator("#project-history");
+      await history.locator("summary").click();
+      await expect(history).toContainText(
+        "Earlier checks have no recorded date",
+      );
+      const verification = page.locator("#project-verification");
+      await verification.locator("summary").first().click();
+      const opt = verification.locator("details").filter({
+        has: page.getByText("Use separate branding and website approvals", {
+          exact: true,
+        }),
+      });
+      await opt.locator("summary").first().click();
+      await opt.getByRole("checkbox").check();
+      await opt
+        .getByRole("button", {
+          name: "Enable separate approval checks",
+          exact: true,
+        })
+        .click();
+      await verification
+        .getByRole("button", {
+          name: "Verify Brand Identity approval",
+          exact: true,
+        })
+        .waitFor();
+      assert.equal(project.final_approved, false);
+      const brand = verification.locator("form").filter({
+        has: page.getByRole("button", {
+          name: "Verify Brand Identity approval",
+          exact: true,
+        }),
+      });
+      await brand.locator("summary").click();
+      await brand
+        .getByLabel("Reference or note")
+        .fill("Fictional branding approval email");
+      await brand.getByRole("checkbox").check();
+      await brand.getByRole("button").click();
+      await verification
+        .getByRole("button", {
+          name: "Remove Brand Identity approval",
+          exact: true,
+        })
+        .waitFor();
+      assert.equal(project.final_approved, false);
+      const web = verification.locator("form").filter({
+        has: page.getByRole("button", {
+          name: "Verify Website Design approval",
+          exact: true,
+        }),
+      });
+      await web.getByRole("checkbox").check();
+      await web.getByRole("button").click();
+      await verification
+        .getByRole("button", {
+          name: "Remove Website Design approval",
+          exact: true,
+        })
+        .waitFor();
+      assert.equal(project.final_approved, true);
+      await expect(history).toContainText("Fictional branding approval email");
+      const remove = verification.locator("form").filter({
+        has: page.getByRole("button", {
+          name: "Remove Brand Identity approval",
+          exact: true,
+        }),
+      });
+      await remove.getByRole("checkbox").check();
+      await remove.getByRole("button").click();
+      await verification
+        .getByRole("button", {
+          name: "Verify Brand Identity approval",
+          exact: true,
+        })
+        .waitFor();
+      assert.equal(project.final_approved, false);
+      await history
+        .getByLabel("Client access after archiving")
+        .selectOption("retain");
+      await history.getByRole("checkbox").check();
+      await history
+        .getByRole("button", { name: "Archive project", exact: true })
+        .click();
+      await expect(page.getByText(/^No projects in this view/)).toBeVisible();
+      await page.getByLabel("Project list filter").selectOption("archived");
+      await expect(
+        page.getByText(/Existing client access is retained as read-only/),
+      ).toBeVisible();
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      const buttons = await page.locator("form button[type=submit]").all();
+      for (const b of buttons) await expect(b).toBeDisabled();
+      await page
+        .getByRole("button", { name: "Back to owner workspace", exact: true })
+        .click();
+      await history.locator("summary").click();
+      await history.getByRole("checkbox").check();
+      await history
+        .getByRole("button", { name: "Restore project", exact: true })
+        .click();
+      await page.getByLabel("Project list filter").selectOption("active");
+      await history.locator("summary").click();
+      await history
+        .getByLabel("Client access after archiving")
+        .selectOption("suspend");
+      await history.getByRole("checkbox").check();
+      await history
+        .getByRole("button", { name: "Archive project", exact: true })
+        .click();
+      await page.getByLabel("Project list filter").selectOption("archived");
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await expect(
+        page.getByText(/This archived project is not available to the client/),
+      ).toBeVisible();
+      await captureUi("archive-suspended-preview");
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: separate combined approvals/revocation, private evidence, deliberate archive retain/suspend, read-only previews and narrow/wide layouts. Fictional services only.",
+      );
+      return;
+    }
     if (fileLibraryMode) {
       if (ownerMode)
         await page
@@ -2500,6 +2926,14 @@ const server = createServer(async (req, res) => {
     console.log(
       "PASS: actual client UI login, questionnaire submission, revision request, creative approval, payment-only lock, final release/download and mobile layout. Supabase HTTP fixture used; this does not verify hosted email/invitation delivery or replace hosted RLS checks.",
     );
+  } catch (error) {
+    const failedPage = browser?.contexts()[0]?.pages()[0];
+    if (failedPage)
+      console.error(
+        (await failedPage.locator("body").innerText()).slice(-9000),
+      );
+    if (errors.length) console.error(errors);
+    throw error;
   } finally {
     if (browser) await browser.close();
     if (app) {

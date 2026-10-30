@@ -2,6 +2,12 @@
 
 A considered workspace for Alex Bell Arts. Phase 1 is an interactive application using **fictional demo data**, with admin management and a client journey preview.
 
+## Latest development update — 30 October 2026
+
+Project archiving with an explicit client-access decision, dated private verification history and separate combined-project approvals are implemented behind additive migration **012**. Existing flags/workflows stay unchanged until the owner deliberately acts. See [PROJECT-LIFECYCLE.md](docs/PROJECT-LIFECYCLE.md).
+
+Optional **013** adds quarantined, directly uploaded 25 MB PDF/image/Illustrator/ZIP files. **Do not apply 013 until an approved real scanner is configured and tested.** No new service is provisioned. Existing uploads retain their old behaviour before 013. See [SECURE-UPLOADS.md](docs/SECURE-UPLOADS.md) and [GO-LIVE-STATUS.md](docs/GO-LIVE-STATUS.md) for the exact activation and remaining hosted/operational work.
+
 ## Run locally
 
 Requires Node.js 22 or later and npm. The PDF content tests also require `pdftotext` (Poppler utilities; on Debian/Ubuntu install `poppler-utils`). This is a development test dependency only.

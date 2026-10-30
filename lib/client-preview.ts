@@ -6,11 +6,16 @@ export function clientPreview(
   _showPlannedLayout = false,
 ): WorkspaceData {
   const project = data.projects.find((p) => p.id === projectId);
-  const eligible = Boolean(project?.contract_signed && project.deposit_paid);
+  const allowed =
+    !project?.archived_at || project.archived_client_access !== "suspend";
+  const eligible = Boolean(
+    allowed && project?.contract_signed && project.deposit_paid,
+  );
   const documents = eligible
     ? data.documents.filter(
         (d) =>
           d.project_id === projectId &&
+          (!d.scan_state || ["legacy", "clean"].includes(d.scan_state)) &&
           d.published &&
           (!d.stage_id ||
             data.stages.some((s) => s.id === d.stage_id && s.visible)) &&
@@ -19,6 +24,10 @@ export function clientPreview(
       )
     : [];
   return {
+    readOnly: true,
+    fileSecurityReady: data.fileSecurityReady,
+    secureUploadsConfigured: data.secureUploadsConfigured,
+    pendingUploads: [],
     stageResources: eligible
       ? (data.stageResources ?? []).filter((r) =>
           data.stages.some(
@@ -62,6 +71,7 @@ export function clientPreview(
       ? (data.assets ?? []).filter(
           (a) =>
             a.project_id === projectId &&
+            (!a.scan_state || ["legacy", "clean"].includes(a.scan_state)) &&
             (!a.stage_id ||
               data.stages.some((s) => s.id === a.stage_id && s.visible)),
         )

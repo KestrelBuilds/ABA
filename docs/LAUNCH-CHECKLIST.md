@@ -2,7 +2,7 @@
 
 Updated 30 October 2026. The app is already online at https://aba-iota.vercel.app. This checklist concerns using it with real clients, not simply publishing a website.
 
-**Rough readiness estimate: 80%.** This is a planning judgement, not a measured completion score or a security sign-off. Most daily workflows are implemented. The remaining hosted acceptance and operational safeguards are significant launch requirements; additional visual features do not close them.
+**Core portal development is implemented; real-client launch is not yet cleared.** The earlier 80% figure was only a planning estimate. Track the remaining hosted acceptance, recovery/privacy and scanner prerequisites in [GO-LIVE-STATUS.md](GO-LIVE-STATUS.md); a percentage is not a security sign-off.
 
 ## What is built
 
@@ -14,14 +14,16 @@ Updated 30 October 2026. The app is already online at https://aba-iota.vercel.ap
 - Private file downloads, read-only owner previews, project attention items and handover preparation.
 - Confirmed client deletion with scoped file cleanup and historical invoice protection.
 - Owner authenticator tools and permission-filtered export (not a full backup).
-- Stable stage purposes, ready for hosted update 011.
+- Stable stage purposes; Alex confirmed 011 applied.
+- Explicit project archive retain/suspend/restore, private dated verification evidence and separate combined-project final approvals, ready for owner activation with 012.
+- Optional larger/source uploads with quarantine and scanner adapter; 013 is withheld until an approved real scanner is configured/tested.
 - Owner Overview charts and clearer brand-colour panels, verified locally with fictional records; hosted review remains pending.
 
 Alex still designs proposals, contracts, invoices and goodbye PDFs in Illustrator. No automatic signing, automatic signature/payment verification, live payments, automatic invitations or Framer launch/transfer is implied.
 
 ## What has already been checked
 
-Alex confirmed hosted owner sign-in, project persistence, the expanded account/Storage/isolation/download/revocation diagnostic and sign-in email receipt/callback on 27 October. Alex later confirmed Tally intake, enquiry conversion, limited previews and independent signed-contract/deposit unlocking. Migration 010 is owner-confirmed as applied.
+Alex confirmed hosted owner sign-in, project persistence, the expanded account/Storage/isolation/download/revocation diagnostic and sign-in email receipt/callback on 27 October. Alex later confirmed Tally intake, enquiry conversion, limited previews and independent signed-contract/deposit unlocking. Migrations 010 and 011 are owner-confirmed as applied.
 
 Local automated and fictional-browser checks cover newer features, but do not prove those newer workflows on hosted Supabase/Vercel. Live invitation/password setup/recovery acceptance was deferred by Alex and remains outstanding. Do not repeat already-applied migrations or treat the old workspace connection failure as an application defect.
 
@@ -56,7 +58,7 @@ Earlier hosted passes are retained as evidence; these steps cover the newer work
 - [ ] Confirm owner authenticator enrolment, a fresh-session challenge and a safe recovery procedure. The MFA code/migration already exists; do not rerun its SQL unnecessarily.
 - [ ] Review provider email/recipient limits, recovery delivery, rate limits and abuse protection.
 - [ ] Review production storage rules, upload format/size limits, cache settings and sensitive download-link handling. Signed links can remain usable for 60 seconds; downloaded files cannot be recalled.
-- [ ] Resolve malware scanning and upload security before real file exchange. This is currently missing, not something local tests have established. No new service or purchase is authorised by this checklist.
+- [ ] Approve/configure a real scanner and validate it before optional 013 activation and real file exchange. The adapter/quarantine/source-upload code is implemented; no live malware engine is configured or proven by local tests. See SECURE-UPLOADS.md. No new service or purchase is authorised by this checklist.
 - [ ] Review production logs for sensitive data/link redaction and retention, and define how to respond to an incident.
 
 ### 4. Make backups and privacy arrangements real
@@ -72,12 +74,13 @@ Earlier hosted passes are retained as evidence; these steps cover the newer work
 - [ ] Review the hosted charts/colour improvements, mobile pages, contact/help links and current development warnings. Remove or replace warnings only after the launch requirements are met.
 - [ ] Alex explicitly approves using real client records after the checks above. The earlier permission to develop and push updates is not launch/security approval.
 
+## Activate and accept the latest development
+
+- [ ] Apply 012 once after a backup/checkpoint and test fictional archive retain/suspend/restore, evidence privacy and separate combined approvals. No historical flags/dates are invented; existing combined projects opt in explicitly. See PROJECT-LIFECYCLE.md.
+- [ ] Keep 013 pending until the real scanner/worker prerequisite and hosted upload/recovery/lease-cleanup checks in SECURE-UPLOADS.md are satisfied. Existing uploads keep their previous 3 MB behaviour before 013.
+
 ## Can follow after launch
 
-- Explicit project archival, with a deliberate decision about continued client access.
-- Dated contract/payment verification evidence without inventing historical records.
-- Separate branding/website approval evidence for combined projects.
-- Larger/source uploads once a suitable secure method is agreed.
 - General questionnaire/Tally syncing, automatic booking confirmation and other integrations only if Alex wants them.
 
 Automatic payments, embedded legal signing, new services and purchases require separate approval. Do not add them to increase a completion percentage.

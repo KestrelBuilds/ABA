@@ -1,3 +1,5 @@
+import QuarantineInbox from "@/components/quarantine-inbox";
+import { loadPendingUploads } from "@/lib/supabase/pending-uploads";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -31,11 +33,23 @@ export default async function Welcome({
     session.db,
     preview && target.success ? target.data : undefined,
   );
+  const pending = preview ? [] : await loadPendingUploads(session.db);
   return (
-    <ProspectArea
-      entries={result.entries}
-      ready={result.ready}
-      preview={preview}
-    />
+    <>
+      <ProspectArea
+        entries={result.entries}
+        ready={result.ready}
+        preview={preview}
+      />
+      {!preview && (
+        <QuarantineInbox
+          uploads={pending.filter((u) =>
+            result.entries.some(
+              (e) => e.project_id === u.project_id && !e.archived_at,
+            ),
+          )}
+        />
+      )}
+    </>
   );
 }

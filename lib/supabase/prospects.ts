@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ProspectEntry } from "../prospects";
 const entry = z.object({
   project_id: z.uuid(),
+  archived_at: z.string().nullable().optional(),
   name: z.string(),
   enabled: z.boolean(),
   release_step: z.enum(["discovery", "proposal", "agreement"]),

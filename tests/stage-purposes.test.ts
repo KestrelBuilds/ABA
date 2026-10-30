@@ -33,7 +33,9 @@ test("stage-purpose upgrade preserves records and access, maps only unambiguous 
       `create role authenticated;create role anon;create schema auth;create table auth.users(id uuid primary key,email text);create table auth.mfa_factors(id uuid primary key,user_id uuid,status text);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create function auth.jwt() returns jsonb language sql stable as $$select '{"aal":"aal1"}'::jsonb$$;grant usage on schema auth to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant all on storage.objects to authenticated;`,
     );
     for (const file of (await readdir("supabase/migrations"))
-      .filter((f) => f.endsWith(".sql") && !f.includes("0011"))
+      .filter(
+        (f) => f.endsWith(".sql") && f < "202610300011_stage_purposes.sql",
+      )
       .sort())
       await apply(file);
     await db.exec(

@@ -3,7 +3,13 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { supabaseSettings } from "./config";
 import { privateFetch } from "./private-fetch";
 import { checkCreativeJourney } from "./journey-check";
-import { checkPrivateStorage, assertStorageDenied } from "./storage-check";
+import {
+  checkPrivateStorage,
+  assertStorageDenied,
+  fictionalPdf,
+} from "./storage-check";
+import { finishUpload, secureUploadsConfigured } from "./file-intake";
+import { createHash } from "node:crypto";
 
 type CheckResult = { ok: boolean; message: string };
 function requireSuccess(error: unknown, step: string) {
@@ -170,21 +176,80 @@ export async function checkClientPortals(
       requireSuccess(trusted.error, "Payment verification");
       verify(trusted.data?.final_paid === false, "Payment record integrity");
     }
-    requireSuccess(
-      (
-        await owner.from("documents").insert(
-          documents.map((id, index) => ({
-            id,
-            project_id: projects[0],
-            name: "Automatic test document",
-            object_path: projects[0] + "/" + id,
-            category: index === 2 ? "final" : "document",
-            published: index !== 1,
-          })),
-        )
-      ).error,
-      "Document metadata setup",
-    );
+    const fileCapability = await owner.rpc("file_security_ready");
+    if (
+      fileCapability.error &&
+      !["PGRST202", "42883"].includes(fileCapability.error.code)
+    )
+      throw Error("Upload security capability could not be checked.");
+    const secureFiles = fileCapability.data === true;
+    if (secureFiles) {
+      if (!secureUploadsConfigured())
+        throw Error(
+          "The approved upload scanner must be configured before this check can run.",
+        );
+      const bytes = Buffer.from(fictionalPdf()),
+        hash = createHash("sha256").update(bytes).digest("hex");
+      // No signed upload tokens: disposable diagnostics use authenticated uploads,
+      // so there are no two-hour upload capabilities surviving immediate cleanup.
+      storageAttempted = true;
+      for (const [index, id] of documents.entries()) {
+        requireSuccess(
+          (
+            await owner.rpc("reserve_file_upload", {
+              target: projects[0],
+              upload_id: id,
+              upload_kind: "document",
+              file_name: "aba-fictional-check.pdf",
+              file_size: bytes.length,
+              file_hash: hash,
+              mime: "application/pdf",
+              category_name: index === 2 ? "final" : "document",
+            })
+          ).error,
+          "Temporary upload reservation",
+        );
+        requireSuccess(
+          (
+            await owner.storage
+              .from("project-files")
+              .upload(paths[index], bytes, {
+                contentType: "application/pdf",
+                cacheControl: "0",
+                upsert: false,
+              })
+          ).error,
+          "Temporary private upload",
+        );
+        if ((await finishUpload(owner, id)).state !== "clean")
+          throw Error("The scanner blocked the fictional diagnostic file.");
+        requireSuccess(
+          (
+            await owner
+              .from("documents")
+              .update({ published: index !== 1 })
+              .eq("id", id)
+          ).error,
+          "Temporary document sharing",
+        );
+      }
+    } else {
+      requireSuccess(
+        (
+          await owner.from("documents").insert(
+            documents.map((id, index) => ({
+              id,
+              project_id: projects[0],
+              name: "Automatic test document",
+              object_path: projects[0] + "/" + id,
+              category: index === 2 ? "final" : "document",
+              published: index !== 1,
+            })),
+          )
+        ).error,
+        "Document metadata setup",
+      );
+    }
     const visibleDocuments = await sessions[0]
       .from("documents")
       .select("id")
@@ -215,6 +280,7 @@ export async function checkClientPortals(
       projects[0],
       documents,
       url,
+      secureFiles,
     );
     requireSuccess(
       (await owner.rpc("revoke_client_access", { target: clients[0] })).error,

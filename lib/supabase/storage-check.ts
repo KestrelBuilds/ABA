@@ -124,10 +124,11 @@ export async function checkPrivateStorage(
   project: string,
   documentIds: string[],
   origin: string,
+  alreadyUploaded = false,
 ) {
   const pdf = fictionalPdf();
   const paths = documentIds.map((id) => project + "/" + id);
-  for (const path of paths) {
+  for (const path of alreadyUploaded ? [] : paths) {
     const upload = await owner.storage
       .from("project-files")
       .upload(path, new TextEncoder().encode(pdf), {

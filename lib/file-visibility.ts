@@ -9,6 +9,19 @@ export function fileVisibility(
   exchanges: { project_id: string; stage_id: string; enabled: boolean }[] = [],
   prospects: ProspectSpace[] = [],
 ): { available: boolean; message: string } {
+  if (document.scan_state && !["legacy", "clean"].includes(document.scan_state))
+    return {
+      available: false,
+      message:
+        document.scan_state === "rejected"
+          ? "File blocked by security checks. It cannot be shared or downloaded."
+          : "File awaiting security checks. It cannot be shared or downloaded.",
+    };
+  if (project.archived_at && project.archived_client_access === "suspend")
+    return {
+      available: false,
+      message: "Client access is suspended for this archived project.",
+    };
   const prospect = prospects.find((x) => x.project_id === project.id);
   if (
     prospect &&

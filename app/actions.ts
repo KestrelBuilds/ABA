@@ -18,8 +18,14 @@ import { stagePurposes } from "@/lib/stage-purpose";
 import { newProjectStages } from "@/lib/workflow-templates";
 import { z } from "zod";
 import { createClientInvitation } from "@/lib/supabase/client-invitations";
+import { UploadPendingError } from "@/lib/upload-policy";
 import { stageVerification } from "@/lib/journey-verification";
-export type Result = { ok: boolean; message: string; link?: string };
+export type Result = {
+  ok: boolean;
+  message: string;
+  link?: string;
+  refresh?: boolean;
+};
 function refresh() {
   revalidatePath("/workspace");
   revalidatePath("/portal");
@@ -32,8 +38,10 @@ async function run(fn: () => Promise<string | void>): Promise<Result> {
     refresh();
     return { ok: true, message: message ?? "Saved." };
   } catch (e) {
+    if (e instanceof UploadPendingError) refresh();
     return {
       ok: false,
+      ...(e instanceof UploadPendingError ? { refresh: true } : {}),
       message:
         e instanceof z.ZodError
           ? "Please check the form fields and try again."
@@ -278,7 +286,36 @@ export async function verifyJourneyRecord(form: FormData) {
       .parse(form.get("field"));
     const confirmed =
       z.enum(["true", "false"]).parse(form.get("confirmed")) === "true";
-    // Update only the selected record; database invoice guards remain authoritative.
+    const ready = await db.rpc("project_lifecycle_ready");
+    if (ready.error && !["PGRST202", "42883"].includes(ready.error.code))
+      throw Error("Verification history could not be checked.");
+    if (ready.data === true) {
+      checked(
+        (
+          await db.rpc("verify_project_record", {
+            target: id,
+            record_field: field,
+            confirmed,
+            reference: z
+              .string()
+              .trim()
+              .max(500)
+              .parse(form.get("reference") ?? ""),
+            occurred_on:
+              z
+                .union([z.iso.date(), z.literal("")])
+                .parse(form.get("occurred_on") ?? "") || null,
+            linked_document: form.get("documentId")
+              ? uuid.parse(form.get("documentId"))
+              : null,
+          })
+        ).error,
+      );
+      return confirmed
+        ? "Verified record and evidence saved."
+        : "Verification removed; the history is retained.";
+    }
+    // Legacy path: database invoice guards remain authoritative.
     checked(
       (
         await db
@@ -292,6 +329,76 @@ export async function verifyJourneyRecord(form: FormData) {
     return confirmed
       ? "Verified record saved. Journey and access now reflect this record."
       : "Verification removed. Journey and access now reflect this record.";
+  });
+}
+export async function archiveProject(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    const target = uuid.parse(form.get("projectId"));
+    if (form.get("acknowledged") !== "on")
+      throw Error("Acknowledge the archive/access decision first.");
+    const archived =
+      z.enum(["true", "false"]).parse(form.get("archived")) === "true";
+    const client_access = z
+      .enum(["retain", "suspend"])
+      .parse(form.get("client_access"));
+    checked(
+      (
+        await db.rpc("archive_project", {
+          target,
+          archived,
+          client_access,
+          acknowledged: true,
+        })
+      ).error,
+    );
+    return archived
+      ? "Project archived with your chosen client access. No files or verification records were deleted."
+      : "Project restored. Existing sharing and verification requirements still apply.";
+  });
+}
+export async function enableSeparateApprovals(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    if (form.get("acknowledged") !== "on")
+      throw Error("Acknowledge that both workstreams must be checked again.");
+    checked(
+      (
+        await db.rpc("enable_stream_approvals", {
+          target: uuid.parse(form.get("projectId")),
+          acknowledged: true,
+        })
+      ).error,
+    );
+    return "Separate approval checks enabled. Final files remain locked until both are verified and final payment is received.";
+  });
+}
+export async function verifyStreamApproval(form: FormData) {
+  return run(async () => {
+    const { db } = await identity(true);
+    if (form.get("acknowledged") !== "on")
+      throw Error("Confirm you have checked this workstream.");
+    checked(
+      (
+        await db.rpc("verify_stream_approval", {
+          target: uuid.parse(form.get("projectId")),
+          workstream: z
+            .enum(["Brand Identity", "Website Design"])
+            .parse(form.get("workstream")),
+          confirmed:
+            z.enum(["true", "false"]).parse(form.get("confirmed")) === "true",
+          reference: z
+            .string()
+            .trim()
+            .max(500)
+            .parse(form.get("reference") ?? ""),
+          linked_document: form.get("documentId")
+            ? uuid.parse(form.get("documentId"))
+            : null,
+        })
+      ).error,
+    );
+    return "Workstream approval saved. Final approval requires both branding and website checks.";
   });
 }
 export async function saveProjectNotes(form: FormData) {
@@ -389,6 +496,52 @@ export async function submitFeedback(form: FormData) {
     return "Your feedback has been recorded. Thank you.";
   });
 }
+export async function beginSecureUpload(input: unknown) {
+  try {
+    const { db } = await identity();
+    const { reserveUpload, uploadInput } =
+      await import("@/lib/supabase/file-intake");
+    return {
+      ok: true as const,
+      upload: await reserveUpload(db, uploadInput.parse(input)),
+    };
+  } catch (error) {
+    return {
+      ok: false as const,
+      message:
+        error instanceof z.ZodError
+          ? "Check the file details."
+          : error instanceof Error
+            ? error.message
+            : "Upload could not start.",
+    };
+  }
+}
+export async function finishSecureUpload(form: FormData): Promise<Result> {
+  try {
+    const { db } = await identity();
+    const { finishUpload } = await import("@/lib/supabase/file-intake");
+    const result = await finishUpload(db, uuid.parse(form.get("uploadId")));
+    refresh();
+    return { ok: result.state === "clean", message: result.message };
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "The file remains quarantined. Retry the check.",
+    };
+  }
+}
+export async function discardSecureUpload(form: FormData) {
+  return run(async () => {
+    const { db } = await identity();
+    const { discardUpload } = await import("@/lib/supabase/file-intake");
+    await discardUpload(db, uuid.parse(form.get("uploadId")));
+    return "Quarantined upload removed after file cleanup.";
+  });
+}
 export async function uploadDocument(form: FormData) {
   return run(async () => {
     const { db } = await identity(true);
@@ -443,6 +596,24 @@ export async function uploadDocument(form: FormData) {
               .parse(form.get("document_role") ?? "General"),
           }
         : {};
+    const { trySmallSecureUpload } = await import("@/lib/supabase/file-intake");
+    if (
+      await trySmallSecureUpload(db, file, {
+        projectId,
+        kind: "document",
+        stageId: "stage_id" in stage ? (stage.stage_id ?? null) : null,
+        category,
+        role:
+          "document_role" in stage
+            ? (stage.document_role ?? "General")
+            : "General",
+        version:
+          "version_label" in review ? (review.version_label ?? "v1") : "v1",
+        reviewDue: "review_due" in review ? (review.review_due ?? "") : "",
+        originalContract: null,
+      })
+    )
+      return "File checked and uploaded privately. Share it when ready.";
     // Insert unpublished metadata first: policy requires a known project/document path.
     checked(
       (
@@ -838,6 +1009,20 @@ export async function uploadClientAsset(form: FormData) {
               : null,
           }
         : {};
+    const { trySmallSecureUpload } = await import("@/lib/supabase/file-intake");
+    if (
+      await trySmallSecureUpload(db, file, {
+        projectId: project_id,
+        kind: "asset",
+        stageId: "stage_id" in stage ? (stage.stage_id ?? null) : null,
+        category: "document",
+        role: "General",
+        version: "v1",
+        reviewDue: "",
+        originalContract: null,
+      })
+    )
+      return "Your file passed its security checks and was uploaded privately.";
     const id = crypto.randomUUID(),
       object_path = project_id + "/" + id;
     checked(
@@ -977,6 +1162,20 @@ export async function uploadSignedContract(form: FormData) {
       new TextDecoder().decode(await file.slice(0, 5).arrayBuffer()) !== "%PDF-"
     )
       throw Error("Choose a completed PDF up to 3 MB.");
+    const { trySmallSecureUpload } = await import("@/lib/supabase/file-intake");
+    if (
+      await trySmallSecureUpload(db, file, {
+        projectId: original.data.project_id,
+        kind: "contract",
+        stageId: original.data.stage_id,
+        category: "document",
+        role: "General",
+        version: "v1",
+        reviewDue: "",
+        originalContract: documentId,
+      })
+    )
+      return "Returned PDF checked and uploaded for my review. It does not verify a signature or payment.";
     const id = crypto.randomUUID(),
       project_id = original.data.project_id,
       object_path = project_id + "/" + id;
@@ -1021,7 +1220,17 @@ export async function deleteClient(form: FormData): Promise<Result> {
       throw Error("Confirm that you understand this deletion is permanent.");
     const { deleteClientRecords } =
       await import("@/lib/supabase/delete-client");
-    await deleteClientRecords(db, clientId, confirmation);
+    const security = await db.rpc("file_security_ready");
+    if (security.error && !["PGRST202", "42883"].includes(security.error.code))
+      throw Error("File security could not be checked before deletion.");
+    const { removeFrozenUploadFiles } =
+      await import("@/lib/supabase/file-intake");
+    await deleteClientRecords(
+      db,
+      clientId,
+      confirmation,
+      security.data === true ? removeFrozenUploadFiles : undefined,
+    );
     return {
       ok: true,
       message:

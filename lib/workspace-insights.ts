@@ -47,6 +47,7 @@ export function workspaceInsights(
     data.role === "admin"
       ? data.projects.filter(
           (p) =>
+            !p.archived_at &&
             !data.clients.some(
               (c) => c.id === p.client_id && c.deletion_pending,
             ) &&

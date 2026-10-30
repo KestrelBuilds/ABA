@@ -26,6 +26,7 @@ export type ProspectEntry = Pick<
   ProspectSpace,
   "enabled" | "release_step" | "enquiry_status" | "booking_url"
 > & {
+  archived_at?: string | null;
   project_id: string;
   name: string;
   contract_signed: boolean;
@@ -51,6 +52,8 @@ export function prospectDocumentVisible(
   space: ProspectSpace,
 ) {
   if (
+    (d.scan_state && !["legacy", "clean"].includes(d.scan_state)) ||
+    (p.archived_at && p.archived_client_access === "suspend") ||
     space.project_id !== p.id ||
     d.project_id !== p.id ||
     !space.enabled ||
@@ -91,8 +94,11 @@ export function previewProspect(
     } as ProspectSpace);
   return {
     project_id: p.id,
+    archived_at: p.archived_at,
     name: p.name,
-    enabled: space.enabled,
+    enabled:
+      space.enabled &&
+      !(p.archived_at && p.archived_client_access === "suspend"),
     release_step: space.release_step,
     enquiry_status: space.enquiry_status,
     booking_url: space.booking_url,
@@ -111,6 +117,7 @@ export function previewProspect(
   };
 }
 export function projectRelationship(data: WorkspaceData, p: DbProject) {
+  if (p.archived_at) return "Archived project";
   return p.contract_signed && p.deposit_paid
     ? "Active client"
     : data.prospectSpaces?.find((s) => s.project_id === p.id)

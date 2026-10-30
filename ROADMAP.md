@@ -71,3 +71,11 @@ Stable stage purposes implemented with additive migration 202610300011, capabili
 Owner Overview insights and clearer brand-colour surfaces implemented: next-phase project counts with drill-down and shared service filters, plus project value marked received/not received from explicit payment checks. No dated-income graph is claimed without reliable payment dates. No additional migration or service is required. Launch readiness remains a rough 80% planning estimate, with hosted journey/recovery acceptance, backup/restore, privacy/upload-security review and final owner materials still required; see docs/LAUNCH-CHECKLIST.md.
 
 Creative direction aligned with Alex's confirmed Moodboard 02: locally hosted Vina Sans/Fira Code, stronger display/mono hierarchy, quieter neutral canvas, supplied values/tagline and personalised research-led wording. Existing palette, standalone A, access/verification rules and approved section styling remain. No new service, schema or launch-readiness claim; see docs/reference/ABA-CREATIVE-DIRECTION.md.
+
+## 30 October: lifecycle and secure upload development
+
+Implemented behind capability-gated migration 012: deliberate archive retain/suspend/restore, active-only summaries, read-only archived client access, private append-only verification evidence without historical backfill, and separate combined-project final approvals with explicit legacy opt-in. Local and fictional browser validation is distinct from hosted acceptance.
+
+Optional 013 implements larger/source-file direct uploads with quarantine, bounded archive checks and a hash-bound scanner adapter, retry/discard and upload-token-safe client deletion. A real approved scanner is not provisioned/configured; 013 must wait for that prerequisite. Existing installations remain usable.
+
+Remaining launch gates and concrete owner steps: docs/GO-LIVE-STATUS.md. Hosted invitation/recovery/new upload/access acceptance, backup AND file restore, privacy/retention, MFA recovery and broader production review remain external work; do not mark them done from local tests.

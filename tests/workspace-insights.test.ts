@@ -159,3 +159,11 @@ test("chart filters share a consistent scope, exclude pending deletions and neve
   });
   assert.equal(data.projects.length, 3);
 });
+
+test("archived projects do not contribute to active pipeline or project payment charts", () => {
+  const insights = workspaceInsights({
+    ...base,
+    projects: [{ ...project, archived_at: "2026-10-30T00:00:00Z" }],
+  });
+  assert.equal(insights.phases.flatMap((p) => p.projects).length, 0);
+});

@@ -1,4 +1,7 @@
 "use client";
+import SecureUpload from "./secure-upload";
+import { FileScanStatus, UploadQueue } from "./upload-status";
+import { fileAvailable } from "@/lib/upload-policy";
 import { useState, type ComponentType, type ReactNode } from "react";
 import { Files, ArrowUpRight, Search } from "lucide-react";
 import type { DbProject, WorkspaceData } from "@/lib/workspace";
@@ -61,6 +64,7 @@ export default function ProjectFiles({
           ? "Find the same files used in the journey, organised by stage. Upload stage files inside their journey stage."
           : "Your shared project files and uploads, organised by journey stage."}
       </p>
+      <UploadQueue data={data} projectId={project.id} Form={Form} />
       {admin && (
         <details className="library-upload">
           <summary>Upload a project-wide file</summary>
@@ -68,46 +72,51 @@ export default function ProjectFiles({
             For files that belong to a particular step, upload inside that
             journey stage instead.
           </p>
-          <Form action={uploadDocument} label="Upload privately">
-            <input type="hidden" name="projectId" value={project.id} />
-            <label>
-              Category
-              <select name="category" defaultValue="document">
-                <option value="presentation">Design presentation</option>
-                <option value="document">Project document</option>
-                <option value="final">Final deliverable</option>
-              </select>
-            </label>
-            {data.managementReady && (
-              <>
-                <label>
-                  Presentation version
-                  <input
-                    name="version_label"
-                    defaultValue="v1"
-                    required
-                    maxLength={40}
-                  />
-                </label>
-                <label>
-                  Feedback due date
-                  <input name="review_due" type="date" />
-                </label>
-              </>
-            )}
-            <label>
-              File
-              <input
-                type="file"
-                name="file"
-                accept="application/pdf,image/png,image/jpeg,image/webp"
-                required
-              />
-            </label>
-            <p>
-              PDF, PNG, JPEG or WebP · 3 MB maximum. Uploads start unpublished.
-            </p>
-          </Form>
+          {data.fileSecurityReady ? (
+            <SecureUpload data={data} projectId={project.id} kind="document" />
+          ) : (
+            <Form action={uploadDocument} label="Upload privately">
+              <input type="hidden" name="projectId" value={project.id} />
+              <label>
+                Category
+                <select name="category" defaultValue="document">
+                  <option value="presentation">Design presentation</option>
+                  <option value="document">Project document</option>
+                  <option value="final">Final deliverable</option>
+                </select>
+              </label>
+              {data.managementReady && (
+                <>
+                  <label>
+                    Presentation version
+                    <input
+                      name="version_label"
+                      defaultValue="v1"
+                      required
+                      maxLength={40}
+                    />
+                  </label>
+                  <label>
+                    Feedback due date
+                    <input name="review_due" type="date" />
+                  </label>
+                </>
+              )}
+              <label>
+                File
+                <input
+                  type="file"
+                  name="file"
+                  accept="application/pdf,image/png,image/jpeg,image/webp"
+                  required
+                />
+              </label>
+              <p>
+                PDF, PNG, JPEG or WebP · 3 MB maximum. Uploads start
+                unpublished.
+              </p>
+            </Form>
+          )}
         </details>
       )}
 
@@ -251,9 +260,12 @@ export default function ProjectFiles({
                       check these separately.
                     </p>
                   )}
-                  <a className="resource" href={"/assets/" + asset.id}>
-                    Download client file securely <ArrowUpRight size={14} />
-                  </a>
+                  <FileScanStatus file={asset} />
+                  {fileAvailable(asset) && (
+                    <a className="resource" href={"/assets/" + asset.id}>
+                      Download client file securely <ArrowUpRight size={14} />
+                    </a>
+                  )}
                 </div>
               );
             }
@@ -296,10 +308,13 @@ export default function ProjectFiles({
                 {admin && (
                   <p className="file-visibility">{visibility.message}</p>
                 )}
-                <a className="resource" href={"/files/" + d.id}>
-                  Download securely <ArrowUpRight size={14} />
-                </a>
-                {admin && (
+                <FileScanStatus file={d} />
+                {fileAvailable(d) && (
+                  <a className="resource" href={"/files/" + d.id}>
+                    Download securely <ArrowUpRight size={14} />
+                  </a>
+                )}
+                {admin && fileAvailable(d) && (
                   <Form
                     action={publishDocument}
                     label={d.published ? "Unpublish" : "Publish to client"}

@@ -1,4 +1,7 @@
 "use client";
+import SecureUpload from "./secure-upload";
+import { FileScanStatus, UploadQueue } from "./upload-status";
+import { fileAvailable } from "@/lib/upload-policy";
 import type { ComponentType, ReactNode } from "react";
 import { ArrowDownToLine, FileText } from "lucide-react";
 import type { WorkspaceData, DbStage } from "@/lib/workspace";
@@ -206,6 +209,12 @@ export default function StageWorkspace({
         </>
       )}
       <h3 className="files-heading">Files for this stage</h3>
+      <UploadQueue
+        data={data}
+        projectId={stage.project_id}
+        stageId={stage.id}
+        Form={Form}
+      />
       {documents.length === 0 && (
         <p>
           No documents have been {admin ? "uploaded" : "shared"} for this stage
@@ -225,13 +234,16 @@ export default function StageWorkspace({
               </p>
             </div>
           </header>
-          <a
-            className="secondary action-link"
-            href={"/files/" + d.id}
-            aria-label={"Download " + d.name}
-          >
-            <ArrowDownToLine size={17} aria-hidden="true" /> Download file
-          </a>
+          <FileScanStatus file={d} />
+          {fileAvailable(d) && (
+            <a
+              className="secondary action-link"
+              href={"/files/" + d.id}
+              aria-label={"Download " + d.name}
+            >
+              <ArrowDownToLine size={17} aria-hidden="true" /> Download file
+            </a>
+          )}
           {admin && project && (
             <p className="file-visibility">
               {
@@ -245,7 +257,7 @@ export default function StageWorkspace({
               }
             </p>
           )}
-          {admin && (
+          {admin && fileAvailable(d) && (
             <Form
               action={publishDocument}
               label={d.published ? "Unpublish file" : "Share file with client"}
@@ -269,9 +281,14 @@ export default function StageWorkspace({
       ))}
       {assets.length > 0 && <h3 className="files-heading">Client returns</h3>}
       {assets.map((a) => (
-        <a className="resource" key={a.id} href={"/assets/" + a.id}>
-          Returned client file · {a.name} ↗
-        </a>
+        <div className="resource" key={a.id}>
+          {fileAvailable(a) ? (
+            <a href={"/assets/" + a.id}>Returned client file · {a.name} ↗</a>
+          ) : (
+            <b>{a.name}</b>
+          )}
+          <FileScanStatus file={a} />
+        </div>
       ))}
       {data.finance?.ready ? (
         <>
@@ -303,71 +320,85 @@ export default function StageWorkspace({
               </details>
               <details className="settings-disclosure stage-upload">
                 <summary>Upload my PDF or presentation for this stage</summary>
-                <Form action={uploadDocument} label="Upload to this stage">
-                  <input
-                    type="hidden"
-                    name="projectId"
-                    value={stage.project_id}
+                {data.fileSecurityReady ? (
+                  <SecureUpload
+                    data={data}
+                    projectId={stage.project_id}
+                    stageId={stage.id}
+                    kind="document"
+                    defaultCategory={defaults.category}
+                    defaultRole={defaults.role}
                   />
-                  <input type="hidden" name="stageId" value={stage.id} />
-                  <label>
-                    Document type
-                    <select name="document_role" defaultValue={defaults.role}>
-                      <option>General</option>
-                      <option>Proposal</option>
-                      <option>Contract</option>
-                      <option>Invoice</option>
-                      <option>Presentation</option>
-                      <option>Handover</option>
-                    </select>
-                  </label>
-                  <label>
-                    Release rule
-                    <select name="category" defaultValue={defaults.category}>
-                      <option value="document">Project document</option>
-                      <option value="presentation">Design presentation</option>
-                      <option value="final">
-                        Final deliverable (approval & payment required)
-                      </option>
-                    </select>
-                  </label>
-                  <label>
-                    Version
+                ) : (
+                  <Form action={uploadDocument} label="Upload to this stage">
                     <input
-                      name="version_label"
-                      defaultValue="v1"
-                      maxLength={40}
-                      required
+                      type="hidden"
+                      name="projectId"
+                      value={stage.project_id}
                     />
-                  </label>
-                  <label>
-                    Review date
-                    <input name="review_due" type="date" />
-                  </label>
-                  <label>
-                    File
-                    <input
-                      name="file"
-                      type="file"
-                      accept="application/pdf,image/png,image/jpeg,image/webp"
-                      required
-                    />
-                  </label>
-                  <p>
-                    PDFs and supported images up to 3 MB. Uploads are private
-                    drafts until you share them. Proposal, contract and invoice
-                    PDFs made in Illustrator belong here. Clients can download
-                    shared files and return completed copies in this stage.
-                  </p>
-                  {defaults.category === "final" && (
-                    <p className="helper-note">
-                      This stage starts with the Final deliverable rule, so
-                      shared files stay locked until final approval and payment
-                      are verified. You can change the rule for a file which
-                      needs earlier review.
+                    <input type="hidden" name="stageId" value={stage.id} />
+                    <label>
+                      Document type
+                      <select name="document_role" defaultValue={defaults.role}>
+                        <option>General</option>
+                        <option>Proposal</option>
+                        <option>Contract</option>
+                        <option>Invoice</option>
+                        <option>Presentation</option>
+                        <option>Handover</option>
+                      </select>
+                    </label>
+                    <label>
+                      Release rule
+                      <select name="category" defaultValue={defaults.category}>
+                        <option value="document">Project document</option>
+                        <option value="presentation">
+                          Design presentation
+                        </option>
+                        <option value="final">
+                          Final deliverable (approval & payment required)
+                        </option>
+                      </select>
+                    </label>
+                    <label>
+                      Version
+                      <input
+                        name="version_label"
+                        defaultValue="v1"
+                        maxLength={40}
+                        required
+                      />
+                    </label>
+                    <label>
+                      Review date
+                      <input name="review_due" type="date" />
+                    </label>
+                    <label>
+                      File
+                      <input
+                        name="file"
+                        type="file"
+                        accept="application/pdf,image/png,image/jpeg,image/webp"
+                        required
+                      />
+                    </label>
+                    <p>
+                      PDFs and supported images up to 3 MB. Uploads are private
+                      drafts until you share them. Proposal, contract and
+                      invoice PDFs made in Illustrator belong here. Clients can
+                      download shared files and return completed copies in this
+                      stage.
                     </p>
-                  )}
-                </Form>
+                    {defaults.category === "final" && (
+                      <p className="helper-note">
+                        This stage starts with the Final deliverable rule, so
+                        shared files stay locked until final approval and
+                        payment are verified. You can change the rule for a file
+                        which needs earlier review.
+                      </p>
+                    )}
+                  </Form>
+                )}
               </details>
             </>
           )}

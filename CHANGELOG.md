@@ -1,5 +1,15 @@
 # Changelog
 
+## 30 October 2026 — project lifecycle and upload quarantine
+
+- Added explicit archive retain/suspend/restore with read-only retained client access and active-only owner summaries.
+- Added private append-only dates/references/document evidence for new verification changes, retaining historical flags without invented events. Native-invoice full-payment protections remain.
+- Added separate branding/website final approvals for new combined projects and acknowledged opt-in for existing combined projects; both plus final payment remain required for final release.
+- Added optional 25 MB direct private PDF/image/AI/ZIP uploads, pending/rejected quarantine, bounded ZIP inspection, trusted hash-bound scanner adapter and retry/discard. No real scanner service is configured; migration 013 must wait for approved configuration/acceptance.
+- Hardened client cleanup around still-live upload tokens, retained intake tombstones, frozen reserved paths and delayed final cleanup with a retry time.
+- Added migration 012/013 activation guidance and a concrete go-live checklist. These are additive/capability-gated; no live SQL or real records changed by this release.
+
+
 ## 0.1.0 — 27 October 2026
 
 - Created ABA Studio’s first working Phase 1 demonstration with Next.js, React and strict TypeScript.

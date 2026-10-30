@@ -40,7 +40,7 @@ function ProspectForm({
               kind === "proposal" ? respondToProposal : uploadSignedContract
             )(form);
             setResult(value);
-            if (value.ok) router.refresh();
+            if (value.ok || value.refresh) router.refresh();
           } catch {
             setResult({
               ok: false,
@@ -152,6 +152,12 @@ export default function ProspectArea({
             <header className="prospect-project-heading">
               <span className="section-kicker">YOUR PROJECT</span>
               <h2>{p.name}</h2>
+              {p.archived_at && (
+                <p className="banner">
+                  Archived project — read-only. Existing file-release checks
+                  still apply.
+                </p>
+              )}
             </header>
             {preview && !p.enabled && (
               <div className="banner">
@@ -283,7 +289,8 @@ export default function ProspectArea({
                                 if you’d like to change it.
                               </p>
                             ) : (
-                              !preview && (
+                              !preview &&
+                              !p.archived_at && (
                                 <ProspectForm
                                   documentId={d.id}
                                   kind="proposal"
@@ -303,7 +310,7 @@ export default function ProspectArea({
                                     Your returned copy · {a.name} ↗
                                   </a>
                                 ))}
-                              {!preview && (
+                              {!preview && !p.archived_at && (
                                 <ProspectForm
                                   documentId={d.id}
                                   kind="contract"

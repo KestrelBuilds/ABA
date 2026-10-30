@@ -1,4 +1,5 @@
 "use client";
+import ProjectLifecycle from "./project-lifecycle";
 import ProjectFiles from "./project-files";
 import Enquiries from "./enquiries";
 import ClientAccess from "./client-access";
@@ -161,6 +162,17 @@ export default function ConnectedStudio({
   const [view, setView] = useState(admin ? "Overview" : "Projects");
   const [projectId, setProjectId] = useState(data.projects[0]?.id ?? "");
   const [query, setQuery] = useState("");
+  const [projectFilter, setProjectFilter] = useState("active");
+  const activeProjects = data.projects.filter((p) => !p.archived_at);
+  const selectableProjects = admin
+    ? data.projects.filter(
+        (p) =>
+          projectFilter === "all" ||
+          (projectFilter === "archived"
+            ? Boolean(p.archived_at)
+            : !p.archived_at),
+      )
+    : data.projects;
   const [accessClientId, setAccessClientId] = useState("");
   const [projectJump, setProjectJump] = useState("");
   useEffect(() => {
@@ -178,7 +190,7 @@ export default function ConnectedStudio({
   const [clientNotice, setClientNotice] = useState("");
   const [creating, setCreating] = useState<"client" | "project" | null>(null);
   const project =
-    data.projects.find((p) => p.id === projectId) ?? data.projects[0];
+    selectableProjects.find((p) => p.id === projectId) ?? selectableProjects[0];
   const otherVerificationFields = (
     Object.keys(verificationLabels) as VerificationField[]
   ).filter(
@@ -201,6 +213,7 @@ export default function ConnectedStudio({
       setAccessClientId(destination.clientId);
       setView("Clients");
     } else {
+      setProjectFilter("active");
       setProjectId(destination.projectId);
       setView("Projects");
       setProjectJump(destination.href);
@@ -216,6 +229,27 @@ export default function ConnectedStudio({
         )
       : 0;
   };
+  if (
+    admin &&
+    showPreview &&
+    project &&
+    project.archived_at &&
+    project.archived_client_access === "suspend"
+  )
+    return (
+      <main className="auth-page">
+        <section className="panel">
+          <h1>Project access suspended</h1>
+          <p>
+            This archived project is not available to the client. No private
+            records are included in this preview.
+          </p>
+          <button className="primary" onClick={() => setShowPreview(false)}>
+            Back to owner workspace
+          </button>
+        </section>
+      </main>
+    );
   if (admin && showPreview && project)
     return (
       <>
@@ -244,7 +278,9 @@ export default function ConnectedStudio({
       </>
     );
   return (
-    <PreviewContext.Provider value={preview}>
+    <PreviewContext.Provider
+      value={preview || (!admin && Boolean(project?.archived_at))}
+    >
       <div className="shell connected">
         <aside className="sidebar">
           <Link className="logo" href="/">
@@ -479,15 +515,18 @@ export default function ConnectedStudio({
                 <WorkspaceAttention data={data} onOpen={openAttention} />
                 <div className="stats">
                   {[
-                    ["Projects", data.projects.length],
+                    ["Active projects", activeProjects.length],
                     [
                       "Awaiting feedback",
                       new Set(
                         data.stages
                           .filter(
                             (s) =>
-                              s.status === "Awaiting Client" ||
-                              s.status === "Awaiting Approval",
+                              activeProjects.some(
+                                (p) => p.id === s.project_id,
+                              ) &&
+                              (s.status === "Awaiting Client" ||
+                                s.status === "Awaiting Approval"),
                           )
                           .map((s) => s.project_id),
                       ).size,
@@ -507,6 +546,7 @@ export default function ConnectedStudio({
                 <WorkspaceInsights
                   data={data}
                   onOpenProject={(id) => {
+                    setProjectFilter("active");
                     setProjectId(id);
                     setView("Projects");
                     setProjectJump("#journey");
@@ -515,8 +555,8 @@ export default function ConnectedStudio({
                 <div className="two-col">
                   <section className="panel">
                     <h2>Current projects</h2>
-                    {data.projects.length ? (
-                      data.projects.map((p) => (
+                    {activeProjects.length ? (
+                      activeProjects.map((p) => (
                         <button
                           className="list-row"
                           key={p.id}
@@ -709,7 +749,21 @@ export default function ConnectedStudio({
             )}
             {(view === "Projects" || !admin) && (
               <>
-                {data.projects.length ? (
+                {admin && data.lifecycleReady && (
+                  <label className="project-picker">
+                    Show projects
+                    <select
+                      aria-label="Project list filter"
+                      value={projectFilter}
+                      onChange={(e) => setProjectFilter(e.target.value)}
+                    >
+                      <option value="active">Active projects</option>
+                      <option value="archived">Archived projects</option>
+                      <option value="all">All projects</option>
+                    </select>
+                  </label>
+                )}
+                {selectableProjects.length ? (
                   <>
                     <label className="project-picker">
                       Your project
@@ -718,7 +772,7 @@ export default function ConnectedStudio({
                         value={project?.id ?? ""}
                         onChange={(e) => setProjectId(e.target.value)}
                       >
-                        {data.projects.map((p) => (
+                        {selectableProjects.map((p) => (
                           <option value={p.id} key={p.id}>
                             {clientFor(p)?.name} — {p.name}
                           </option>
@@ -727,6 +781,23 @@ export default function ConnectedStudio({
                     </label>
                     {project && (
                       <>
+                        {project.archived_at && (
+                          <p className="banner">
+                            Archived project ·{" "}
+                            {admin
+                              ? project.archived_client_access === "suspend"
+                                ? "Client access is suspended."
+                                : "Existing client access is retained as read-only."
+                              : "Read-only access. Your existing file-release checks still apply."}
+                          </p>
+                        )}
+                        {admin && (
+                          <ProjectLifecycle
+                            data={data}
+                            project={project}
+                            Form={ActionForm}
+                          />
+                        )}
                         {!admin && (
                           <PortalGuide
                             project={project}
@@ -1422,7 +1493,9 @@ export default function ConnectedStudio({
                     </h2>
                     <p>
                       {admin
-                        ? "Create a client, then add their first project."
+                        ? data.projects.length
+                          ? "No projects in this view. Choose another project filter above."
+                          : "Create a client, then add their first project."
                         : "A signed contract and recorded 50% deposit are required before your project becomes available. Please contact Alex if you need help."}
                     </p>
                   </section>

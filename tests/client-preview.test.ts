@@ -99,3 +99,26 @@ test("client preview excludes finance drafts, void invoices and internal billing
   assert.deepEqual(view.billing, []);
   assert.deepEqual(view.templates, []);
 });
+
+test("preview excludes suspended archives and quarantined records without exposing owner evidence", () => {
+  const data = fixture();
+  data.lifecycleReady = true;
+  data.verificationHistory = [];
+  data.streamApprovals = [];
+  data.pendingUploads = [];
+  data.projects[0].archived_at = "2026-10-30T00:00:00Z";
+  data.projects[0].archived_client_access = "retain";
+  data.documents[0].scan_state = "pending";
+  let preview = clientPreview(data, "p1");
+  assert.equal(preview.projects.length, 1);
+  assert.equal(preview.documents.length, 0);
+  assert.equal(preview.readOnly, true);
+  assert.equal(preview.verificationHistory, undefined);
+  assert.equal(preview.streamApprovals, undefined);
+  data.projects[0].archived_client_access = "suspend";
+  preview = clientPreview(data, "p1");
+  assert.equal(preview.projects.length, 0);
+  assert.equal(preview.stages.length, 0);
+  assert.equal(preview.documents.length, 0);
+  assert.equal(preview.questionnaires.length, 0);
+});

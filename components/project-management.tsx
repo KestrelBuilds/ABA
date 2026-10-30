@@ -1,4 +1,7 @@
 "use client";
+import SecureUpload from "./secure-upload";
+import { FileScanStatus } from "./upload-status";
+import { fileAvailable } from "@/lib/upload-policy";
 import type { ComponentType, ReactNode } from "react";
 import type { WorkspaceData, DbProject } from "@/lib/workspace";
 import type { Result } from "@/app/actions";
@@ -208,24 +211,35 @@ export default function ProjectManagement({
           Please include licence information where relevant and never upload
           passwords.
         </p>
-        <Form action={uploadClientAsset} label="Upload asset privately">
-          <input type="hidden" name="projectId" value={project.id} />
-          <label>
-            File
-            <input
-              type="file"
-              name="file"
-              required
-              accept="application/pdf,image/png,image/jpeg,image/webp"
-            />
-          </label>
-        </Form>
+        {data.fileSecurityReady ? (
+          <SecureUpload data={data} projectId={project.id} kind="asset" />
+        ) : (
+          <Form action={uploadClientAsset} label="Upload asset privately">
+            <input type="hidden" name="projectId" value={project.id} />
+            <label>
+              File
+              <input
+                type="file"
+                name="file"
+                required
+                accept="application/pdf,image/png,image/jpeg,image/webp"
+              />
+            </label>
+          </Form>
+        )}
         {(data.assets ?? [])
           .filter((a) => a.project_id === project.id)
           .map((a) => (
-            <a className="resource" key={a.id} href={"/assets/" + a.id}>
-              {a.name} · Download ↗
-            </a>
+            <div key={a.id}>
+              <FileScanStatus file={a} />
+              {fileAvailable(a) ? (
+                <a className="resource" href={"/assets/" + a.id}>
+                  {a.name} · Download ↗
+                </a>
+              ) : (
+                <b>{a.name}</b>
+              )}
+            </div>
           ))}
       </section>
     </div>

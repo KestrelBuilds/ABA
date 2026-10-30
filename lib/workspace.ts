@@ -3,6 +3,7 @@ import type { StagePurpose } from "./stage-purpose";
 import type { ProspectSpace } from "./prospects";
 import type { ClientPortalStatus } from "./invitations";
 import { loadFinance, type FinanceData } from "./finance/data";
+import { secureUploadsConfigured } from "./supabase/file-intake";
 import { identity } from "./supabase/server";
 export type DbClient = {
   deletion_pending?: boolean;
@@ -13,6 +14,9 @@ export type DbClient = {
   sector: string;
 };
 export type DbProject = {
+  archived_at?: string | null;
+  archived_client_access?: "retain" | "suspend";
+  separate_approvals?: boolean;
   id: string;
   client_id: string;
   name: string;
@@ -34,7 +38,23 @@ export type DbStage = {
   status: string;
   visible: boolean;
 };
-export type DbDocument = {
+export type FileSecurity = {
+  scan_state?: "legacy" | "pending" | "clean" | "rejected";
+  file_size?: number | null;
+  sha256?: string | null;
+  content_type?: string | null;
+  scanned_at?: string | null;
+};
+export type PendingUpload = {
+  id: string;
+  project_id: string;
+  stage_id: string | null;
+  name: string;
+  kind: "document" | "asset" | "contract";
+  status: "pending" | "rejected";
+  expires_at: string;
+};
+export type DbDocument = FileSecurity & {
   id: string;
   project_id: string;
   name: string;
@@ -76,7 +96,7 @@ export type ClientAction = {
   due: string | null;
   status: "To do" | "Done";
 };
-export type ClientAsset = {
+export type ClientAsset = FileSecurity & {
   contract_document_id?: string | null;
   stage_id?: string | null;
   id: string;
@@ -84,7 +104,35 @@ export type ClientAsset = {
   name: string;
   created_at: string;
 };
+export type VerificationEvent = {
+  id: string;
+  project_id: string | null;
+  project_label: string;
+  field: string;
+  confirmed: boolean;
+  recorded_at: string;
+  actor_id: string | null;
+  reference: string;
+  occurred_on: string | null;
+  document_id: string | null;
+  document_label: string | null;
+  invoice_id: string | null;
+  source: string;
+};
 export type WorkspaceData = {
+  readOnly?: boolean;
+  fileSecurityReady?: boolean;
+  secureUploadsConfigured?: boolean;
+  pendingUploads?: PendingUpload[];
+  lifecycleReady?: boolean;
+  verificationHistory?: VerificationEvent[];
+  streamApprovals?: {
+    project_id: string;
+    stream: "Brand Identity" | "Website Design";
+    confirmed: boolean;
+    checked_at: string;
+    checked_by: string | null;
+  }[];
   stagePurposesReady?: boolean;
   invitationsReady?: boolean;
   portalStatuses?: ClientPortalStatus[];
@@ -154,6 +202,49 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
     : null;
   if (portalStatuses?.error)
     throw Error("Client access status could not be loaded.");
+  const fileCapability = await db.rpc("file_security_ready");
+  if (
+    fileCapability.error &&
+    !["PGRST202", "42883"].includes(fileCapability.error.code)
+  )
+    throw Error("File security could not be checked.");
+  const fileSecurityReady = fileCapability.data === true;
+  const pendingUploads = fileSecurityReady
+    ? await db
+        .from("upload_intakes")
+        .select("id,project_id,stage_id,name,kind,status,expires_at")
+        .in("status", ["pending", "rejected"])
+        .is("discarded_at", null)
+        .order("created_at")
+        .overrideTypes<PendingUpload[], { merge: false }>()
+    : null;
+  if (pendingUploads?.error) throw Error("Upload status could not be loaded.");
+  const scanColumns = fileSecurityReady
+    ? ",scan_state,file_size,sha256,content_type,scanned_at"
+    : "";
+  const lifecycleCapability = await db.rpc("project_lifecycle_ready");
+  if (
+    lifecycleCapability.error &&
+    !["PGRST202", "42883"].includes(lifecycleCapability.error.code)
+  )
+    throw Error("Project history and archiving could not be checked.");
+  const lifecycleReady = lifecycleCapability.data === true;
+  const lifecycle =
+    lifecycleReady && profile.role === "admin"
+      ? await Promise.all([
+          db
+            .from("project_verifications")
+            .select(
+              "id,project_id,project_label,field,confirmed,recorded_at,actor_id,reference,occurred_on,document_id,document_label,invoice_id,source",
+            )
+            .order("recorded_at", { ascending: false }),
+          db
+            .from("project_stream_approvals")
+            .select("project_id,stream,confirmed,checked_at,checked_by"),
+        ])
+      : [];
+  if (lifecycle.some((r) => r.error))
+    throw Error("Project history could not be loaded.");
   const purposeCapability = await db.rpc("stage_purposes_ready");
   if (
     purposeCapability.error &&
@@ -248,11 +339,11 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
         db
           .from("client_assets")
           .select(
-            finance.ready
+            (finance.ready
               ? contractReady
                 ? "id,project_id,name,created_at,stage_id,contract_document_id"
                 : "id,project_id,name,created_at,stage_id"
-              : "id,project_id,name,created_at",
+              : "id,project_id,name,created_at") + scanColumns,
           )
           .order("created_at")
           .overrideTypes<ClientAsset[], { merge: false }>(),
@@ -273,9 +364,12 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
     db
       .from("projects")
       .select(
-        "id,client_id,name,type,due,budget,contract_signed,deposit_paid,final_paid,final_approved",
+        lifecycleReady
+          ? "id,client_id,name,type,due,budget,contract_signed,deposit_paid,final_paid,final_approved,archived_at,archived_client_access,separate_approvals"
+          : "id,client_id,name,type,due,budget,contract_signed,deposit_paid,final_paid,final_approved",
       )
-      .order("created_at"),
+      .order("created_at")
+      .overrideTypes<DbProject[], { merge: false }>(),
     db
       .from("stages")
       .select(
@@ -288,11 +382,11 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
     db
       .from("documents")
       .select(
-        managementReady
+        (managementReady
           ? finance.ready
             ? "id,project_id,name,category,published,version_label,review_due,stage_id,document_role"
             : "id,project_id,name,category,published,version_label,review_due"
-          : "id,project_id,name,category,published",
+          : "id,project_id,name,category,published") + scanColumns,
       )
       .order("created_at")
       .overrideTypes<DbDocument[], { merge: false }>(),
@@ -322,6 +416,12 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       "Workspace data could not be loaded. Check the database migrations and access policies.",
     );
   return {
+    fileSecurityReady,
+    secureUploadsConfigured: secureUploadsConfigured(),
+    pendingUploads: pendingUploads?.data ?? [],
+    lifecycleReady,
+    verificationHistory: lifecycle[0]?.data ?? [],
+    streamApprovals: lifecycle[1]?.data ?? [],
     stagePurposesReady,
     invitationsReady,
     portalStatuses: portalStatuses?.data ?? [],

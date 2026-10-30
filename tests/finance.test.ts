@@ -30,7 +30,7 @@ test("finance SQL enforces immutable snapshots, private drafts, 50/50 invoices a
   const db = new PGlite();
   try {
     await db.exec(
-      `create role authenticated;create role anon;create schema auth;create table auth.users(id uuid primary key);create table auth.mfa_factors(id uuid primary key,user_id uuid,status text);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create function auth.jwt() returns jsonb language sql stable as $$select '{"aal":"aal1"}'::jsonb$$;grant usage on schema auth to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant all on storage.objects to authenticated;`,
+      `create role authenticated;create role anon;create schema auth;create table auth.users(id uuid primary key,email text);create table auth.mfa_factors(id uuid primary key,user_id uuid,status text);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create function auth.jwt() returns jsonb language sql stable as $$select '{"aal":"aal1"}'::jsonb$$;grant usage on schema auth to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant all on storage.objects to authenticated;`,
     );
     for (const file of [
       "202610270001_workspace.sql",
@@ -40,7 +40,11 @@ test("finance SQL enforces immutable snapshots, private drafts, 50/50 invoices a
       "202610280005_business_documents.sql",
       "202610280006_contract_area.sql",
       "202610280007_client_deletion.sql",
+      "202610290008_prospect_spaces.sql",
+      "202610290009_enquiries.sql",
+      "202610290010_client_invitations.sql",
       "202610300011_stage_purposes.sql",
+      "202610300012_project_lifecycle.sql",
     ])
       await db.exec(
         (await readFile("supabase/migrations/" + file, "utf8")).replace(
@@ -49,7 +53,7 @@ test("finance SQL enforces immutable snapshots, private drafts, 50/50 invoices a
         ),
       );
     await db.exec(
-      `insert into auth.users values('${owner}'),('${one}'),('${two}');insert into public.clients(id,name,contact,email)values('${c1}','One business','One','one@example.com'),('${c2}','Two business','Two','two@example.com');insert into public.profiles values('${owner}','admin',null),('${one}','client','${c1}'),('${two}','client','${c2}');insert into public.projects(id,client_id,name,type,due,budget,contract_signed)values('${project}','${c1}','Test brand','Brand Identity','2027-01-01',101.01,true);`,
+      `insert into auth.users(id) values('${owner}'),('${one}'),('${two}');insert into public.clients(id,name,contact,email)values('${c1}','One business','One','one@example.com'),('${c2}','Two business','Two','two@example.com');insert into public.profiles values('${owner}','admin',null),('${one}','client','${c1}'),('${two}','client','${c2}');insert into public.projects(id,client_id,name,type,due,budget,contract_signed)values('${project}','${c1}','Test brand','Brand Identity','2027-01-01',101.01,true);`,
     );
     const as = async (user: string) => {
       await db.exec("reset role");
@@ -127,6 +131,18 @@ test("finance SQL enforces immutable snapshots, private drafts, 50/50 invoices a
     assert.equal(
       (await rows("select deposit_paid from public.projects"))[0].deposit_paid,
       true,
+    );
+    assert.deepEqual(
+      (
+        await rows(
+          "select invoice_id,source,occurred_on from public.project_verifications where field='deposit_paid' and confirmed",
+        )
+      ).map((e) => ({
+        invoice: e.invoice_id,
+        source: e.source,
+        dated: !!e.occurred_on,
+      })),
+      [{ invoice: deposit, source: "native_invoice", dated: true }],
     );
     await assert.rejects(() =>
       db.exec(`select public.void_invoice('${deposit}')`),
