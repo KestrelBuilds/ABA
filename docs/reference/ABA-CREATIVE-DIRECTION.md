@@ -16,7 +16,7 @@ The earlier moodboard's gradient direction is not the selected reference. Do not
 
 The PDF font metadata identifies Vina Sans, Fira Code, Semplicita Pro and Helvetica Neue. It does not establish a webfont licence for commercial families or mean every illustrative type sample is a supplied font.
 
-The app locally hosts the open-licensed **Vina Sans** display family and **Fira Code** variable mono family. These reflect the bold/mono direction without an external font-service request. Body text and dense controls retain a readable Arial/Helvetica/system sans-serif fallback; no Semplicita Pro or Helvetica Neue font files were extracted from the PDF or purchased.
+The app locally hosts the open-licensed **Vina Sans** display family and **Fira Code** variable mono family. Alex refined the hierarchy after reviewing the app: use Vina Sans only for main page headings (`h1`); project names, cards and section/subheadings (`h2`/`h3`) use readable sans-serif in normal case, while small labels retain Fira Code. These reflect the bold/mono direction without an external font-service request. Body text and dense controls retain a readable Arial/Helvetica/system sans-serif fallback; no Semplicita Pro or Helvetica Neue font files were extracted from the PDF or purchased.
 
 Files and their OFL licences are in `public/fonts`. Downloaded over verified HTTPS from the official Google Fonts repository, pinned commit `6157dfaa640ca5738b4d1a7070fe389c3036d7fc`:
 

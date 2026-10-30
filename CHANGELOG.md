@@ -232,3 +232,9 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Updated welcome/client copy around personalised, research-led work and clear communication. Added the supplied values and shared “Loyalty is key” signature. Did not expose competitor/persona notes, copy moodboard imagery or invent ongoing-support commitments.
 - No SQL, external font service, purchases, changed client records or altered access/verification rules.
 - Validation: 87 automated tests, strict TypeScript, formatting and production build passed. Fictional Chromium checked owner charts, enquiry conversion, client invitations, password recovery, restricted access and the complete client approval/final-download journey. Production welcome/login/setup/invitation/demo pages passed local-display-font loading, standalone A and 320/390/1440 px layout checks, plus the existing signed-out/private-route checks. Hosted acceptance remains separate.
+
+## Clearer secondary headings — 30 October 2026
+
+- Reserved the thick Vina Sans display font for main page headings. Project/client names, card headings and section titles now use normal-case sans-serif at readable sizes, while mono labels and approved stats styling remain.
+- Recorded the owner typography preference for future changes. No SQL, dependency or behaviour changes.
+- Validation: strict TypeScript, formatting and production build passed. Fictional browser checks passed restricted client access, owner charts/project navigation and client preview, with layouts inspected at 320/390/1440 px.
