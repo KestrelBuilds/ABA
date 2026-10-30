@@ -8,6 +8,8 @@ Project archiving with an explicit client-access decision, dated private verific
 
 Optional **013** adds quarantined, directly uploaded 25 MB PDF/image/Illustrator/ZIP files. **Do not apply 013 until an approved real scanner is configured and tested.** No new service is provisioned. Existing uploads retain their old behaviour before 013. See [SECURE-UPLOADS.md](docs/SECURE-UPLOADS.md) and [GO-LIVE-STATUS.md](docs/GO-LIVE-STATUS.md) for the exact activation and remaining hosted/operational work.
 
+The owner-run **My account → Check client portal access** diagnostic now includes archive retain/suspend/restore, private dated verification history and separate combined-project final release. Results show each group and verify temporary-file cleanup before reporting success. It requires no new SQL beyond already-applied 012. See [PORTAL-CHECKS.md](docs/PORTAL-CHECKS.md); the expanded hosted run remains pending.
+
 ## Run locally
 
 Requires Node.js 22 or later and npm. The PDF content tests also require `pdftotext` (Poppler utilities; on Debian/Ubuntu install `poppler-utils`). This is a development test dependency only.

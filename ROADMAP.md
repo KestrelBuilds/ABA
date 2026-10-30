@@ -79,3 +79,9 @@ Implemented behind capability-gated migration 012: deliberate archive retain/sus
 Optional 013 implements larger/source-file direct uploads with quarantine, bounded archive checks and a hash-bound scanner adapter, retry/discard and upload-token-safe client deletion. A real approved scanner is not provisioned/configured; 013 must wait for that prerequisite. Existing installations remain usable.
 
 Remaining launch gates and concrete owner steps: docs/GO-LIVE-STATUS.md. Hosted invitation/recovery/new upload/access acceptance, backup AND file restore, privacy/retention, MFA recovery and broader production review remain external work; do not mark them done from local tests.
+
+## Expanded owner-run portal checks
+
+Implemented grouped diagnostic results for accounts/privacy, questionnaires/feedback, private files/final delivery, lifecycle evidence/combined approvals, revocation and verified cleanup. All assertions use ordinary owner/disposable client sessions; service access only creates/removes this run’s temporary accounts and verifies scoped cleanup. Failed file removal/absence checks preserve project/client metadata, while revoking disposable client access. Older installations explicitly skip unavailable lifecycle checks.
+
+Alex confirmed owner archive/filter/restore UI behaviour after 012; client archive permissions, history privacy and combined final release still need a hosted diagnostic run. This update does not complete email recovery, backup/restore, privacy or live scanner acceptance and requires no new migration/service.

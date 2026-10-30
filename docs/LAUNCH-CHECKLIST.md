@@ -77,7 +77,8 @@ Earlier hosted passes are retained as evidence; these steps cover the newer work
 ## Activate and accept the latest development
 
 - [x] Apply 012 once. Alex confirmed successful activation; do not rerun.
-- [ ] Test fictional archive retain/suspend/restore, evidence privacy and separate combined approvals. No historical flags/dates are invented; existing combined projects opt in explicitly. See PROJECT-LIFECYCLE.md.
+- [x] Owner archive/archived-list/restore UI test: Alex confirmed it worked after 012.
+- [ ] Test retained/suspended client access, evidence privacy and separate combined approvals using the expanded owner diagnostic (PORTAL-CHECKS.md) and actual client screens. No historical flags/dates are invented; existing combined projects opt in explicitly. See PROJECT-LIFECYCLE.md.
 - [ ] Keep 013 pending until the real scanner/worker prerequisite and hosted upload/recovery/lease-cleanup checks in SECURE-UPLOADS.md are satisfied. Existing uploads keep their previous 3 MB behaviour before 013.
 
 ## Can follow after launch

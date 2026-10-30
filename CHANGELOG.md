@@ -1,5 +1,14 @@
 # Changelog
 
+## Expanded owner portal diagnostic
+
+- Added live-check coverage for retained read-only archives, suspended raw/signed file access, restoration, private verification history and both combined-project approvals plus final payment/revocation.
+- Added clear per-group Passed / Needs attention / Not run results, with unavailable lifecycle checks explicit on older installations.
+- Ambiguous Auth creation errors report an unknown cleanup outcome and run ID, without inventing an account ID or deleting existing accounts.
+- Temporary-file deletion is verified before removing fixture metadata; cleanup failure retains scoped records and revokes disposable client access, with the run ID reported for review.
+- Recorded Alex’s successful owner archive/filter/restore test after 012. The expanded hosted diagnostic, email recovery and operational acceptance remain pending. No SQL or new service required.
+
+
 ## 30 October 2026 — project lifecycle and upload quarantine
 
 - Added explicit archive retain/suspend/restore with read-only retained client access and active-only owner summaries.

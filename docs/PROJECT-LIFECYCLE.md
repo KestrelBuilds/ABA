@@ -25,3 +25,5 @@ Existing combined projects retain their previous overall flag. The owner may exp
 ## Validation
 
 Local PostgreSQL tests exercise raw API/storage access, unrelated accounts, append-only history, explicit opt-in and approval revocation. Chromium `--lifecycle` exercises real app forms against fictional services, including 320/390/1440 px layouts. These checks do not establish hosted acceptance. Test archive retain/suspend/restore, evidence privacy and both combined checks on fictional hosted projects after 012.
+
+Alex confirmed the owner archive/filter/restore flow worked after applying 012. This does not establish retained/suspended client permissions or combined-approval acceptance. The expanded owner-run diagnostic now tests those with temporary accounts/files; see PORTAL-CHECKS.md. Its hosted result remains pending.

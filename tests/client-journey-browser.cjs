@@ -7,6 +7,9 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const portalChecksMode = process.argv.includes("--portal-checks");
+const diagnosticCleanupScopes = [];
+let diagnosticAccountAttempts = 0;
 const secureMode = process.argv.includes("--secure-uploads");
 const lifecycleMode = process.argv.includes("--lifecycle");
 const insightsMode = process.argv.includes("--insights");
@@ -43,6 +46,7 @@ const fixtureStageId = randomUUID();
 const financeMode = process.argv.includes("--finance");
 const ownerMode =
   process.argv.includes("--owner-preview") ||
+  portalChecksMode ||
   secureMode ||
   lifecycleMode ||
   insightsMode ||
@@ -478,6 +482,23 @@ const server = createServer(async (req, res) => {
     }
     if (secureMode && path === "/storage/v1/object/list/project-files")
       return json([]);
+    if (
+      portalChecksMode &&
+      path === "/auth/v1/admin/users" &&
+      req.method === "POST"
+    ) {
+      diagnosticAccountAttempts++;
+      assert.equal(req.headers.apikey, "fictional-service-key");
+      assert.match(body.email, /^aba-check-[0-9a-f-]+-0@example\.com$/);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      return json(
+        {
+          message:
+            "Fictional provider outage; raw details must not reach the user",
+        },
+        diagnosticAccountAttempts === 1 ? 403 : 503,
+      );
+    }
     if (path === "/auth/v1/token")
       return json({
         access_token: jwt,
@@ -558,6 +579,19 @@ const server = createServer(async (req, res) => {
       return json([]);
     }
     const table = path.split("/").pop();
+    if (
+      portalChecksMode &&
+      req.method === "DELETE" &&
+      ["projects", "clients", "invitations"].includes(table)
+    ) {
+      const filter = url.searchParams.get(
+        table === "invitations" ? "client_id" : "id",
+      );
+      assert.ok(filter?.startsWith("in.("));
+      assert.ok(!filter.includes(pid) && !filter.includes(cid));
+      diagnosticCleanupScopes.push(table);
+      return json([]);
+    }
     if (table === "project_lifecycle_ready") return json(lifecycleMode);
     if (table === "file_security_ready") return json(secureMode);
     if (table === "reserve_file_upload") {
@@ -1205,7 +1239,9 @@ const server = createServer(async (req, res) => {
             : "",
           UPLOAD_SCAN_KEY: secureMode ? "fictional-scan-key" : "",
           SUPABASE_SERVICE_ROLE_KEY:
-            invitationsMode || secureMode ? "fictional-service-key" : "",
+            invitationsMode || secureMode || portalChecksMode
+              ? "fictional-service-key"
+              : "",
           APP_ORIGIN: `http://127.0.0.1:${appPort}`,
         },
         stdio: ["ignore", "pipe", "pipe"],
@@ -1294,6 +1330,83 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (portalChecksMode) {
+      const panel = page.locator(".portal-check");
+      await panel.locator("summary").first().click();
+      const run = panel.getByRole("button", {
+        name: "Run automatic portal checks",
+        exact: true,
+      });
+      await run.click();
+      const results = panel.getByRole("list", { name: "Portal check results" });
+      await results.waitFor();
+      await expect(results.locator("li")).toHaveCount(6);
+      await expect(
+        results.locator("li").filter({ hasText: "Accounts & project privacy" }),
+      ).toContainText("Needs attention");
+      await expect(
+        results.locator("li").filter({ hasText: "Questionnaires & feedback" }),
+      ).toContainText("Not run");
+      await expect(
+        results
+          .locator("li")
+          .filter({ hasText: "Archives, evidence & combined approvals" }),
+      ).toContainText("Not run");
+      await expect(
+        results.locator("li").filter({ hasText: "Temporary data cleanup" }),
+      ).toContainText("Passed");
+      await expect(panel).toContainText(
+        "Temporary account creation could not be completed.",
+      );
+      await expect(panel).not.toContainText("raw details must not reach");
+      await expect(run).toBeEnabled();
+      await run.click();
+      await expect.poll(() => diagnosticAccountAttempts).toBe(2);
+      await expect(
+        results.locator("li").filter({ hasText: "Temporary data cleanup" }),
+      ).toContainText("Needs attention");
+      await expect(panel).toContainText("account creation outcome unknown");
+      await expect(panel).not.toContainText(
+        "Temporary accounts, files and records were removed",
+      );
+      await expect(run).toBeDisabled();
+      await expect(panel).toContainText(
+        "finish its cleanup before starting another check",
+      );
+      await captureUi("portal-check-results", panel);
+      await page.reload();
+      await panel.locator("summary").first().click();
+      await page.route("**/workspace", async (route) => {
+        if (
+          route.request().method() === "POST" &&
+          route.request().headers()["next-action"]
+        )
+          return route.fulfill({
+            status: 503,
+            contentType: "text/plain",
+            body: "Fictional interrupted action",
+          });
+        return route.continue();
+      });
+      await run.click();
+      await expect(panel).toContainText("The check was interrupted.");
+      await expect(run).toBeDisabled();
+      assert.equal(diagnosticAccountAttempts, 2);
+
+      assert.deepEqual([...new Set(diagnosticCleanupScopes)].sort(), [
+        "clients",
+        "invitations",
+        "projects",
+      ]);
+      assert.equal(recoveryRequests.length, 0);
+      assert.equal(generatedInvitations, 0);
+      assert.equal(clientDeleted, false);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: actual owner diagnostic action, clear failed/not-run/cleanup result groups, provider error redaction, safe retry after a confirmed refusal and blocked retry after unknown cleanup, cleanup scoped away from existing records and 320/390/1440 layouts. Fictional services only.",
+      );
+      return;
+    }
     if (secureMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
       const library = page.getByRole("region", {

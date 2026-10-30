@@ -3643,3 +3643,39 @@ h2,
   min-width: 0;
   width: 100%;
 }
+
+.portal-check-results {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+  margin-block: 1rem;
+}
+.portal-check-results li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border: 1px solid #cbb3e0;
+  border-left: 4px solid #7e00e5;
+  border-radius: 0.4rem;
+  background: #f9f9f9;
+  color: #111;
+}
+.check-result-state {
+  padding: 0.25rem 0.55rem;
+  border-radius: 0.3rem;
+  background: #f0e8f7;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.check-passed {
+  background: #d4e600;
+  color: #111;
+}
+.check-failed {
+  background: #111;
+  color: #f9f9f9;
+}

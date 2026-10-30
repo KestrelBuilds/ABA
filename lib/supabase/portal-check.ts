@@ -3,15 +3,13 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { supabaseSettings } from "./config";
 import { privateFetch } from "./private-fetch";
 import { checkCreativeJourney } from "./journey-check";
-import {
-  checkPrivateStorage,
-  assertStorageDenied,
-  fictionalPdf,
-} from "./storage-check";
-import { finishUpload, secureUploadsConfigured } from "./file-intake";
-import { createHash } from "node:crypto";
+import { checkPrivateStorage, assertStorageDenied } from "./storage-check";
+import { createCheckDocument } from "./check-document";
+import { checkProjectLifecycle } from "./lifecycle-check";
+import { removeCheckFiles } from "./check-cleanup";
+import type { PortalCheckItem } from "../portal-check-results";
 
-type CheckResult = { ok: boolean; message: string };
+type CheckResult = { ok: boolean; message: string; checks?: PortalCheckItem[] };
 function requireSuccess(error: unknown, step: string) {
   if (error) throw new Error(step + " could not be completed.");
 }
@@ -24,6 +22,7 @@ function verify(condition: boolean, step: string) {
 export async function checkClientPortals(
   owner: SupabaseClient,
   service: SupabaseClient,
+  clientFactory: typeof createClient = createClient,
 ): Promise<CheckResult> {
   const runId = crypto.randomUUID();
   const clients = [crypto.randomUUID(), crypto.randomUUID()];
@@ -33,30 +32,54 @@ export async function checkClientPortals(
     crypto.randomUUID(),
     crypto.randomUUID(),
   ];
-  const paths = documents.map((id) => projects[0] + "/" + id);
+  const combinedProject = crypto.randomUUID(),
+    combinedDocument = crypto.randomUUID();
+  const allProjects = [...projects, combinedProject];
+  const paths = [
+    ...documents.map((id) => projects[0] + "/" + id),
+    combinedProject + "/" + combinedDocument,
+  ];
+  const checks: PortalCheckItem[] = [
+    "Accounts & project privacy",
+    "Questionnaires & feedback",
+    "Private files & final delivery",
+    "Archives, evidence & combined approvals",
+    "Access removal",
+    "Temporary data cleanup",
+  ].map((label) => ({ label, status: "not_run" }));
+  let currentCheck = 0;
   let storageAttempted = false;
+  let accountCreationUncertain = false;
   const users: string[] = [];
   const sessions: SupabaseClient[] = [];
   const { url, key } = supabaseSettings();
   let result: CheckResult = {
     ok: false,
     message: "Portal checks did not finish.",
+    checks,
   };
   const cleanupProblems: string[] = [];
   try {
     for (let index = 0; index < 2; index++) {
       const email = `aba-check-${runId}-${index}@example.com`;
       const password = crypto.randomUUID() + crypto.randomUUID();
+      accountCreationUncertain = true;
       const created = await service.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
         app_metadata: { aba_test_run: runId },
       });
+      if (
+        created.error &&
+        [400, 401, 403, 404, 409, 422, 429].includes(created.error.status ?? 0)
+      )
+        accountCreationUncertain = false;
       requireSuccess(created.error, "Temporary account creation");
-      if (!created.data.user)
+      if (!created.data.user?.id)
         throw new Error("Temporary account was not created.");
       users.push(created.data.user.id);
+      accountCreationUncertain = false;
       requireSuccess(
         (
           await owner.from("clients").insert({
@@ -123,7 +146,7 @@ export async function checkClientPortals(
         ).error,
         "Temporary invitation setup",
       );
-      const session = createClient(url, key, {
+      const session = clientFactory(url, key, {
         global: { fetch: privateFetch },
         auth: { persistSession: false, autoRefreshToken: false },
       });
@@ -176,6 +199,8 @@ export async function checkClientPortals(
       requireSuccess(trusted.error, "Payment verification");
       verify(trusted.data?.final_paid === false, "Payment record integrity");
     }
+    checks[0].status = "passed";
+    currentCheck = 2;
     const fileCapability = await owner.rpc("file_security_ready");
     if (
       fileCapability.error &&
@@ -183,73 +208,16 @@ export async function checkClientPortals(
     )
       throw Error("Upload security capability could not be checked.");
     const secureFiles = fileCapability.data === true;
-    if (secureFiles) {
-      if (!secureUploadsConfigured())
-        throw Error(
-          "The approved upload scanner must be configured before this check can run.",
-        );
-      const bytes = Buffer.from(fictionalPdf()),
-        hash = createHash("sha256").update(bytes).digest("hex");
-      // No signed upload tokens: disposable diagnostics use authenticated uploads,
-      // so there are no two-hour upload capabilities surviving immediate cleanup.
-      storageAttempted = true;
-      for (const [index, id] of documents.entries()) {
-        requireSuccess(
-          (
-            await owner.rpc("reserve_file_upload", {
-              target: projects[0],
-              upload_id: id,
-              upload_kind: "document",
-              file_name: "aba-fictional-check.pdf",
-              file_size: bytes.length,
-              file_hash: hash,
-              mime: "application/pdf",
-              category_name: index === 2 ? "final" : "document",
-            })
-          ).error,
-          "Temporary upload reservation",
-        );
-        requireSuccess(
-          (
-            await owner.storage
-              .from("project-files")
-              .upload(paths[index], bytes, {
-                contentType: "application/pdf",
-                cacheControl: "0",
-                upsert: false,
-              })
-          ).error,
-          "Temporary private upload",
-        );
-        if ((await finishUpload(owner, id)).state !== "clean")
-          throw Error("The scanner blocked the fictional diagnostic file.");
-        requireSuccess(
-          (
-            await owner
-              .from("documents")
-              .update({ published: index !== 1 })
-              .eq("id", id)
-          ).error,
-          "Temporary document sharing",
-        );
-      }
-    } else {
-      requireSuccess(
-        (
-          await owner.from("documents").insert(
-            documents.map((id, index) => ({
-              id,
-              project_id: projects[0],
-              name: "Automatic test document",
-              object_path: projects[0] + "/" + id,
-              category: index === 2 ? "final" : "document",
-              published: index !== 1,
-            })),
-          )
-        ).error,
-        "Document metadata setup",
+    storageAttempted = true;
+    for (const [index, id] of documents.entries())
+      await createCheckDocument(
+        owner,
+        projects[0],
+        id,
+        index === 2 ? "final" : "document",
+        index !== 1,
+        secureFiles,
       );
-    }
     const visibleDocuments = await sessions[0]
       .from("documents")
       .select("id")
@@ -266,9 +234,12 @@ export async function checkClientPortals(
       .in("id", documents);
     requireSuccess(otherDocuments.error, "Cross-client document check");
     verify(otherDocuments.data?.length === 0, "Cross-client document privacy");
+    currentCheck = 1;
     await checkCreativeJourney(owner, sessions, projects, users, documents[0]);
+    checks[1].status = "passed";
+    currentCheck = 2;
     storageAttempted = true;
-    const anonymous = createClient(url, key, {
+    const anonymous = clientFactory(url, key, {
       global: { fetch: privateFetch },
       auth: { persistSession: false, autoRefreshToken: false },
     });
@@ -280,8 +251,27 @@ export async function checkClientPortals(
       projects[0],
       documents,
       url,
-      secureFiles,
+      true,
     );
+    checks[2].status = "passed";
+    currentCheck = 3;
+    checks[3].status = await checkProjectLifecycle(
+      owner,
+      sessions[0],
+      sessions[1],
+      {
+        projectId: projects[0],
+        clientId: clients[0],
+        userId: users[0],
+        documentId: documents[0],
+        combinedProjectId: combinedProject,
+        combinedDocumentId: combinedDocument,
+        runId,
+        origin: url,
+        secureFiles,
+      },
+    );
+    currentCheck = 4;
     requireSuccess(
       (await owner.rpc("revoke_client_access", { target: clients[0] })).error,
       "Access revocation",
@@ -294,14 +284,22 @@ export async function checkClientPortals(
       paths[0],
       "Revoked-client file protection",
     );
+    checks[4].status = "passed";
     result = {
       ok: true,
+      checks,
       message:
-        "Passed: two client sign-ins, invitation acceptance, separate project access, hidden milestones, internal-note privacy, payment protection, document visibility, questionnaire submission/review, revision requests and creative approvals, real PDF uploads/downloads, signed downloads, private-file access, final-payment/approval file gates and access revocation. Email delivery has not been tested by this check.",
+        "Available portal checks passed." +
+        (checks[3].status === "unavailable"
+          ? " Lifecycle checks were not run because update 012 is unavailable."
+          : "") +
+        " Email delivery, password recovery, backups and privacy arrangements need separate checks.",
     };
   } catch (error) {
+    checks[currentCheck].status = "failed";
     result = {
       ok: false,
+      checks,
       message:
         error instanceof Error
           ? error.message
@@ -321,21 +319,18 @@ export async function checkClientPortals(
       operation: PromiseLike<{ error: unknown }>,
     ) => {
       try {
-        if ((await operation).error) cleanupProblems.push(label);
+        if (!(await operation).error) return true;
       } catch {
-        cleanupProblems.push(label);
+        /* Report below. */
       }
+      cleanupProblems.push(label);
+      return false;
     };
-    if (storageAttempted) {
-      await clean(
-        "temporary files",
-        service.storage.from("project-files").remove(paths),
+    if (accountCreationUncertain)
+      cleanupProblems.push(
+        "temporary account creation outcome unknown — review this run in Auth",
       );
-    }
-    await clean(
-      "projects",
-      service.from("projects").delete().in("id", projects),
-    );
+    // Remove the disposable accounts' access even if private-file cleanup fails.
     await clean(
       "invitations",
       service.from("invitations").delete().in("client_id", clients),
@@ -345,7 +340,6 @@ export async function checkClientPortals(
         "profiles",
         service.from("profiles").delete().in("id", users),
       );
-      // Preserve audit history while removing references to disposable auth users.
       await clean(
         "test audit references",
         service
@@ -354,15 +348,41 @@ export async function checkClientPortals(
           .in("actor_id", users),
       );
     }
-    await clean("clients", service.from("clients").delete().in("id", clients));
+    let filesClean = !storageAttempted;
+    if (storageAttempted) {
+      try {
+        filesClean = await removeCheckFiles(service, paths);
+      } catch {
+        filesClean = false;
+      }
+      if (!filesClean)
+        cleanupProblems.push(
+          "private files / verification — project records retained",
+        );
+    }
+    const projectsClean =
+      filesClean &&
+      (await clean(
+        "projects",
+        service.from("projects").delete().in("id", allProjects),
+      ));
+    if (projectsClean)
+      await clean(
+        "clients",
+        service.from("clients").delete().in("id", clients),
+      );
     for (const id of users)
       await clean("accounts", service.auth.admin.deleteUser(id));
+    checks[5].status = cleanupProblems.length ? "failed" : "passed";
   }
   if (cleanupProblems.length)
     return {
       ok: false,
+      checks,
       message:
-        result.message +
+        (result.ok
+          ? "Permission checks passed; cleanup is not complete."
+          : result.message) +
         ` Temporary cleanup needs attention (${[...new Set(cleanupProblems)].join(", ")}). Check run ${runId} in Supabase before retrying.`,
     };
   return {

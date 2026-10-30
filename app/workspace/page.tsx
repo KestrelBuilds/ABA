@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { configured, identity } from "@/lib/supabase/server";
 import { loadWorkspace } from "@/lib/workspace";
 import ConnectedStudio from "@/components/connected-studio";
+// The owner-requested diagnostic includes real provider round trips and cleanup.
+export const maxDuration = 180;
 export const dynamic = "force-dynamic";
 export default async function Workspace() {
   if (!configured()) redirect("/login");

@@ -77,3 +77,26 @@ test("cleanup failure is reported instead of claiming accounts, files and record
   );
   assert.deepEqual(f.deleted, ["temporary-user-only"]);
 });
+
+for (const status of [403, 503])
+  test(`Auth creation HTTP ${status} never invents an account ID or a successful unknown cleanup`, async () => {
+    const f = fixtures();
+    Object.assign(f.service.auth.admin, {
+      createUser: async () => ({ data: { user: null }, error: { status } }),
+    });
+    const result = await checkClientPortals(f.owner, f.service);
+    assert.equal(result.ok, false);
+    assert.equal(result.checks?.[0].status, "failed");
+    assert.deepEqual(f.deleted, []);
+    if (status === 503) {
+      assert.equal(result.checks?.[5].status, "failed");
+      assert.match(result.message, /account creation outcome unknown/);
+      assert.doesNotMatch(
+        result.message,
+        /Temporary accounts, files and records were removed/,
+      );
+    } else {
+      assert.equal(result.checks?.[5].status, "passed");
+      assert.doesNotMatch(result.message, /outcome unknown/);
+    }
+  });

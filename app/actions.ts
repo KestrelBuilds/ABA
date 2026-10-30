@@ -18,6 +18,7 @@ import { stagePurposes } from "@/lib/stage-purpose";
 import { newProjectStages } from "@/lib/workflow-templates";
 import { z } from "zod";
 import { createClientInvitation } from "@/lib/supabase/client-invitations";
+import type { PortalCheckItem } from "@/lib/portal-check-results";
 import { UploadPendingError } from "@/lib/upload-policy";
 import { stageVerification } from "@/lib/journey-verification";
 export type Result = {
@@ -25,6 +26,7 @@ export type Result = {
   message: string;
   link?: string;
   refresh?: boolean;
+  checks?: PortalCheckItem[];
 };
 function refresh() {
   revalidatePath("/workspace");
