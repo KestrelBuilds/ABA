@@ -7,6 +7,15 @@ const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
+const projectFinderMode = process.argv.includes("--project-finder");
+let finderWrites = 0,
+  finderCreationRequests = 0,
+  createdFinderProjectId = "";
+const finderExtraStages = [];
+const finderClientId = randomUUID(),
+  websiteProjectId = randomUUID(),
+  combinedFinderId = randomUUID(),
+  archivedFinderId = randomUUID();
 const portalChecksMode = process.argv.includes("--portal-checks");
 const diagnosticCleanupScopes = [];
 let diagnosticAccountAttempts = 0;
@@ -46,6 +55,7 @@ const fixtureStageId = randomUUID();
 const financeMode = process.argv.includes("--finance");
 const ownerMode =
   process.argv.includes("--owner-preview") ||
+  projectFinderMode ||
   portalChecksMode ||
   secureMode ||
   lifecycleMode ||
@@ -115,6 +125,34 @@ const project = {
   final_paid: false,
   final_approved: false,
 };
+const finderProjects = [
+  project,
+  {
+    ...project,
+    id: websiteProjectId,
+    client_id: finderClientId,
+    name: "Framer website",
+    type: "Website Design",
+    due: "2026-12-01",
+  },
+  {
+    ...project,
+    id: combinedFinderId,
+    client_id: finderClientId,
+    name: "Brand and website",
+    type: "Both",
+    due: "2027-02-01",
+    separate_approvals: true,
+  },
+  {
+    ...project,
+    id: archivedFinderId,
+    name: "Archived identity",
+    due: "2026-11-01",
+    archived_at: "2026-10-30T00:00:00Z",
+    archived_client_access: "suspend",
+  },
+];
 const intakes = [],
   storedUploads = new Map();
 let scannerOutage = false,
@@ -401,6 +439,14 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://127.0.0.1:${fixturePort}`);
     const path = url.pathname;
+    if (
+      projectFinderMode &&
+      /^\/rest\/v1\/(projects|clients|documents|client_assets|stages|profiles)$/.test(
+        path,
+      ) &&
+      req.method !== "GET"
+    )
+      finderWrites++;
     res.setHeader("Access-Control-Allow-Origin", `http://127.0.0.1:${appPort}`);
     res.setHeader(
       "Access-Control-Allow-Headers",
@@ -592,7 +638,37 @@ const server = createServer(async (req, res) => {
       diagnosticCleanupScopes.push(table);
       return json([]);
     }
-    if (table === "project_lifecycle_ready") return json(lifecycleMode);
+    if (projectFinderMode && table === "create_project") {
+      finderCreationRequests++;
+      createdFinderProjectId = randomUUID();
+      finderProjects.push({
+        id: createdFinderProjectId,
+        client_id: body.target_client,
+        name: body.project_name,
+        type: body.project_type,
+        due: body.due_date,
+        budget: body.project_budget,
+        contract_signed: false,
+        deposit_paid: false,
+        final_paid: false,
+        final_approved: false,
+        archived_at: null,
+        separate_approvals: body.project_type === "Both",
+      });
+      finderExtraStages.push(
+        ...body.template.map((stage, position) => ({
+          ...stage,
+          id: randomUUID(),
+          project_id: createdFinderProjectId,
+          position,
+          status: "Not Started",
+          visible: true,
+        })),
+      );
+      return json(createdFinderProjectId);
+    }
+    if (table === "project_lifecycle_ready")
+      return json(lifecycleMode || projectFinderMode);
     if (table === "file_security_ready") return json(secureMode);
     if (table === "reserve_file_upload") {
       intakes.push({
@@ -1006,6 +1082,14 @@ const server = createServer(async (req, res) => {
               deletion_pending: deletionPending,
             },
           ];
+    if (projectFinderMode && table === "clients")
+      rows.push({
+        id: finderClientId,
+        name: "Málaga Studio",
+        contact: "Fictional Client",
+        email: "malaga@example.com",
+        sector: "Design",
+      });
     if (table === "contract_exchanges") {
       if (req.method === "POST") exchangeEnabled = body.enabled;
       rows = [
@@ -1020,6 +1104,7 @@ const server = createServer(async (req, res) => {
       if (req.method === "PATCH") Object.assign(project, body);
       rows = [project];
     }
+    if (projectFinderMode && table === "projects") rows = finderProjects;
     if (table === "finance_settings") rows = [seller];
     if (table === "client_billing")
       rows = [
@@ -1089,6 +1174,8 @@ const server = createServer(async (req, res) => {
           visible: true,
         },
       ];
+    if (projectFinderMode && table === "stages")
+      rows = [...rows, ...finderExtraStages];
     if (table === "stages" && templateMode) rows = liveTemplate;
     if (table === "stages" && (prospectMode || prospectOwnerMode))
       rows = potentialStages;
@@ -1330,6 +1417,152 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (projectFinderMode) {
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      const finder = page.getByRole("region", {
+          name: "Find a project",
+          exact: true,
+        }),
+        picker = page.getByLabel("Select project", { exact: true });
+      await expect(finder.getByRole("status")).toContainText(
+        "Showing 3 of 3 projects",
+      );
+      await finder
+        .getByLabel("Search projects", { exact: true })
+        .fill("combined");
+      await expect(picker).toHaveValue(combinedFinderId);
+      await finder
+        .getByLabel("Search projects", { exact: true })
+        .fill("malaga framer");
+      await expect(picker).toHaveValue(websiteProjectId);
+      await expect(picker.locator("option")).toHaveCount(1);
+      await finder
+        .getByLabel("Project type", { exact: true })
+        .selectOption("Brand Identity");
+      await expect(picker).toHaveCount(0);
+      await expect(page.getByText(/^No projects in this view/)).toBeVisible();
+      await finder
+        .getByRole("button", { name: "Clear project filters", exact: true })
+        .click();
+      await expect(picker.locator("option")).toHaveCount(3);
+      await finder
+        .getByLabel("Sort projects", { exact: true })
+        .selectOption("due");
+      assert.deepEqual(
+        await picker
+          .locator("option")
+          .evaluateAll((options) => options.map((o) => o.value)),
+        [websiteProjectId, pid, combinedFinderId],
+      );
+      await expect(picker).toHaveValue(pid);
+      await finder.getByLabel("Project list filter").selectOption("archived");
+      await expect(picker).toHaveValue(archivedFinderId);
+      await finder.getByLabel("Project list filter").selectOption("all");
+      await expect(picker.locator("option")).toHaveCount(4);
+      await expect(picker).toHaveValue(archivedFinderId);
+      await finder
+        .getByLabel("Search projects", { exact: true })
+        .fill("archived");
+      await page.getByRole("button", { name: "Overview", exact: true }).click();
+      await page
+        .locator(".list-row")
+        .filter({ hasText: "Fictional client journey" })
+        .click();
+      await expect(picker).toHaveValue(pid);
+      await expect(
+        finder.getByLabel("Search projects", { exact: true }),
+      ).toHaveValue("");
+      await expect(finder.getByLabel("Project list filter")).toHaveValue(
+        "active",
+      );
+      await expect(
+        finder.getByLabel("Sort projects", { exact: true }),
+      ).toHaveValue("current");
+      await finder.getByLabel("Project list filter").selectOption("archived");
+      await finder
+        .getByLabel("Search projects", { exact: true })
+        .fill("archived");
+      await page.getByRole("button", { name: "Overview", exact: true }).click();
+      const phases = page.getByRole("region", {
+        name: "Projects by phase",
+        exact: true,
+      });
+      await phases.getByRole("button", { name: /^Branding/ }).click();
+      await phases
+        .getByRole("button", { name: /Fictional client journey/ })
+        .click();
+      await expect(picker).toHaveValue(pid);
+      await expect(
+        finder.getByLabel("Search projects", { exact: true }),
+      ).toHaveValue("");
+      await finder
+        .getByLabel("Project type", { exact: true })
+        .selectOption("Website Design");
+      await expect(picker).toHaveValue(websiteProjectId);
+      await captureUi("project-finder", finder);
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await expect(finder).toHaveCount(0);
+      await expect(
+        page.getByLabel("Select project", { exact: true }).locator("option"),
+      ).toHaveCount(1);
+      await expect(
+        page.getByText("Archived identity", { exact: true }),
+      ).toHaveCount(0);
+      await page
+        .getByRole("button", { name: "Back to owner workspace", exact: true })
+        .click();
+      await expect(picker).toHaveValue(websiteProjectId);
+      assert.equal(finderWrites, 0);
+      await finder.getByLabel("Project list filter").selectOption("archived");
+      await finder
+        .getByLabel("Project type", { exact: true })
+        .selectOption("Both");
+      await expect(picker).toHaveCount(0);
+      await page
+        .getByRole("button", { name: "New project", exact: true })
+        .click();
+      const create = page.locator("form").filter({
+        has: page.getByRole("button", {
+          name: "Create project",
+          exact: true,
+        }),
+      });
+      await create
+        .getByLabel("Project name", { exact: true })
+        .fill("Newly created design");
+      await create.getByLabel("Client").selectOption(finderClientId);
+      await create.getByLabel("Workflow").selectOption("Brand Identity");
+      await create
+        .getByLabel("Estimated completion", { exact: true })
+        .fill("2027-04-01");
+      await create.getByLabel("Project value (£)", { exact: true }).fill("500");
+      await create
+        .getByRole("button", { name: "Create project", exact: true })
+        .click();
+      await expect(create.getByRole("status")).toContainText(
+        "Project created.",
+      );
+      await expect(finder.getByLabel("Project list filter")).toHaveValue(
+        "active",
+      );
+      await expect(
+        finder.getByLabel("Project type", { exact: true }),
+      ).toHaveValue("all");
+      await expect(
+        picker.locator("option").filter({ hasText: "Newly created design" }),
+      ).toHaveCount(1);
+      assert.equal(finderCreationRequests, 1);
+      const made = finderProjects.find((p) => p.id === createdFinderProjectId);
+      assert.equal(made.contract_signed, false);
+      assert.equal(made.deposit_paid, false);
+      assert.equal(made.final_paid, false);
+      assert.equal(made.final_approved, false);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: owner project/client search with accents, service/archive combinations, stable estimated-date sorting, selection retention, no-results/reset, overview/drill-down recovery, client-preview exclusion, newly created projects visible after filter reset and responsive layouts. Filtering does not mutate records; fictional services only.",
+      );
+      return;
+    }
     if (portalChecksMode) {
       const panel = page.locator(".portal-check");
       await panel.locator("summary").first().click();

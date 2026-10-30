@@ -10,6 +10,8 @@ Optional **013** adds quarantined, directly uploaded 25 MB PDF/image/Illustrator
 
 The owner-run **My account → Check client portal access** diagnostic now includes archive retain/suspend/restore, private dated verification history and separate combined-project final release. Results show each group and verify temporary-file cleanup before reporting success. It requires no new SQL beyond already-applied 012. See [PORTAL-CHECKS.md](docs/PORTAL-CHECKS.md); the expanded hosted run remains pending.
 
+Owner **Projects → Find a project** now combines project/client-name search, service and archive filters, and estimated-completion/name sorting. Clear filters restores the active view; overview shortcuts clear stale filters before opening a project. No SQL is required. See [PROJECT-BROWSING.md](docs/PROJECT-BROWSING.md).
+
 ## Run locally
 
 Requires Node.js 22 or later and npm. The PDF content tests also require `pdftotext` (Poppler utilities; on Debian/Ubuntu install `poppler-utils`). This is a development test dependency only.

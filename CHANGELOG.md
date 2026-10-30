@@ -1,5 +1,13 @@
 # Changelog
 
+## Owner project finder
+
+- Added combined project/client-name search, service/archive filters and estimated-completion/project-name/client-name sorting, with counts, reset and empty states.
+- Preserved project selection when sorting; overview, attention and chart shortcuts clear stale filters before opening their target.
+- Successful project creation resets finder filters so the new record is visible.
+- Kept the finder owner-only and retained the existing client/preview project selectors and access rules. No SQL or new service required.
+
+
 ## Expanded owner portal diagnostic
 
 - Added live-check coverage for retained read-only archives, suspended raw/signed file access, restoration, private verification history and both combined-project approvals plus final payment/revocation.

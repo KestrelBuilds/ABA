@@ -85,3 +85,7 @@ Remaining launch gates and concrete owner steps: docs/GO-LIVE-STATUS.md. Hosted 
 Implemented grouped diagnostic results for accounts/privacy, questionnaires/feedback, private files/final delivery, lifecycle evidence/combined approvals, revocation and verified cleanup. All assertions use ordinary owner/disposable client sessions; service access only creates/removes this run’s temporary accounts and verifies scoped cleanup. Failed file removal/absence checks preserve project/client metadata, while revoking disposable client access. Older installations explicitly skip unavailable lifecycle checks.
 
 Alex confirmed owner archive/filter/restore UI behaviour after 012; client archive permissions, history privacy and combined final release still need a hosted diagnostic run. This update does not complete email recovery, backup/restore, privacy or live scanner acceptance and requires no new migration/service.
+
+## Owner project browsing
+
+Implemented combined project/client-name search, service/archive filtering, stable estimated-completion and natural-name sorting, scoped counts/reset/empty states and filter-aware project shortcuts. Successful new-project creation clears prior finder filters so the record stays visible. The owner finder uses existing permitted workspace data; client/preview selectors and all project/access flags remain unchanged. No SQL or new service required. Hosted review remains separate from local validation. See docs/PROJECT-BROWSING.md.

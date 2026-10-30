@@ -193,6 +193,7 @@ export async function addProject(form: FormData) {
         })
       ).error,
     );
+    return "Project created.";
   });
 }
 export async function saveStage(form: FormData) {

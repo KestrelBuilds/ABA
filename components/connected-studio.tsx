@@ -1,4 +1,10 @@
 "use client";
+import ProjectFinder from "./project-finder";
+import {
+  defaultProjectFilters,
+  findProjects,
+  type ProjectFilters,
+} from "@/lib/project-search";
 import ProjectLifecycle from "./project-lifecycle";
 import ProjectFiles from "./project-files";
 import Enquiries from "./enquiries";
@@ -81,11 +87,13 @@ function ActionForm({
   children,
   label = "Save",
   className = "",
+  onSuccess,
 }: {
   action: (f: FormData) => Promise<Result>;
   children: ReactNode;
   label?: string;
   className?: string;
+  onSuccess?: () => void;
 }) {
   const preview = useContext(PreviewContext);
   const [pending, start] = useTransition();
@@ -100,7 +108,10 @@ function ActionForm({
           try {
             const r = await action(data);
             setResult(r);
-            if (r.ok) router.refresh();
+            if (r.ok) {
+              onSuccess?.();
+              router.refresh();
+            }
           } catch {
             setResult({
               ok: false,
@@ -162,17 +173,30 @@ export default function ConnectedStudio({
   const [view, setView] = useState(admin ? "Overview" : "Projects");
   const [projectId, setProjectId] = useState(data.projects[0]?.id ?? "");
   const [query, setQuery] = useState("");
-  const [projectFilter, setProjectFilter] = useState("active");
+  const [projectFilters, setProjectFilters] = useState<ProjectFilters>(
+    defaultProjectFilters,
+  );
   const activeProjects = data.projects.filter((p) => !p.archived_at);
-  const selectableProjects = admin
-    ? data.projects.filter(
-        (p) =>
-          projectFilter === "all" ||
-          (projectFilter === "archived"
-            ? Boolean(p.archived_at)
-            : !p.archived_at),
-      )
-    : data.projects;
+  const projectResults = findProjects(data, projectFilters);
+  const selectableProjects = admin ? projectResults.projects : data.projects;
+  const updateProjectFilters = (next: ProjectFilters) => {
+    const matches = findProjects(data, next).projects;
+    setProjectFilters(next);
+    setProjectId((current) =>
+      matches.some((p) => p.id === current) ? current : (matches[0]?.id ?? ""),
+    );
+  };
+  const openProject = (id: string, href = "") => {
+    setProjectFilters({
+      ...defaultProjectFilters,
+      scope: data.projects.find((p) => p.id === id)?.archived_at
+        ? "archived"
+        : "active",
+    });
+    setProjectId(id);
+    setView("Projects");
+    setProjectJump(href);
+  };
   const [accessClientId, setAccessClientId] = useState("");
   const [projectJump, setProjectJump] = useState("");
   useEffect(() => {
@@ -213,10 +237,7 @@ export default function ConnectedStudio({
       setAccessClientId(destination.clientId);
       setView("Clients");
     } else {
-      setProjectFilter("active");
-      setProjectId(destination.projectId);
-      setView("Projects");
-      setProjectJump(destination.href);
+      openProject(destination.projectId, destination.href);
     }
   };
   const complete = (p: DbProject) => {
@@ -449,7 +470,13 @@ export default function ConnectedStudio({
               <section className="panel">
                 <h2>Shape the next project.</h2>
                 {data.clients.length ? (
-                  <ActionForm action={addProject} label="Create project">
+                  <ActionForm
+                    action={addProject}
+                    label="Create project"
+                    onSuccess={() =>
+                      updateProjectFilters({ ...defaultProjectFilters })
+                    }
+                  >
                     <div className="form-grid">
                       <label>
                         Project name
@@ -545,12 +572,7 @@ export default function ConnectedStudio({
                 </div>
                 <WorkspaceInsights
                   data={data}
-                  onOpenProject={(id) => {
-                    setProjectFilter("active");
-                    setProjectId(id);
-                    setView("Projects");
-                    setProjectJump("#journey");
-                  }}
+                  onOpenProject={(id) => openProject(id, "#journey")}
                 />
                 <div className="two-col">
                   <section className="panel">
@@ -560,10 +582,7 @@ export default function ConnectedStudio({
                         <button
                           className="list-row"
                           key={p.id}
-                          onClick={() => {
-                            setProjectId(p.id);
-                            setView("Projects");
-                          }}
+                          onClick={() => openProject(p.id)}
                         >
                           <span className="avatar pale">
                             {clientFor(p)?.name[0]}
@@ -749,19 +768,14 @@ export default function ConnectedStudio({
             )}
             {(view === "Projects" || !admin) && (
               <>
-                {admin && data.lifecycleReady && (
-                  <label className="project-picker">
-                    Show projects
-                    <select
-                      aria-label="Project list filter"
-                      value={projectFilter}
-                      onChange={(e) => setProjectFilter(e.target.value)}
-                    >
-                      <option value="active">Active projects</option>
-                      <option value="archived">Archived projects</option>
-                      <option value="all">All projects</option>
-                    </select>
-                  </label>
+                {admin && (
+                  <ProjectFinder
+                    filters={projectFilters}
+                    count={selectableProjects.length}
+                    total={projectResults.total}
+                    archivesReady={Boolean(data.lifecycleReady)}
+                    onChange={updateProjectFilters}
+                  />
                 )}
                 {selectableProjects.length ? (
                   <>
@@ -1494,7 +1508,7 @@ export default function ConnectedStudio({
                     <p>
                       {admin
                         ? data.projects.length
-                          ? "No projects in this view. Choose another project filter above."
+                          ? "No projects in this view. Try another search or clear your project filters."
                           : "Create a client, then add their first project."
                         : "A signed contract and recorded 50% deposit are required before your project becomes available. Please contact Alex if you need help."}
                     </p>
