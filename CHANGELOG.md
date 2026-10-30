@@ -209,3 +209,12 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Corrected next-step routing for renamed fixed contract/deposit stages: check the contract first, then use historical native-invoice full-payment actions.
 - Replaced the stale launch checklist with current evidence, remaining hosted/operational requirements and a clearly subjective 80% planning estimate. No new service, database migration or automatic record changes for charts/colours.
 - Validation: 87 automated tests passed. Strict TypeScript, formatting and production build passed. Fictional Chromium checked Overview filtering/empty states/drill-down, owner-only chart visibility, client preview, stage verification and the client approval/final-download journey at 320/390/1440 px. Hosted acceptance remains separate.
+
+## Consistent branding across ABA Studio — 30 October 2026
+
+- Extended shared purple/off-white surfaces, edged panels, black totals and lime accents beyond Overview to public/account pages, restricted client access and the fictional demo.
+- Added the standalone A home link to setup, account access, security, invitation confirmation and error pages where it was missing.
+- Gave Enquiries, Projects and Clients matching nested card/form styling, including enquiry conversion, project selection and client detail sections. Preserved destructive/error cues and permission/verification behaviour.
+- No additional SQL, services, real client data changes or email delivery.
+- Added black/off-white section bands with lime dividers to key owner panels, enquiry headers and client names. Preserved the demo mobile menu layout while sharing its colour theme.
+- Validation: 87 existing automated tests, strict TypeScript, formatting and production build passed. Fictional Chromium checked password recovery, restricted access, enquiry conversion, client invitations and owner/client charts/previews at 320/390/1440 px. Production public/setup/invitation/demo pages passed logo/overflow checks and existing signed-out/private-route checks. Hosted acceptance remains separate.

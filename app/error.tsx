@@ -1,7 +1,12 @@
 "use client";
+import BrandMark from "@/components/brand-mark";
+import Link from "next/link";
 export default function ErrorPage({ reset }: { reset: () => void }) {
   return (
     <main className="auth-page">
+      <Link className="logo" href="/" aria-label="Alex Bell Arts home">
+        <BrandMark />
+      </Link>
       <section className="panel auth-panel">
         <h1>A moment to regroup.</h1>
         <p>

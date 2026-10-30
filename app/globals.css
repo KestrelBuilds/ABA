@@ -1,9 +1,9 @@
 :root {
-  --bg: #f9f9f9;
-  --paper: #fff;
+  --bg: #efebf4;
+  --paper: #f9f9f9;
   --ink: #111111;
   --muted: #68636f;
-  --line: #e3dfe8;
+  --line: #cdbbdc;
   --accent: #d4e600;
   --primary: #7e00e5;
   --radius: 12px;
@@ -86,7 +86,7 @@ h3 {
 }
 p {
   line-height: 1.7;
-  color: #7b8077;
+  color: var(--muted);
 }
 small {
   font-size: 11px;
@@ -225,7 +225,7 @@ nav em {
   justify-content: center;
   flex-shrink: 0;
   border-radius: 50%;
-  background: #314b38;
+  background: var(--ink);
   color: #fff;
   font-size: 11px;
 }
@@ -236,8 +236,8 @@ nav em {
   margin-left: 16px;
 }
 .avatar.pale {
-  background: #eff0e6;
-  color: #526041;
+  background: #eee4f7;
+  color: #5c287c;
   width: 42px;
   height: 42px;
   font-family: Georgia, serif;
@@ -605,8 +605,10 @@ main {
 }
 .panel {
   padding: 24px;
-  background: #fff;
+  background: var(--paper);
   border: 1px solid var(--line);
+  border-top: 3px solid #b28ad1;
+  box-shadow: 0 3px 0 #e2d8ec;
   border-radius: 9px;
   margin-bottom: 20px;
 }
@@ -1474,7 +1476,7 @@ details summary {
 }
 .feedback-item {
   padding: 15px;
-  background: #f5f7ef;
+  background: #eee4f7;
   margin: 15px 0;
   border-radius: 5px;
 }
@@ -2221,8 +2223,8 @@ nav button {
   color: #6900ae;
 }
 .status-verified {
-  background: #eaf2e8;
-  color: #345530;
+  background: #eef1cf;
+  color: #414900;
 }
 .connected .form-section {
   padding: 22px 0;
@@ -2518,9 +2520,9 @@ nav button {
   margin-top: 6px;
 }
 .access-check.is-verified {
-  background: #f2f7f0;
-  color: #345530;
-  border-color: #cbdac6;
+  background: #eef1cf;
+  color: #414900;
+  border-color: #a9b900;
 }
 .prospect-checks > p {
   grid-column: 1/-1;
@@ -2909,11 +2911,11 @@ summary:focus-visible {
   --line: #d1c3df;
   background: var(--bg);
 }
-.connected .sidebar {
+.shell .sidebar {
   background: #e8e0f0;
   border-right-color: #c8b5da;
 }
-.connected .topbar {
+.shell .topbar {
   background: #f9f9f9;
   border-bottom: 2px solid #d4e600;
 }
@@ -2937,22 +2939,22 @@ summary:focus-visible {
   border-color: #cbb8db;
   background: #f9f9f9;
 }
-.connected .stats {
+.shell .stats {
   background: #111;
   border: 1px solid #111;
   color: #f9f9f9;
   box-shadow: 0 3px 0 #d4e600;
 }
-.connected .stat {
+.shell .stat {
   border-color: #49404f;
 }
-.connected .stat > div {
+.shell .stat > div {
   color: #ded6e5;
 }
-.connected .stat strong {
+.shell .stat strong {
   color: #f9f9f9;
 }
-.connected .stat:first-child strong {
+.shell .stat:first-child strong {
   color: #d4e600;
 }
 .connected .milestone-disclosure,
@@ -3245,13 +3247,151 @@ summary:focus-visible {
   white-space: nowrap;
   border: 0;
 }
-.connected nav button,
-.connected .topbar {
+.shell nav button,
+.shell .topbar {
   color: #574b61;
 }
-.connected nav button.active {
+.shell nav button.active {
   color: #6500b8;
 }
-.connected .eyebrow {
+.shell .eyebrow,
+.auth-page .eyebrow {
   color: #6b487f;
+}
+
+/* The same brand surfaces apply before sign-in and in limited-access journeys. */
+.auth-panel {
+  border-top: 4px solid var(--primary);
+}
+.auth-page :is(.primary, .secondary) {
+  min-height: 44px;
+  white-space: normal;
+  line-height: 1.5;
+}
+.auth-page :is(input:not([type="checkbox"]), select, textarea) {
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid #bfa6d2;
+  border-radius: 8px;
+  min-height: 44px;
+  padding: 10px 12px;
+}
+.auth-panel .auth-guidance,
+.auth-panel details {
+  background: #eee4f7;
+  border: 1px solid #d1bce2;
+  border-radius: 8px;
+  padding: 16px;
+}
+.auth-page .resource {
+  color: #5f228a;
+}
+.prospect-next-step {
+  background: #eee4f7;
+  border: 1px solid #c5a6dd;
+  border-left: 4px solid var(--primary);
+}
+.prospect-document,
+.contract-area-content .business-record {
+  background: #f9f9f9;
+  border: 1px solid #cdb5df;
+  border-left: 4px solid #ad7fd0;
+  border-radius: 8px;
+  padding: 20px;
+}
+.contract-area-content .business-record {
+  margin-bottom: 20px;
+}
+.contract-area-content .document-item {
+  background: #eee4f7;
+}
+.portal-section-grid a {
+  background: #f9f9f9;
+  border-color: #cdbbdc;
+}
+.shell .project-card {
+  background: var(--paper);
+  border-color: #cdbbdc;
+  box-shadow: 0 3px 0 #e2d8ec;
+}
+@media (max-width: 520px) {
+  .auth-page {
+    padding: 32px 16px;
+  }
+  .auth-panel {
+    padding: 24px 20px;
+  }
+  .auth-panel h1 {
+    font-size: 28px;
+    overflow-wrap: anywhere;
+  }
+  .contract-area-content .business-record {
+    padding: 16px;
+  }
+}
+
+/* Keep the owner inbox, project selector and client records equally distinct. */
+.connected :is(.enquiries-panel, .client-card) {
+  border-top: 4px solid var(--primary);
+}
+.connected .enquiry-card {
+  background: #eee4f7;
+  border-color: #c5a6dd;
+  border-left: 4px solid #ad7fd0;
+}
+.connected .enquiry-card[open] {
+  background: #f9f7fc;
+  border-color: #9f65cb;
+  border-left-color: var(--primary);
+}
+.connected :is(.enquiry-convert, .manual-enquiry) {
+  background: #f0f2d9;
+  border-color: #bcc870;
+}
+.connected .project-picker {
+  background: #eee4f7;
+  border: 1px solid #c5a6dd;
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  padding: 16px;
+}
+.connected .client-card > details:not(.client-delete) {
+  background: #eee4f7;
+  border: 1px solid #d1bce2;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* Black section bands anchor key areas; forms retain the lighter surfaces. */
+.connected .panel:not(.client-card) > h2:first-child,
+.connected .enquiries-panel > .section-heading {
+  background: var(--ink);
+  color: var(--paper);
+  margin: -24px -24px 22px;
+  padding: 18px 24px;
+  border-radius: 6px 6px 0 0;
+  border-bottom: 2px solid var(--accent);
+}
+.connected .enquiries-panel > .section-heading .section-kicker {
+  color: var(--accent);
+}
+.connected .enquiries-panel > .section-heading .status-badge {
+  background: #342a3b;
+  color: #f9f9f9;
+}
+.connected .client-card > h2 {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 14px 16px;
+  margin: 14px 0 18px;
+  border-radius: 6px;
+  border-bottom: 2px solid var(--accent);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 520px) {
+  .connected .panel:not(.client-card) > h2:first-child,
+  .connected .enquiries-panel > .section-heading {
+    margin: -20px -20px 20px;
+    padding: 18px 20px;
+  }
 }

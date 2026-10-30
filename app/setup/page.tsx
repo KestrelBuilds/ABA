@@ -1,7 +1,11 @@
+import BrandMark from "@/components/brand-mark";
 import Link from "next/link";
 export default function Setup() {
   return (
     <main className="auth-page">
+      <Link className="logo" href="/" aria-label="Alex Bell Arts home">
+        <BrandMark />
+      </Link>
       <section className="panel auth-panel">
         <div className="eyebrow">ABA STUDIO / CONNECTION SETUP</div>
         <h1>A home for your projects.</h1>

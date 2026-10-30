@@ -1,3 +1,4 @@
+import BrandMark from "@/components/brand-mark";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { database, configured } from "@/lib/supabase/server";
@@ -24,6 +25,9 @@ export default async function Access() {
   if (profile.data) redirect("/portal");
   return (
     <main className="auth-page">
+      <Link className="logo" href="/" aria-label="Alex Bell Arts home">
+        <BrandMark />
+      </Link>
       <section className="panel auth-panel">
         <span className="section-kicker">YOUR ACCOUNT</span>
         <h1>Your portal isn’t available yet.</h1>

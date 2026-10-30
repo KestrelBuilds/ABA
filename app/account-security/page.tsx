@@ -1,3 +1,4 @@
+import BrandMark from "@/components/brand-mark";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { identity, configured } from "@/lib/supabase/server";
@@ -17,6 +18,9 @@ export default async function AccountSecurity() {
     throw Error("Account security is unavailable.");
   return (
     <main className="auth-page">
+      <Link className="logo" href="/" aria-label="Alex Bell Arts home">
+        <BrandMark />
+      </Link>
       <section className="panel auth-panel">
         <div className="eyebrow">ABA STUDIO / OWNER SECURITY</div>
         <h1>A little extra protection.</h1>

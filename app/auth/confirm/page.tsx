@@ -1,3 +1,5 @@
+import BrandMark from "@/components/brand-mark";
+import Link from "next/link";
 import { AcceptInvitation } from "@/components/auth-forms";
 import type { Metadata } from "next";
 export const metadata: Metadata = {
@@ -14,6 +16,9 @@ export default async function Confirm({
   const recovery = type === "recovery";
   return (
     <main className="auth-page">
+      <Link className="logo" href="/" aria-label="Alex Bell Arts home">
+        <BrandMark />
+      </Link>
       <section className="panel auth-panel">
         <div className="eyebrow">
           {recovery
