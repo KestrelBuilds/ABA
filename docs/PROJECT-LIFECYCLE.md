@@ -1,6 +1,6 @@
 # Project archiving and verification history
 
-Apply **202610300012_project_lifecycle.sql once, after 011**, following a provider backup/checkpoint. Alex confirmed 011 was applied; do not rerun it. No new secrets or services are needed for 012. The app checks capability before querying new columns; earlier installations keep their existing controls.
+Apply **202610300012_project_lifecycle.sql once, after 011**, following a provider backup/checkpoint. Alex confirmed both 011 and 012 were applied successfully; do not rerun either. This is owner-reported activation, not completed hosted behaviour testing. No new secrets or services are needed for 012. The app checks capability before querying new columns; earlier installations keep their existing controls.
 
 ## Archiving
 

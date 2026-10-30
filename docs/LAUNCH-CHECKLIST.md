@@ -15,7 +15,7 @@ Updated 30 October 2026. The app is already online at https://aba-iota.vercel.ap
 - Confirmed client deletion with scoped file cleanup and historical invoice protection.
 - Owner authenticator tools and permission-filtered export (not a full backup).
 - Stable stage purposes; Alex confirmed 011 applied.
-- Explicit project archive retain/suspend/restore, private dated verification evidence and separate combined-project final approvals, ready for owner activation with 012.
+- Explicit project archive retain/suspend/restore, private dated verification evidence and separate combined-project final approvals, 012 activation confirmed by Alex; hosted behaviour checks remain pending.
 - Optional larger/source uploads with quarantine and scanner adapter; 013 is withheld until an approved real scanner is configured/tested.
 - Owner Overview charts and clearer brand-colour panels, verified locally with fictional records; hosted review remains pending.
 
@@ -76,7 +76,8 @@ Earlier hosted passes are retained as evidence; these steps cover the newer work
 
 ## Activate and accept the latest development
 
-- [ ] Apply 012 once after a backup/checkpoint and test fictional archive retain/suspend/restore, evidence privacy and separate combined approvals. No historical flags/dates are invented; existing combined projects opt in explicitly. See PROJECT-LIFECYCLE.md.
+- [x] Apply 012 once. Alex confirmed successful activation; do not rerun.
+- [ ] Test fictional archive retain/suspend/restore, evidence privacy and separate combined approvals. No historical flags/dates are invented; existing combined projects opt in explicitly. See PROJECT-LIFECYCLE.md.
 - [ ] Keep 013 pending until the real scanner/worker prerequisite and hosted upload/recovery/lease-cleanup checks in SECURE-UPLOADS.md are satisfied. Existing uploads keep their previous 3 MB behaviour before 013.
 
 ## Can follow after launch

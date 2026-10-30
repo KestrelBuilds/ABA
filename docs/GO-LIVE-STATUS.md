@@ -4,7 +4,7 @@ Status: 30 October 2026. The core portal workflows and the new archive/history/c
 
 ## Next update for Alex
 
-1. After a provider backup/checkpoint, paste migration **012 only** into the Supabase SQL editor and run once. 011 was already confirmed successful. 012 adds archiving, dated verification history and separate final approvals for new combined projects, preserving existing checks/access.
+1. **Done — Alex confirmed migration 012 applied successfully.** 011 was already confirmed successful. Do not rerun either migration. Activation is owner-reported; hosted archive/history/combined-approval behaviour still needs acceptance testing on fictional projects. 013 remains pending until an approved real scanner is configured and tested.
 2. In the cloud setup panel, use **Finish review**, save the reviewed settings and publish the environment. Saving the assistant's setup draft alone does not publish it.
 3. Use fictional hosted projects to verify the new controls: archive retained read-only/suspended/restored; private evidence and combined approvals; new-account invitation/password setup, returning-account sign-in and password recovery; contract returns and restricted/full/final downloads. Invitation links are manually copied/sent; pending status is not email delivery.
 4. Design and upload the actual goodbye-packet PDFs, with agreed wording for each project. Starter outlines contain placeholders, not agreed licence/support/ownership promises.
