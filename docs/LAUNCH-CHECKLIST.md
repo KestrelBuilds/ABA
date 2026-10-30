@@ -29,7 +29,7 @@ Local automated and fictional-browser checks cover newer features, but do not pr
 
 ### 1. Activate the new stage setting
 
-- [ ] Apply only `supabase/migrations/202610300011_stage_purposes.sql` after 010. It has been tested locally and pushed; it has not been applied to the hosted database from this workspace.
+- [x] Apply `supabase/migrations/202610300011_stage_purposes.sql` after 010. Alex confirmed Success on 30 October 2026. This is owner-reported hosted activation, not hosted behaviour acceptance.
 - [ ] On a fictional project, rename a standard stage and confirm its contract/payment check stays attached. Explicitly choose a purpose for custom/ambiguous stages. See [STAGE-PURPOSES.md](STAGE-PURPOSES.md).
 
 This update preserves project verification records and access rules. It does not mark anything signed or paid. The previous behaviour remains available until activation.

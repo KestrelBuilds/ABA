@@ -218,3 +218,9 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - No additional SQL, services, real client data changes or email delivery.
 - Added black/off-white section bands with lime dividers to key owner panels, enquiry headers and client names. Preserved the demo mobile menu layout while sharing its colour theme.
 - Validation: 87 existing automated tests, strict TypeScript, formatting and production build passed. Fictional Chromium checked password recovery, restricted access, enquiry conversion, client invitations and owner/client charts/previews at 320/390/1440 px. Production public/setup/invitation/demo pages passed logo/overflow checks and existing signed-out/private-route checks. Hosted acceptance remains separate.
+
+## Internal-only stages are easier to spot — 30 October 2026
+
+- Owner journey stages now show a charcoal header, muted body and lime lock badge when Client visible is off. Client-visible stages keep the purple treatment; progress and verification badges remain separate. Styling follows the saved visibility setting without changing permissions.
+- Alex confirmed database update 011 completed successfully; hosted behaviour acceptance remains separate. No SQL is required for this styling change.
+- Validation: 87 existing automated tests, strict TypeScript, formatting and production build passed. A fictional browser check saved visibility off/on, checked the badge and colour reset, and inspected open/closed stages at 320/390/1440 px while retaining independent verification behaviour.

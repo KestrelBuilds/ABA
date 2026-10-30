@@ -3395,3 +3395,89 @@ summary:focus-visible {
     padding: 18px 20px;
   }
 }
+
+/* Internal stage visibility is distinct from progress or verification status. */
+.connected .milestone-disclosure > summary .stage-heading {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.connected .milestone-disclosure > summary .stage-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.connected .milestone-disclosure.stage-internal {
+  background: #e9e5ed;
+  border-color: #a59aaf;
+  border-left-color: #111;
+}
+.connected .milestone-disclosure.stage-internal > summary {
+  background: #111;
+  color: #f9f9f9;
+  margin: 0 -18px;
+  padding: 20px 18px;
+  border-radius: 5px;
+}
+.connected .milestone-disclosure.stage-internal[open] > summary {
+  margin-bottom: 18px;
+  border-radius: 5px 5px 0 0;
+  border-bottom: 2px solid var(--accent);
+}
+.connected .milestone-disclosure.stage-internal > summary small {
+  color: #dcd5e3;
+}
+.connected .milestone-disclosure.stage-internal > summary::after {
+  color: var(--accent);
+}
+.connected .milestone-disclosure.stage-internal > summary .pill {
+  background: #342a3b;
+  color: #f9f9f9;
+}
+.stage-internal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--ink);
+  padding: 4px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.stage-internal-badge svg {
+  flex-shrink: 0;
+}
+@media (max-width: 520px) {
+  .connected .milestone-disclosure.stage-internal > summary {
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+@media (max-width: 520px) {
+  .connected .milestone-disclosure.stage-internal > summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .connected .milestone-disclosure.stage-internal > summary .stage-heading {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .connected .milestone-disclosure.stage-internal > summary .pill {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    margin: 0;
+  }
+  .connected .milestone-disclosure.stage-internal > summary::after {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .stage-internal-badge {
+    white-space: nowrap;
+  }
+}

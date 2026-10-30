@@ -37,6 +37,7 @@ import {
   Users,
   LogOut,
   LayoutDashboard,
+  Lock,
 } from "lucide-react";
 import type { WorkspaceData, DbProject } from "@/lib/workspace";
 import {
@@ -860,18 +861,28 @@ export default function ConnectedStudio({
                                 .map((s) =>
                                   admin ? (
                                     <details
-                                      className="milestone-disclosure"
+                                      className={
+                                        s.visible
+                                          ? "milestone-disclosure"
+                                          : "milestone-disclosure stage-internal"
+                                      }
                                       id={"stage-" + s.id}
                                       key={s.id}
                                     >
                                       <summary>
-                                        <span>
+                                        <span className="stage-heading">
                                           {s.name}
-                                          <small>
-                                            {s.stream}
-                                            {!s.visible
-                                              ? " · Internal only"
-                                              : ""}
+                                          <small className="stage-meta">
+                                            <span>{s.stream}</span>
+                                            {!s.visible && (
+                                              <span className="stage-internal-badge">
+                                                <Lock
+                                                  size={12}
+                                                  aria-hidden="true"
+                                                />
+                                                Internal only
+                                              </span>
+                                            )}
                                           </small>
                                         </span>
                                         <span className="pill">{s.status}</span>

@@ -4,7 +4,7 @@ Stage names are editable labels. After migration 011, each stage has a separate 
 
 ## Activate
 
-Apply only `supabase/migrations/202610300011_stage_purposes.sql` in the Supabase SQL editor after migrations 001–010. Do not rerun earlier migrations. This migration has been tested locally; applying it to the hosted project and hosted acceptance remain owner steps. No credentials or real records were used in development.
+Apply only `supabase/migrations/202610300011_stage_purposes.sql` in the Supabase SQL editor after migrations 001–010. Do not rerun earlier migrations. This migration has been tested locally. Alex confirmed it ran successfully on the hosted project on 30 October 2026; hosted behaviour acceptance remains an owner step. No credentials or real records were used in development.
 
 The update adds a nullable constrained column and a capability function, and extends atomic project creation to retain the supplied purpose. Existing row-level permissions, access functions, private file paths, native invoice guards and project verification flags are unchanged. Existing names, streams, positions, progress statuses and verification records are retained. The existing audit trigger records stage updates; no historical verification evidence is invented.
 
