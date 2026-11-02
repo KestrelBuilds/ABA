@@ -1,5 +1,13 @@
 # Changelog
 
+## 2 November 2026 — upload content checks and launch review
+
+- Validate filename, reported type and binary signature for new 3 MB owner documents, client assets and PDF contract returns before metadata/Storage writes. Size limits, original-contract binding and release rules remain unchanged; no SQL or scanner service is activated.
+- Preserve exact signature bytes in the shared inspector; reject high-bit lookalikes previously masked by ASCII decoding for PDF, PostScript and WebP.
+- Added regression coverage for disguised files, MIME/extension mismatch, accepted PDF/image signatures, pre-read size rejection and invalid-then-valid client uploads in the fictional browser journey.
+- Recorded Alex's completed live journey/recovery/MFA/backup checks as owner-reported evidence, keeping exceptional branches separate. Added an internal privacy/data-retention review without publishing legal terms or inventing retention periods.
+- Validation: all 108 automated tests, type check, production build and formatting passed; production demo/protected-route checks and fictional client upload, contract-return, secure-upload and lifecycle browser checks passed.
+
 ## 2 November 2026 — completed-stage colours
 
 - Completed-stage circles use the brand lime with black ticks across the demo and connected client portal.

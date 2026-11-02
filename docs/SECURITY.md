@@ -2,6 +2,8 @@
 
 ## Current boundary
 
+Latest review: [PRIVACY-REVIEW.md](PRIVACY-REVIEW.md), 2 November 2026. Alex reports the live journey, password recovery, MFA and backup restoration completed. These owner-reported results supersede earlier pending notes for those items; branch-specific isolation/lifecycle checks and privacy/scanner decisions remain separate.
+
 The `/demo` route uses fictional localStorage records. The connected workspace `/workspace` and `/portal` uses verified Supabase identities and database row-level policies on every request. Nothing from the demo is automatically imported. Protected UI state never acts as an access check. No live client data is authorised until hosted acceptance testing is complete.
 
 ## Data controls implemented
@@ -21,7 +23,7 @@ The `/demo` route uses fictional localStorage records. The connected workspace `
 
 This is not a claim of GDPR compliance. Alex is the data controller; establish lawful basis, privacy notices, processor agreements and transfer safeguards with Supabase/Vercel/email providers. Choose and document retention periods, subject-access/export and deletion handling; audit/feedback foreign keys require a deliberate deletion process. Define incident handling, access reviews, backups/restore and owner MFA enforcement. Do not collect unnecessary sensitive information in free-text answers.
 
-Upload validation limits types and size but does not scan for malware or verify every file's binary format. All files download as attachments; add malware scanning/retention limits before real file exchange. Signed URLs are bearer links until their 60-second expiry. Supabase email links and invitations are sensitive credentials; never log or publish them. Production logs and provider logs need a redaction/retention review.
+New 3 MB uploads check the filename extension, reported MIME type and recognised binary signature before creating metadata or writing to Storage. This rejects common disguised files; it is not full file parsing or malware scanning. Direct Storage clients still rely on deployed bucket/RLS policies. Existing files are not rechecked or given invented scan history. All files download as attachments; add malware scanning/retention limits before real file exchange. Signed URLs are bearer links until their 60-second expiry. Supabase email links and invitations are sensitive credentials; never log or publish them. Production logs and provider logs need a redaction/retention review.
 
 No payments, legal signatures or automatic external messages are implemented. Creative approvals are project feedback only. Payment/contract status is recorded manually by the owner and does not independently prove a payment or legal agreement.
 

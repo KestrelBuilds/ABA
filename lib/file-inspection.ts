@@ -1,15 +1,31 @@
 import yauzl from "yauzl";
 import { MAX_UPLOAD_BYTES, uploadMime } from "./upload-policy";
+import { validateFile } from "./validation";
+
+// The reported MIME type is browser-controlled. Check legacy uploads before
+// creating metadata or writing bytes, while retaining their existing 3 MB cap.
+export async function validateUploadContents(file: File) {
+  validateFile(file);
+  const mime = await inspectFile(
+    Buffer.from(await file.arrayBuffer()),
+    file.name,
+  );
+  if (mime !== file.type)
+    throw Error("The file contents do not match its file type.");
+}
+
 export async function inspectFile(bytes: Buffer, name: string) {
   if (!bytes.length || bytes.length > MAX_UPLOAD_BYTES)
     throw Error("Files must be between 1 byte and 25 MB.");
   const mime = uploadMime(name);
-  const ascii = bytes.subarray(0, 16).toString("ascii");
+  // Latin-1 preserves every byte. ASCII decoding masks high bits and can make
+  // a non-PDF header look like "%PDF-" (and similarly for PostScript/WebP).
+  const header = bytes.subarray(0, 16).toString("latin1");
   const valid =
     mime === "application/pdf"
-      ? ascii.startsWith("%PDF-")
+      ? header.startsWith("%PDF-")
       : mime === "application/postscript"
-        ? ascii.startsWith("%PDF-") || ascii.startsWith("%!PS-Adobe")
+        ? header.startsWith("%PDF-") || header.startsWith("%!PS-Adobe")
         : mime === "image/png"
           ? bytes
               .subarray(0, 8)
@@ -17,7 +33,7 @@ export async function inspectFile(bytes: Buffer, name: string) {
           : mime === "image/jpeg"
             ? bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255
             : mime === "image/webp"
-              ? ascii.startsWith("RIFF") && ascii.slice(8, 12) === "WEBP"
+              ? header.startsWith("RIFF") && header.slice(8, 12) === "WEBP"
               : mime === "application/zip"
                 ? bytes.length >= 4 &&
                   (bytes.readUInt32LE(0) === 0x04034b50 ||

@@ -1,0 +1,35 @@
+# Privacy and file-protection review
+
+Technical review: 2 November 2026. This is an internal working record, not a published privacy notice or legal approval. It does not set retention periods or authorise a new processor. Alex reports that the live client journey, password recovery, MFA and backup restoration are complete; the coding workspace has no hosted account credentials with which to independently repeat them.
+
+## Data and removal boundaries
+
+| Records | Purpose and access | Retention/removal decision still needed |
+| --- | --- | --- |
+| Tally/manual enquiries and questionnaire answers | Review prospective work and deliver agreed services. Owner enquiry access; project questionnaires scoped to the owning client. Avoid unnecessary sensitive answers. | Define how long unsuccessful enquiries, original Tally submissions and completed-project answers are kept. Closing an enquiry does not erase it. Include copies held in Tally. |
+| Client contact details, projects and internal notes | Owner business administration; internal notes excluded from client DTOs and protected separately. | Define end-of-project retention and how correction/access requests are handled. Avoid copying internal notes into client exports. |
+| Private uploads, contract returns and final files | Project delivery; stage visibility, publication, onboarding and final-release gates apply. | Define retention for files and separately held backups. Archive retains data. A downloaded copy cannot be recalled; signed links may remain usable for 60 seconds. |
+| Feedback, approvals and verification evidence | Record the exact reviewed version and owner decisions. Verification evidence is owner-only and append-only. | Define lawful retention and a reviewed process for requests affecting immutable records; do not delete or rewrite evidence automatically. |
+| Native financial history, audit records and Auth accounts | Preserve historical accounting/access evidence and sign-in continuity. | Client deletion deliberately preserves audit/Auth history and can be blocked by native financial records. It is not complete personal-data erasure. Review these separately with the applicable obligations. |
+| Optional quarantine and discarded-upload tombstones | Hold unchecked files and prevent upload-token replay from escaping deletion scope. | Before 013, approve the scanner's confidentiality/region/retention terms and define monitoring/cleanup. Tokens last two hours; frozen deletion waits for expiry plus margin. |
+| Provider logs and backups | Operations, investigation and recovery. | Check actual provider retention and access. Redact cookies, email/invitation/recovery links, signed URLs, service keys, file bodies and questionnaire answers. Define backup expiry and how restored data is handled after an erasure request. |
+
+## File review and implemented correction
+
+The older 3 MB owner/client upload actions accepted files based on reported MIME type and size. A caller can forge that MIME type. New uploads now also require the filename extension, reported type and recognised binary signature to agree before creating upload metadata or sending bytes to Storage. The shared signature reader preserves exact bytes, rejecting high-bit lookalikes that ASCII decoding would mask. Explicit contract returns retain their original-document binding and PDF-only limit. Existing files are not rewritten or marked as scanned.
+
+This checks common signatures, not full file validity, active PDF content or malware. An authenticated caller's direct Storage requests still rely on the deployed bucket/RLS rules; server-action checks do not substitute for the optional quarantine system. No bypass of existing project ownership, final release or provider Storage policies is added.
+
+013 stays withheld until a real approved scanner and worker are configured and tested. The scanner adapter and fictional fixtures are not evidence of a running antivirus engine. Existing legacy files have no malware-scan history. See [SECURE-UPLOADS.md](SECURE-UPLOADS.md) for scanner acceptance, bounds and deletion leases.
+
+## Before publishing privacy wording
+
+- Choose and record a lawful basis and retention schedule for each record group above. Do not silently turn these notes into client-facing commitments.
+- Confirm the controller contact, existing Supabase/Vercel/Tally/email processing terms, actual hosting regions and transfer safeguards. No new service or purchase is approved by this review.
+- Publish a reviewed notice covering purposes, recipients, retention, rights and contact/complaints routes. Include any scanner only after it is selected and approved.
+- Record an access/correction/erasure request process that checks identity, avoids other clients' data, and accounts for audit, financial, Auth, backups and Tally copies. The owner workspace JSON export contains permitted workspace data; it is not a complete per-person subject-access response.
+- Keep an incident procedure: stop further sharing, preserve relevant evidence, rotate/revoke affected credentials through the provider and assess notification duties with appropriate advice. Do not promise a statutory outcome from automated checks.
+
+Only technical code behaviour and local test results can be established here. Provider account settings, actual backup contents, processor agreements and legal decisions require the corresponding private operational evidence.
+
+Review validation: 108 automated tests, type check and production build passed. Chromium exercised rejection followed by a valid client upload, byte-identical explicit contract return, secure-upload quarantine/retry, lifecycle access and production demo/protected routes. These fixtures used fictional accounts/files and a fictional scanner; they do not establish hosted provider or real malware-engine behaviour.

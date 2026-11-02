@@ -1,6 +1,6 @@
 # ABA Studio: getting ready for real clients
 
-Updated 30 October 2026. The app is already online at https://aba-iota.vercel.app. This checklist concerns using it with real clients, not simply publishing a website.
+Updated 2 November 2026. The app is already online at https://aba-iota.vercel.app. This checklist concerns using it with real clients, not simply publishing a website.
 
 **Core portal development is implemented; real-client launch is not yet cleared.** The earlier 80% figure was only a planning estimate. Track the remaining hosted acceptance, recovery/privacy and scanner prerequisites in [GO-LIVE-STATUS.md](GO-LIVE-STATUS.md); a percentage is not a security sign-off.
 
@@ -25,7 +25,7 @@ Alex still designs proposals, contracts, invoices and goodbye PDFs in Illustrato
 
 Alex confirmed hosted owner sign-in, project persistence, the expanded account/Storage/isolation/download/revocation diagnostic and sign-in email receipt/callback on 27 October. Alex later confirmed Tally intake, enquiry conversion, limited previews and independent signed-contract/deposit unlocking. Migrations 010 and 011 are owner-confirmed as applied.
 
-Local automated and fictional-browser checks cover newer features, but do not prove those newer workflows on hosted Supabase/Vercel. Live invitation/password setup/recovery acceptance was deferred by Alex and remains outstanding. Do not repeat already-applied migrations or treat the old workspace connection failure as an application defect.
+On 2 November Alex confirmed the full live client journey (invitation, questionnaires, uploads, approvals and final delivery), password recovery, MFA and backup restoration. These are owner-reported passes, superseding earlier deferred notes. Detailed exceptional branches and the expanded hosted diagnostic are listed separately below; they are not inferred from a normal journey pass. Alex's mobile screenshot also confirms the lime completion ticks are live. Local automated and fictional-browser checks do not independently establish hosted provider behaviour.
 
 ## Before the first real client
 
@@ -40,13 +40,13 @@ This update preserves project verification records and access rules. It does not
 
 Use fictional projects/accounts only, in separate owner and client browser sessions.
 
-- [ ] Manually share an invitation, set up a new account password and accept access.
-- [ ] Check returning-account sign-in, expired/revoked invitations and password recovery. Do not reset/delete accounts to make an invitation work.
+- [x] Normal live invitation/access journey — owner-confirmed 2 November. Exceptional invitation branches remain below.
+- [ ] Check returning-account sign-in and expired/revoked invitations. Password recovery is owner-confirmed; do not reset/delete accounts to make an invitation work.
 - [ ] Verify discovery-only, released proposal and contract/deposit areas; ensure unreleased files/stages remain hidden.
 - [ ] Download an original contract PDF and return it with its explicit original-contract reference. Upload/return must never verify a signature automatically.
 - [ ] Verify signed contract and deposit separately. Confirm both are needed for the full creative journey.
-- [ ] Submit the correct service questionnaire; exercise a presentation revision and creative approval. Website-only clients must not receive branding questions.
-- [ ] Check final files/handover remain locked until both verified final creative approval and final payment. Keep historical native-invoice full-payment protections.
+- [x] Live questionnaires, uploads, approvals and final delivery — owner-confirmed 2 November. Presentation-revision, website-only separation and locked-access denial branches remain part of the detailed acceptance review.
+- [ ] Check final-file denial before both verified final creative approval and final payment, including historical native-invoice full-payment protections. Successful final delivery alone does not establish denial before release.
 - [ ] Check new file search/filtering and stage navigation on a phone, including owner preview restrictions.
 - [ ] Rerun the expanded owner diagnostic for newer questionnaire/feedback checks and verify it cleans up its own test records.
 - [ ] Confirm another client cannot read the fictional project's private records/files, including direct requests; verify hiding, unpublishing and revocation still deny new access.
@@ -55,7 +55,7 @@ Earlier hosted passes are retained as evidence; these steps cover the newer work
 
 ### 3. Protect access and files
 
-- [ ] Confirm owner authenticator enrolment, a fresh-session challenge and a safe recovery procedure. The MFA code/migration already exists; do not rerun its SQL unnecessarily.
+- [x] Owner MFA and password recovery — owner-confirmed 2 November. Keep recovery instructions securely; do not rerun MFA SQL or remove a working factor to repeat this check.
 - [ ] Review provider email/recipient limits, recovery delivery, rate limits and abuse protection.
 - [ ] Review production storage rules, upload format/size limits, cache settings and sensitive download-link handling. Signed links can remain usable for 60 seconds; downloaded files cannot be recalled.
 - [ ] Approve/configure a real scanner and validate it before optional 013 activation and real file exchange. The adapter/quarantine/source-upload code is implemented; no live malware engine is configured or proven by local tests. See SECURE-UPLOADS.md. No new service or purchase is authorised by this checklist.
@@ -64,7 +64,7 @@ Earlier hosted passes are retained as evidence; these steps cover the newer work
 ### 4. Make backups and privacy arrangements real
 
 - [ ] Confirm what Supabase, Storage and Vercel actually back up, how often and how recovery works. Check current plan/capabilities before proposing purchases.
-- [ ] Perform a restore rehearsal that includes the required records and private file bytes. A JSON export or schema migration is not a full backup.
+- [x] Backup restoration — owner-confirmed 2 November. Retain the private scope/date/result, including whether private file bytes were restored. A JSON export or schema migration is not a full backup.
 - [ ] Set a privacy notice, retention/deletion rules and subject-access process; review provider agreements, data locations and transfer safeguards.
 - [ ] Account/audit history and native financial records have deliberate retention rules; client deletion is not a complete personal-data erasure service.
 

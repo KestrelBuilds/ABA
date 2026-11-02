@@ -2,6 +2,12 @@
 
 A considered workspace for Alex Bell Arts. Phase 1 is an interactive application using **fictional demo data**, with admin management and a client journey preview.
 
+### 2 November — upload validation and launch progress
+
+New 3 MB PDF/image uploads now check that their extension, reported type and binary signature agree before saving. This applies to owner documents, client assets and explicit PDF contract returns, without changing release gates or requiring SQL. It is not malware scanning; optional 013 still requires a real approved scanner. See [the privacy/file review](docs/PRIVACY-REVIEW.md).
+
+Alex confirmed the live client journey, password recovery, MFA and backup restoration completed. Those owner-reported passes are recorded in [the launch checklist](docs/LAUNCH-CHECKLIST.md), separately from local tests and outstanding branch-specific/provider checks. Final privacy arrangements, scanner configuration and the actual goodbye PDFs remain open.
+
 ## Latest development update — 30 October 2026
 
 Project archiving with an explicit client-access decision, dated private verification history and separate combined-project approvals are implemented behind additive migration **012**. Existing flags/workflows stay unchanged until the owner deliberately acts. See [PROJECT-LIFECYCLE.md](docs/PROJECT-LIFECYCLE.md).

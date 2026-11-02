@@ -3159,6 +3159,27 @@ const server = createServer(async (req, res) => {
         .locator("#client-assets")
         .getByLabel("File", { exact: true })
         .setInputFiles({
+          name: "Disguised asset.pdf",
+          mimeType: "application/pdf",
+          buffer: Buffer.from("<html>This is not a PDF</html>"),
+        });
+      await page
+        .getByRole("button", { name: "Upload asset privately", exact: true })
+        .click();
+      await page
+        .getByText("The file contents do not match its file type.", {
+          exact: true,
+        })
+        .waitFor();
+      assert.equal(
+        assets.length,
+        0,
+        "rejected bytes must not create asset records",
+      );
+      await page
+        .locator("#client-assets")
+        .getByLabel("File", { exact: true })
+        .setInputFiles({
           name: "Fictional brand asset.pdf",
           mimeType: "application/pdf",
           buffer: Buffer.from("%PDF-1.4 Fictional asset"),

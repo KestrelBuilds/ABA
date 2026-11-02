@@ -12,8 +12,8 @@ import {
   questionnaireInput,
   credentials,
   uuid,
-  validateFile,
 } from "@/lib/validation";
+import { validateUploadContents } from "@/lib/file-inspection";
 import { stagePurposes } from "@/lib/stage-purpose";
 import { newProjectStages } from "@/lib/workflow-templates";
 import { z } from "zod";
@@ -554,7 +554,7 @@ export async function uploadDocument(form: FormData) {
       .parse(form.get("category"));
     const file = form.get("file");
     if (!(file instanceof File)) throw Error("Choose a file to upload.");
-    validateFile(file);
+    await validateUploadContents(file);
     const id = crypto.randomUUID();
     const path = projectId + "/" + id;
     const capability = await db.rpc("project_management_ready");
@@ -1002,7 +1002,7 @@ export async function uploadClientAsset(form: FormData) {
     const project_id = uuid.parse(form.get("projectId"));
     const file = form.get("file");
     if (!(file instanceof File)) throw Error("Choose a file.");
-    validateFile(file);
+    await validateUploadContents(file);
     const business = await db.rpc("business_documents_ready");
     const stage =
       business.data === true
@@ -1159,12 +1159,13 @@ export async function uploadSignedContract(form: FormData) {
     if (!original.data?.stage_id) throw Error("Contract not found.");
     const file = form.get("file");
     if (!(file instanceof File)) throw Error("Choose your completed PDF.");
-    validateFile(file);
-    if (
-      file.type !== "application/pdf" ||
-      new TextDecoder().decode(await file.slice(0, 5).arrayBuffer()) !== "%PDF-"
-    )
+    if (file.type !== "application/pdf")
       throw Error("Choose a completed PDF up to 3 MB.");
+    try {
+      await validateUploadContents(file);
+    } catch {
+      throw Error("Choose a completed PDF up to 3 MB.");
+    }
     const { trySmallSecureUpload } = await import("@/lib/supabase/file-intake");
     if (
       await trySmallSecureUpload(db, file, {

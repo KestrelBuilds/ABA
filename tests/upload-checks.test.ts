@@ -1,10 +1,60 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { inspectFile } from "../lib/file-inspection";
+import { inspectFile, validateUploadContents } from "../lib/file-inspection";
 import { scanFile, validScanner } from "../lib/file-scanner";
 import { uploadMime, fileAvailable } from "../lib/upload-policy";
+
+test("3 MB uploads reject forged content, extensions and MIME types before storage", async () => {
+  for (const [name, type, bytes] of [
+    ["Proof.PDF", "application/pdf", Buffer.from("%PDF-1.7 fictional")],
+    ["Proof.png", "image/png", Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])],
+    ["Proof.jpg", "image/jpeg", Buffer.from([255, 216, 255, 224])],
+    ["Proof.jpeg", "image/jpeg", Buffer.from([255, 216, 255, 224])],
+    ["Proof.webp", "image/webp", Buffer.from("RIFF0000WEBP")],
+  ] as const) {
+    const file = new File([new Uint8Array(bytes)], name, { type });
+    await validateUploadContents(file);
+    assert.deepEqual(Buffer.from(await file.arrayBuffer()), bytes);
+  }
+  for (const [name, type, bytes] of [
+    ["Proof.pdf", "application/pdf", "<html>Disguised content</html>"],
+    ["Proof.png", "image/png", "%PDF-1.7 fictional"],
+    ["Proof.pdf", "image/png", "%PDF-1.7 fictional"],
+    ["Proof.png", "application/pdf", "%PDF-1.7 fictional"],
+    ["Proof.webp", "image/webp", "RIFF0000WAVE"],
+    ["Proof.exe", "application/pdf", "%PDF-1.7 fictional"],
+    ["../Proof.pdf", "application/pdf", "%PDF-1.7 fictional"],
+    ["Source.ai", "application/postscript", "%!PS-Adobe fictional"],
+  ]) {
+    await assert.rejects(() =>
+      validateUploadContents(new File([bytes], name, { type })),
+    );
+  }
+});
+
+test("3 MB upload limits are checked before reading file contents", async () => {
+  for (const size of [0, 3 * 1024 * 1024 + 1]) {
+    const file = new File([new Uint8Array(size)], "Proof.pdf", {
+      type: "application/pdf",
+    });
+    file.arrayBuffer = async () => {
+      throw Error("Rejected uploads must not be read.");
+    };
+    await assert.rejects(() => validateUploadContents(file), /up to 3 MB/);
+  }
+});
 test("source upload inspection checks real signatures and rejects spoofed types, unsafe archives and expansion bombs", async () => {
+  for (const [name, signature] of [
+    ["Proof.pdf", "%PDF-"],
+    ["Source.ai", "%!PS-Adobe"],
+    ["Proof.webp", "RIFF0000WEBP"],
+  ]) {
+    const maskedHeader = Buffer.from(
+      Buffer.from(signature).map((byte) => byte | 128),
+    );
+    await assert.rejects(() => inspectFile(maskedHeader, name), /contents/);
+  }
   assert.equal(
     await inspectFile(Buffer.from("%PDF-1.7 fictional"), "Proof.pdf"),
     "application/pdf",
