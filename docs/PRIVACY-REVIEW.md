@@ -2,6 +2,8 @@
 
 Technical review: 2 November 2026. This is an internal working record, not a published privacy notice or legal approval. It does not set retention periods or authorise a new processor. Alex reports that the live client journey, password recovery, MFA and backup restoration are complete; the coding workspace has no hosted account credentials with which to independently repeat them.
 
+The public notice is now implemented at `/privacy`, with Alex's supplied email and purpose-based retention criteria. [PRIVACY-NOTICE.md](PRIVACY-NOTICE.md) records the cookie/source audit and the operational details still to confirm. This internal review remains separate from that client-facing page.
+
 ## Data and removal boundaries
 
 | Records | Purpose and access | Retention/removal decision still needed |

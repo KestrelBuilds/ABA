@@ -4,6 +4,7 @@ import { database, configured, identity } from "@/lib/supabase/server";
 import { MfaRequiredError } from "@/lib/mfa";
 import { PasswordForm } from "@/components/auth-forms";
 import BrandMark from "@/components/brand-mark";
+import BrandSignature from "@/components/brand-signature";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Your portal password — Alex Bell Arts",
@@ -58,6 +59,7 @@ export default async function ResetPassword({
           Continue to my portal →
         </Link>
       </section>
+      <BrandSignature />
     </main>
   );
 }

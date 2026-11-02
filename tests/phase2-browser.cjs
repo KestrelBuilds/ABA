@@ -12,6 +12,39 @@ const assert = require("node:assert/strict");
     });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
+    const privacyResponse = await page.goto("http://127.0.0.1:3000/privacy");
+    assert.equal(privacyResponse.status(), 200);
+    assert.equal(privacyResponse.headers()["set-cookie"], undefined);
+    await page
+      .getByRole("heading", { name: "Privacy & cookies.", exact: true })
+      .waitFor();
+    assert.equal(
+      await page
+        .getByRole("link", { name: "Alex.bell.arts@outlook.com", exact: true })
+        .getAttribute("href"),
+      "mailto:Alex.bell.arts@outlook.com",
+    );
+    await page
+      .getByRole("link", { name: "Cookies & browser storage", exact: true })
+      .click();
+    await page.waitForURL("**/privacy#cookies");
+    for (const width of [320, 390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+    }
+    await page
+      .getByRole("link", { name: "Return to sign in", exact: true })
+      .click();
+    await page.waitForURL("**/login");
+    await page
+      .getByRole("link", { name: "Privacy & cookies", exact: true })
+      .click();
+    await page.waitForURL("**/privacy");
+    await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto("http://127.0.0.1:3000");
     await page
       .getByRole("heading", { name: "Your vision. My creative direction." })
@@ -73,7 +106,7 @@ const assert = require("node:assert/strict");
     );
     assert.deepEqual(errors, []);
     console.log(
-      "PASS: home navigation, missing-connection explanation, protected admin/client redirects, unauthenticated file denial, invalid invitation handling, mobile layout. Hosted sign-in/storage not tested.",
+      "PASS: public privacy/cookie notice, contact link, sign-in footer navigation, 320/390/1440px privacy layouts, home navigation, missing-connection explanation, protected admin/client redirects, unauthenticated file denial, invalid invitation handling, mobile layout. Hosted sign-in/storage not tested.",
     );
   } finally {
     await browser.close();

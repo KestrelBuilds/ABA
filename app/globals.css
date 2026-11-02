@@ -3552,6 +3552,81 @@ h2,
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
+.brand-signature .privacy-link {
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  letter-spacing: normal;
+  padding: 8px 0;
+  text-underline-offset: 4px;
+}
+.privacy-page {
+  max-width: 880px;
+}
+.privacy-notice {
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.privacy-notice p {
+  font-size: inherit;
+  color: var(--ink);
+}
+.privacy-notice p.muted {
+  font-size: 13px;
+  color: var(--muted);
+}
+.privacy-notice > header {
+  border-bottom: 3px solid var(--accent);
+  padding-bottom: 16px;
+}
+.privacy-notice h1 {
+  margin: 12px 0;
+}
+.privacy-notice > section {
+  margin-block: 32px;
+  scroll-margin-top: 24px;
+}
+.privacy-notice h2 {
+  margin-bottom: 12px;
+}
+.privacy-notice h3,
+.privacy-purposes dt {
+  font:
+    600 16px/1.5 Arial,
+    Helvetica,
+    sans-serif;
+}
+.privacy-notice li + li {
+  margin-top: 10px;
+}
+.privacy-jump-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding-block: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.privacy-jump-links a {
+  padding-block: 8px;
+}
+.privacy-purposes > div,
+.privacy-storage > section {
+  margin-block: 16px;
+  padding: 18px;
+  background: #f0e8f7;
+  border-left: 3px solid var(--primary);
+  border-radius: 6px;
+}
+.privacy-purposes dd {
+  margin: 8px 0 0;
+}
+.privacy-storage h3 {
+  margin-top: 0;
+}
+.privacy-storage p {
+  margin-bottom: 0;
+}
 .brand-values {
   display: flex;
   flex-wrap: wrap;

@@ -3060,6 +3060,12 @@ const server = createServer(async (req, res) => {
       await page
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
+      assert.equal(
+        await page
+          .getByRole("link", { name: "Privacy & cookies", exact: true })
+          .getAttribute("href"),
+        "/privacy",
+      );
       await page.getByRole("button", { name: /Preview client portal/ }).click();
       await page
         .getByRole("heading", {
@@ -3067,6 +3073,12 @@ const server = createServer(async (req, res) => {
           exact: true,
         })
         .waitFor();
+      assert.equal(
+        await page
+          .getByRole("link", { name: "Privacy & cookies", exact: true })
+          .getAttribute("href"),
+        "/privacy",
+      );
       assert.equal(
         await page
           .getByRole("button", { name: "Sign out", exact: true })

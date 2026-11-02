@@ -1,4 +1,5 @@
 import BrandMark from "@/components/brand-mark";
+import BrandSignature from "@/components/brand-signature";
 import Link from "next/link";
 import { AcceptInvitation } from "@/components/auth-forms";
 import type { Metadata } from "next";
@@ -47,6 +48,7 @@ export default async function Confirm({
           </p>
         )}
       </section>
+      <BrandSignature />
     </main>
   );
 }

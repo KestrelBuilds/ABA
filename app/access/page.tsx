@@ -1,4 +1,5 @@
 import BrandMark from "@/components/brand-mark";
+import BrandSignature from "@/components/brand-signature";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { database, configured } from "@/lib/supabase/server";
@@ -49,6 +50,7 @@ export default async function Access() {
           </button>
         </form>
       </section>
+      <BrandSignature />
     </main>
   );
 }

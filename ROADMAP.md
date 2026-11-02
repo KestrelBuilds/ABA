@@ -2,6 +2,8 @@
 
 ## Current progress — 2 November 2026
 
+Public Privacy & cookies notice implemented at `/privacy`, with Alex's supplied contact, purpose-based retention criteria, provider/rights explanations and an audited description of essential sign-in cookies and fictional demo storage. Links are available before sign-in and from portal/account/contract views. No tracking or consent system is introduced. Actual retention schedules, provider regions/agreements and transfer safeguards still need operational confirmation; this page alone does not close the privacy launch gate. See docs/PRIVACY-NOTICE.md.
+
 Alex reports the live client journey, password recovery, MFA and backup restoration complete; earlier pending notes for these normal workflows are superseded. Branch-specific lifecycle/isolation diagnostics and the final privacy/provider review remain tracked in docs/LAUNCH-CHECKLIST.md. The lime completed-stage styling is confirmed live by Alex's screenshot.
 
 New 3 MB uploads now require matching filename, MIME type and binary signature before metadata/Storage writes. This adds server-action validation without activating 013 or claiming malware scanning. See docs/PRIVACY-REVIEW.md for the data inventory, removal boundaries and outstanding retention/processor decisions. Actual Illustrator goodbye PDFs remain owner-supplied; no legal/support promises are invented.

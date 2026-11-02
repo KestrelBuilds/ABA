@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PasswordForm } from "./auth-forms";
 import BrandMark from "./brand-mark";
+import BrandSignature from "./brand-signature";
 import type { ContractEntry } from "@/lib/contracts";
 import { uploadSignedContract, signOut, type Result } from "@/app/actions";
 function ReturnContract({ id }: { id: string }) {
@@ -163,6 +164,7 @@ export default function ContractArea({
           </form>
         )}
       </div>
+      <BrandSignature />
     </main>
   );
 }

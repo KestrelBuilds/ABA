@@ -2,6 +2,8 @@
 
 A considered workspace for Alex Bell Arts. Phase 1 is an interactive application using **fictional demo data**, with admin management and a client journey preview.
 
+The public [Privacy & cookies page](https://aba-iota.vercel.app/privacy) explains portal data use, rights, essential sign-in cookies and fictional demo storage, with Alex's supplied privacy email. It is linked before sign-in and from portal footers. No optional trackers or consent banner were introduced. See [the notice audit](docs/PRIVACY-NOTICE.md) for the evidence and retention/provider details still requiring operational confirmation.
+
 ### 2 November — upload validation and launch progress
 
 New 3 MB PDF/image uploads now check that their extension, reported type and binary signature agree before saving. This applies to owner documents, client assets and explicit PDF contract returns, without changing release gates or requiring SQL. It is not malware scanning; optional 013 still requires a real approved scanner. See [the privacy/file review](docs/PRIVACY-REVIEW.md).

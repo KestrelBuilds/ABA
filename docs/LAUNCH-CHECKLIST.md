@@ -65,7 +65,8 @@ Earlier hosted passes are retained as evidence; these steps cover the newer work
 
 - [ ] Confirm what Supabase, Storage and Vercel actually back up, how often and how recovery works. Check current plan/capabilities before proposing purchases.
 - [x] Backup restoration — owner-confirmed 2 November. Retain the private scope/date/result, including whether private file bytes were restored. A JSON export or schema migration is not a full backup.
-- [ ] Set a privacy notice, retention/deletion rules and subject-access process; review provider agreements, data locations and transfer safeguards.
+- [x] Add the public Privacy & cookies page and links before sign-in/from the portal, using Alex's supplied contact and source-audited cookie explanation. See PRIVACY-NOTICE.md.
+- [ ] Finalise and operate retention/deletion rules and a subject-access process; confirm provider agreements, actual data locations and transfer safeguards, then update the public notice where needed. Adding the page does not complete this operational review.
 - [ ] Account/audit history and native financial records have deliberate retention rules; client deletion is not a complete personal-data erasure service.
 
 ### 5. Finish client-facing material and approve launch

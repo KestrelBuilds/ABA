@@ -1,5 +1,13 @@
 # Changelog
 
+## 2 November 2026 — public privacy and cookie information
+
+- Added public `/privacy` with Alex's supplied Outlook contact, data-use/lawful-basis, provider, retention-criteria, rights, security and cookie/storage explanations.
+- Linked the page from shared welcome/login/owner/client/demo footers and invitation, password reset, access and legacy contract screens, without copying private URL parameters.
+- Documented the source/SDK cookie audit: essential Supabase session/verifier cookies and fictional demo local storage. No analytics, optional cookies, consent banner, new service or SQL introduced.
+- Retention schedules, actual provider regions/agreements and transfer safeguards remain operator review items; no blanket compliance or invented deletion deadline is claimed.
+- Validation: all 108 automated tests, type check, production build and changed-file formatting passed. Chromium verified public access without sign-in, contact/footer/section links, readable layouts at 320/390/1440px, owner/client-preview links and existing demo behaviour. A fresh browser made only first-party requests and wrote no cookies or local storage on `/privacy`.
+
 ## 2 November 2026 — upload content checks and launch review
 
 - Validate filename, reported type and binary signature for new 3 MB owner documents, client assets and PDF contract returns before metadata/Storage writes. Size limits, original-contract binding and release rules remain unchanged; no SQL or scanner service is activated.
