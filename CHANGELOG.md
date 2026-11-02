@@ -1,5 +1,10 @@
 # Changelog
 
+## 2 November 2026 — completed-stage colours
+
+- Completed-stage circles use the brand lime with black ticks across the demo and connected client portal.
+- No database update is required. All 106 automated tests, type check, production build and demo/unconfigured-access browser checks passed. Chromium confirmed lime circles with black ticks at desktop and mobile widths.
+
 ## Owner project finder
 
 - Added combined project/client-name search, service/archive filters and estimated-completion/project-name/client-name sorting, with counts, reset and empty states.

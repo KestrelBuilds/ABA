@@ -812,9 +812,9 @@ select {
   font-size: 10px;
 }
 .stage-check.done {
-  background: #ede3fa;
-  border-color: #ede3fa;
-  color: #6321a0;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink);
 }
 .stage-main {
   flex: 1;
