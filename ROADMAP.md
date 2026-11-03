@@ -1,5 +1,9 @@
 # ABA Studio roadmap
 
+## 3 November — client account help
+
+Implemented authenticated current-email display on the no-access screen, wrong-account guidance, fixed public support links and direct recovery/email help modes on login. Expired/incomplete reset links open the correct form; invitation failures distinguish existing-account sign-in from asking for a fresh invitation. Public error pages offer retry/sign-in/contact without database instructions. Contact details are centralised with the privacy notice. The fictional browser checks verify no private project/client reads without membership, safe sign-out, connected-account redirection and non-sending/token-free help links; server permissions and Auth flows are unchanged.
+
 ## 3 November — invitation permission diagnostics
 
 Extended the owner-run diagnostic with expired invitation rejection, empty membership/project reads, owner-scoped renewal and repeated acceptance of the same disposable account. After revocation it checks rejection, safe reinvitation, two-client isolation and unchanged verification flags, then revokes again before cleanup. It requires the expected 4xx application denial; network/5xx/unrelated errors are failures. Pre-010 installs explicitly report extended invitation checks unrun. Local tests exercise the real SQL, including a deliberately removed expiry guard and verified cleanup; no hosted pass, new SQL, real-account changes or email delivery is implied.

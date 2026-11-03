@@ -2729,6 +2729,27 @@ summary:focus-visible {
 .invitation-dates dd {
   margin: 2px 0 0;
 }
+.signed-in-account {
+  margin: 20px 0;
+  padding: 16px;
+  border-left: 3px solid var(--primary);
+  border-radius: 6px;
+  background: #f0e8f7;
+  overflow-wrap: anywhere;
+}
+.signed-in-account span,
+.signed-in-account strong {
+  display: block;
+}
+.signed-in-account span {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.signed-in-account strong {
+  font-size: 14px;
+  font-weight: 600;
+}
 .delivery-file-list {
   list-style: none;
   padding: 0;

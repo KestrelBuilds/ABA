@@ -1,5 +1,6 @@
 import BrandMark from "@/components/brand-mark";
 import BrandSignature from "@/components/brand-signature";
+import ContactAlex from "@/components/contact-alex";
 import Link from "next/link";
 import { AcceptInvitation } from "@/components/auth-forms";
 import type { Metadata } from "next";
@@ -43,9 +44,22 @@ export default async function Confirm({
             kind={recovery ? "recovery" : "invite"}
           />
         ) : (
-          <p>
-            This invitation is incomplete. Please ask Alex for a fresh link.
-          </p>
+          <>
+            <p>
+              {recovery
+                ? "This password-reset link is incomplete. Request a new one from the sign-in page."
+                : "This invitation is incomplete. Please ask Alex for a fresh link."}
+            </p>
+            <Link
+              className="resource"
+              href={recovery ? "/login?help=recovery" : "/login?invited=1"}
+            >
+              {recovery
+                ? "Request a new password-reset link →"
+                : "Return to sign in →"}
+            </Link>
+            <ContactAlex />
+          </>
         )}
       </section>
       <BrandSignature />

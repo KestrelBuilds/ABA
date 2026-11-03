@@ -6,9 +6,15 @@ import { configured } from "@/lib/supabase/server";
 export default async function Login({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; invited?: string }>;
+  searchParams: Promise<{ error?: string; invited?: string; help?: string }>;
 }) {
-  const { error, invited } = await searchParams;
+  const { error, invited, help } = await searchParams;
+  const initialHelp =
+    help === "recovery" || error === "reset"
+      ? "recovery"
+      : help === "email" || error === "link"
+        ? "email"
+        : undefined;
   return (
     <main className="auth-page">
       <Link className="logo" href="/">
@@ -36,7 +42,7 @@ export default async function Login({
           </div>
         )}
         {configured() ? (
-          <LoginForms />
+          <LoginForms help={initialHelp} />
         ) : (
           <>
             <div className="banner">

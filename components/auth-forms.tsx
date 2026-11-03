@@ -1,6 +1,7 @@
 "use client";
 import { useActionState } from "react";
 import Link from "next/link";
+import ContactAlex from "./contact-alex";
 import {
   signIn,
   requestSignInLink,
@@ -10,7 +11,7 @@ import {
   type Result,
 } from "@/app/actions";
 const initial: Result = { ok: false, message: "" };
-export function LoginForms() {
+export function LoginForms({ help }: { help?: "recovery" | "email" }) {
   const [state, action, pending] = useActionState(signIn, initial);
   const [linkState, linkAction, linkPending] = useActionState(
     requestSignInLink,
@@ -42,7 +43,7 @@ export function LoginForms() {
         </button>
         <p role="status">{state.message}</p>
       </form>
-      <details className="auth-help">
+      <details className="auth-help" open={help === "recovery"}>
         <summary>Forgot your password?</summary>
         <p>
           Enter the email Alex invited. I’ll send a link so you can choose a new
@@ -59,7 +60,7 @@ export function LoginForms() {
           <p role="status">{resetState.message}</p>
         </form>
       </details>
-      <details className="auth-help">
+      <details className="auth-help" open={help === "email"}>
         <summary>Sign in by email instead</summary>
         <p>
           Already invited, but haven’t set a password? Request a sign-in link.
@@ -80,6 +81,7 @@ export function LoginForms() {
         New here? Ask Alex for your private invitation. There’s no public
         account registration.
       </p>
+      <ContactAlex />
     </>
   );
 }
@@ -104,9 +106,25 @@ export function AcceptInvitation({
       </button>
       <p role="status">{state.message}</p>
       {!state.ok && state.message && (
-        <Link className="resource" href="/login">
-          Return to sign in or request a fresh password link →
-        </Link>
+        <>
+          <Link
+            className="resource"
+            href={
+              kind === "recovery" ? "/login?help=recovery" : "/login?invited=1"
+            }
+          >
+            {kind === "recovery"
+              ? "Request a new password-reset link →"
+              : "Already have an account? Sign in →"}
+          </Link>
+          <ContactAlex
+            label={
+              kind === "recovery"
+                ? "Email Alex for help"
+                : "Email Alex about a fresh invitation"
+            }
+          />
+        </>
       )}
     </form>
   );

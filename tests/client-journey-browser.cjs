@@ -32,6 +32,9 @@ const workspaceHelpMode = process.argv.includes("--workspace-help");
 const goodbyeStageId = randomUUID();
 const invitationsMode = process.argv.includes("--invitations");
 const accountMode = process.argv.includes("--account");
+const accessHelpMode = process.argv.includes("--access-help");
+let accessHelpConnected = false,
+  accessPrivateReads = 0;
 const prospectMode = process.argv.includes("--prospect");
 const prospectOwnerMode = process.argv.includes("--prospect-owner");
 const enquiriesMode = process.argv.includes("--enquiries");
@@ -92,7 +95,9 @@ const user = {
   id: uid,
   aud: "authenticated",
   role: "authenticated",
-  email: "fictional@example.com",
+  email: accessHelpMode
+    ? "different-account@example.com"
+    : "fictional@example.com",
   email_confirmed_at: new Date().toISOString(),
   app_metadata: { provider: "email", providers: ["email"] },
   user_metadata: {},
@@ -454,6 +459,15 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://127.0.0.1:${fixturePort}`);
     const path = url.pathname;
+    if (
+      accessHelpMode &&
+      !accessHelpConnected &&
+      req.method === "GET" &&
+      /^\/rest\/v1\/(clients|projects|project_notes|documents|questionnaires)(?:\/|$)/.test(
+        path,
+      )
+    )
+      accessPrivateReads++;
     if (
       projectFinderMode &&
       /^\/rest\/v1\/(projects|clients|documents|client_assets|stages|profiles)$/.test(
@@ -1083,13 +1097,16 @@ const server = createServer(async (req, res) => {
     }
     if (table === "enquiries") rows = incoming;
     if (table === "profiles")
-      rows = [
-        {
-          id: uid,
-          role: ownerMode ? "admin" : "client",
-          client_id: ownerMode ? null : cid,
-        },
-      ];
+      rows =
+        accessHelpMode && !accessHelpConnected
+          ? []
+          : [
+              {
+                id: uid,
+                role: ownerMode ? "admin" : "client",
+                client_id: ownerMode ? null : cid,
+              },
+            ];
     if (table === "clients")
       rows = clientDeleted
         ? []
@@ -1410,7 +1427,9 @@ const server = createServer(async (req, res) => {
     if (accountMode) {
       await page.goto(`http://127.0.0.1:${appPort}/reset-password`);
       await page.waitForURL("**/login?error=reset");
-      await page.getByText("Forgot your password?", { exact: true }).click();
+      await page
+        .getByRole("button", { name: "Send password-reset link", exact: true })
+        .waitFor();
       const reset = page.locator("form").filter({
         has: page.getByRole("button", { name: "Send password-reset link" }),
       });
@@ -1444,6 +1463,66 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
       .click();
+    if (accessHelpMode) {
+      await page.waitForURL("**/access");
+      await expect(page.locator(".signed-in-account")).toContainText(
+        "different-account@example.com",
+      );
+      await expect(
+        page.getByText("fictional@example.com", { exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole("link", {
+          name: "Email Alex about portal access",
+          exact: true,
+        }),
+      ).toHaveAttribute("href", "mailto:Alex.bell.arts@outlook.com");
+      await expect(
+        page.getByRole("heading", {
+          name: "Fictional client journey",
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      assert.equal(accessPrivateReads, 0);
+      await page
+        .getByRole("link", { name: "Check my access again", exact: true })
+        .click();
+      await page.waitForURL("**/access");
+      await captureUi("account-access-help");
+      await page
+        .getByRole("button", {
+          name: "Sign out and use another account",
+          exact: true,
+        })
+        .click();
+      await page.waitForURL("**/login");
+      await page.goto(`http://127.0.0.1:${appPort}/access`);
+      await page.waitForURL("**/login");
+      await expect(page.locator(".signed-in-account")).toHaveCount(0);
+      assert.equal(accessPrivateReads, 0);
+      accessHelpConnected = true;
+      await page
+        .getByLabel("Email address", { exact: true })
+        .first()
+        .fill(user.email);
+      await page
+        .getByLabel("Password", { exact: true })
+        .fill("Fictional-password-123");
+      await page
+        .getByRole("button", { name: "Sign in to ABA Studio", exact: true })
+        .click();
+      await page.waitForURL("**/portal");
+      await page.goto(`http://127.0.0.1:${appPort}/access`);
+      await page.waitForURL("**/portal");
+      await page
+        .getByRole("heading", { name: "Fictional client journey", exact: true })
+        .waitFor();
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: access help shows only the authenticated account email, gives a fixed support link, makes no private project/client reads without membership, supports safe sign-out, and redirects connected accounts to their portal. Phone/desktop fixture checks only.",
+      );
+      return;
+    }
     if (projectFinderMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
       const finder = page.getByRole("region", {
@@ -2461,6 +2540,56 @@ const server = createServer(async (req, res) => {
         })
         .click();
       await page.getByText(/This password-reset link has expired/).waitFor();
+      const requestsBeforeHelp = recoveryRequests.length;
+      await page
+        .getByRole("link", {
+          name: "Request a new password-reset link →",
+          exact: true,
+        })
+        .click();
+      await page.waitForURL("**/login?help=recovery");
+      await page
+        .getByRole("button", { name: "Send password-reset link", exact: true })
+        .waitFor();
+      assert.equal(recoveryRequests.length, requestsBeforeHelp);
+      await page.goto(
+        `http://127.0.0.1:${appPort}/auth/confirm?token_hash=expired-fictional-token-at-least-20`,
+      );
+      await page
+        .getByRole("button", {
+          name: "Accept invitation & sign in",
+          exact: true,
+        })
+        .click();
+      await page.getByText(/This invitation has expired/).waitFor();
+      await expect(
+        page.getByRole("link", {
+          name: "Already have an account? Sign in →",
+          exact: true,
+        }),
+      ).toHaveAttribute("href", "/login?invited=1");
+      await expect(
+        page.getByRole("link", {
+          name: "Email Alex about a fresh invitation",
+          exact: true,
+        }),
+      ).toHaveAttribute("href", "mailto:Alex.bell.arts@outlook.com");
+      await captureUi("expired-invitation-help");
+      const verificationsBeforeIncomplete = verifiedTypes.length;
+      await page.goto(`http://127.0.0.1:${appPort}/auth/confirm?type=recovery`);
+      await page.getByText(/This password-reset link is incomplete/).waitFor();
+      assert.equal(verifiedTypes.length, verificationsBeforeIncomplete);
+      await page
+        .getByRole("link", {
+          name: "Request a new password-reset link →",
+          exact: true,
+        })
+        .click();
+      await page
+        .getByRole("button", { name: "Send password-reset link", exact: true })
+        .waitFor();
+      await page.goto(`http://127.0.0.1:${appPort}/login?help=unrecognised`);
+      await expect(page.locator("details.auth-help[open]")).toHaveCount(0);
       assert.equal(passwordUpdates.length, 1);
       assert.deepEqual(errors, []);
       console.log(

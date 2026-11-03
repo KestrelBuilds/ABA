@@ -25,4 +25,6 @@ No optional tracker or consent banner was added. The notice explains necessary a
 
 The public contact link does not send email automatically. Do not add sign-in links, personal client data or secret values to this notice or its URLs.
 
+Public privacy and account-help links now share `lib/studio-contact.ts`, preserving Alex's supplied address. The no-access screen displays only the email returned for the current authenticated account, under its existing private/no-store route. It does not query a different client's expected contact details; help navigation does not carry invitation/recovery tokens or account emails in query parameters.
+
 Validation: all 108 automated tests, type check, production build and changed-file formatting passed. Production Chromium checks confirmed public `/privacy` access without sign-in or a Supabase connection, the supplied mailto link, sign-in/footer and section navigation, 320/390/1440px layouts and 16px mobile body text. A fresh browser observed only first-party resources and no cookie/local-storage writes on the page. The fictional owner/client-preview check confirmed footer links while preserving the read-only preview. Existing demo creation/persistence/mobile checks also passed. These are local observations, not an audit of hosting-level production scripts or provider agreements.

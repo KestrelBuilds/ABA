@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts. Phase 1 is an interactive application using **fictional demo data**, with admin management and a client journey preview.
 
+### 3 November — client account help
+
+The no-access screen now shows the current signed-in email so clients can compare it with their invitation, sign out safely or contact Alex. Expired/incomplete reset links open the recovery form directly; expired invitations offer existing-account sign-in and a separate fresh-invitation contact route. Support links use Alex's supplied public email without adding private tokens or sending mail automatically. See [account-help guidance](docs/CLIENT-INVITATIONS.md). No SQL or permission changes.
+
 ### 3 November — extended owner access checks
 
 **My account → Check client portal access** now checks expired/revoked invitations, repeated acceptance and renewal of the same temporary account, including isolation and unchanged payment/approval flags. It revokes access again and verifies scoped cleanup. No new SQL or emails are needed; real client records are not selected for these probes. See [the diagnostic guide](docs/PORTAL-CHECKS.md). Hosted results still require running the deployed check.

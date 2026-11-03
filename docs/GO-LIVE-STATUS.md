@@ -2,6 +2,8 @@
 
 Status: 3 November 2026. The core portal workflows and the new archive/history/combined-approval code are implemented. Readiness is tracked by concrete gates; local tests are separate from live acceptance.
 
+Client account-help follow-up: the no-access page identifies the current signed-in email only, and expired/incomplete links lead to appropriate sign-in/recovery/contact routes. Browser fixtures verify no private record reads without membership and no emails/token sharing from help links. This is local UI evidence; the owner's completed live recovery/MFA/journey checks remain recorded separately below.
+
 The updated owner diagnostic can establish database invitation expiry, repeated acceptance, revoked-invitation denial and renewal of the same disposable account, as well as its existing isolation/file/lifecycle checks. The local suite checks this against real SQL policies, including a deliberately broken expiry guard. Its expanded hosted result is still pending; see PORTAL-CHECKS.md for the single owner-run action and cleanup requirements. No new SQL or client email is needed.
 
 Latest development: the public Privacy & cookies page is implemented, with the cookie audit and remaining retention/provider details recorded in PRIVACY-NOTICE.md. The owner invitation panel now clears stale link results on refresh and shows UK invitation/expiry/connection dates. The `--invitations` browser fixture covers expired/revoked/connected status transitions and safe reinvitation; these are local fictional checks, not new hosted acceptance. No hosted credentials are configured in this workspace.

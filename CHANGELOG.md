@@ -1,5 +1,13 @@
 # Changelog
 
+## 3 November 2026 — client sign-in and access help
+
+- Show the current authenticated email on the no-access page, with guidance to use the originally invited address and a fixed public contact link. No lookup or exposure of another account's expected email or project data.
+- Open recovery/email-link help directly for relevant login errors and fixed help modes. Expired invitations offer sign-in plus an invitation-help contact; incomplete reset links now have reset-specific wording and recovery navigation.
+- Centralised Alex's supplied public contact email for privacy/help; support links carry no tokens or page URLs and do not send email automatically. General errors now offer retry/sign-in/contact without client-facing database instructions.
+- Added fictional browser coverage for no-membership privacy, sign-out, connected-account redirection, expired/incomplete link navigation and ignored unknown help modes. No SQL, account registration, password-policy or permission changes.
+- Validation: all 115 automated tests, type check, production build and formatting passed. Account/no-access browser workflows passed at phone/desktop widths, alongside production demo, privacy and protected-route smoke checks. Hosted email delivery is not established by these fictional checks.
+
 ## 3 November 2026 — extended invitation diagnostics
 
 - Added expired/revoked invitation checks and same-account renewal/repeated acceptance to the owner-only automatic portal diagnostic. Probes use its allocated fictional accounts, current owner/client permissions and existing RPCs; no new service user, password reset, invitation token or email.

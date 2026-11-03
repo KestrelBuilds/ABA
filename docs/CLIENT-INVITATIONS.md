@@ -32,6 +32,14 @@ Exact normalized saved email, a confirmed Auth email at acceptance, owner/MFA ch
 
 ## Passwords and email setup
 
+### Help with the wrong account or an old link
+
+The no-access screen shows the email returned by Supabase for the current authenticated account. Compare it with the email in Alex's invitation. If it differs, sign out and use the invited email; if it matches, use **Email Alex about portal access** so the invitation/shared area can be checked. The screen does not look up or reveal a different client's expected email, project or invitation status. Creating a new account or resetting a password does not restore revoked permission.
+
+Expired or incomplete password-reset links lead directly to `/login?help=recovery`, with the recovery form already expanded. An expired invitation offers existing-account sign-in and a separate contact link for a fresh invitation. Invalid generic sign-in callbacks open the email-link form. The `help` parameter accepts only the fixed `recovery`/`email` UI modes; it is not a redirect target and never pre-fills an account email from the URL.
+
+Support links use the public address Alex supplied, **Alex.bell.arts@outlook.com**, centralised in `lib/studio-contact.ts`. They open an email draft only after the user chooses the link; they do not send mail, include page URLs, copy authentication tokens or change any invitation. Public privacy contact information uses the same source. General error pages provide retry/sign-in/contact routes without asking clients to troubleshoot the database.
+
 The login page offers **Forgot your password?** and **Sign in by email instead**. Both return uniform messages; they do not disclose whether an email exists. Recovery uses Supabase's supported reset flow and requires a verified signed-in Auth session before changing that account's password. Confirmation must match, and owner MFA is still required. Changing a password does not grant or restore portal access.
 
 In Supabase Authentication → URL Configuration, retain the production Site URL and allow:

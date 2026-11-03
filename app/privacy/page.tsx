@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BrandMark from "@/components/brand-mark";
 import BrandSignature from "@/components/brand-signature";
+import { studioContactEmail, studioContactHref } from "@/lib/studio-contact";
 
 export const metadata: Metadata = {
   title: "Privacy & cookies — Alex Bell Arts",
@@ -44,11 +45,9 @@ export default function Privacy() {
           </p>
           <p>
             For privacy questions or to exercise your rights, email me at{" "}
-            <a href="mailto:Alex.bell.arts@outlook.com">
-              Alex.bell.arts@outlook.com
-            </a>
-            . Please do not send passwords, sign-in links, authentication codes
-            or bank-card details.
+            <a href={studioContactHref}>{studioContactEmail}</a>. Please do not
+            send passwords, sign-in links, authentication codes or bank-card
+            details.
           </p>
         </section>
 
