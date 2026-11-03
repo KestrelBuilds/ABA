@@ -79,6 +79,9 @@ const inviteeUid = randomUUID();
 let invitationAccount = null,
   portalState = "not_invited",
   generatedInvitations = 0;
+let portalInvitedAt = null,
+  portalExpiresAt = null,
+  invitationRevision = 0;
 const passwordUpdates = [],
   recoveryRequests = [],
   otpRequests = [],
@@ -795,14 +798,19 @@ const server = createServer(async (req, res) => {
           client_id: cid,
           eligible: true,
           state: portalState,
-          invited_at: null,
-          accepted_at: null,
-          expires_at: null,
+          invited_at: portalInvitedAt,
+          accepted_at:
+            portalState === "connected" ? "2027-07-03T23:30:00.000Z" : null,
+          expires_at: portalExpiresAt,
         },
       ]);
     if (table === "client_invitation_account") return json(invitationAccount);
     if (table === "record_client_invitation") {
       portalState = "pending";
+      const created =
+        Date.parse("2027-07-01T23:30:00.000Z") + invitationRevision++ * 60000;
+      portalInvitedAt = new Date(created).toISOString();
+      portalExpiresAt = new Date(created + 7 * 86400000).toISOString();
       return json(randomUUID());
     }
     if (table === "revoke_client_access") {
@@ -1352,6 +1360,7 @@ const server = createServer(async (req, res) => {
     });
     const page = await browser.newPage({
       viewport: { width: 390, height: 844 },
+      timezoneId: invitationsMode ? "America/Los_Angeles" : undefined,
     });
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("console", (message) => {
@@ -2163,6 +2172,16 @@ const server = createServer(async (req, res) => {
         .getByRole("button", { name: "Create portal invitation", exact: true })
         .click();
       await access.getByText("Invitation pending", { exact: true }).waitFor();
+      await access
+        .getByText("2 Jul 2027, 00:30 (UK time)", { exact: true })
+        .waitFor();
+      await access
+        .getByText("9 Jul 2027, 00:30 (UK time)", { exact: true })
+        .waitFor();
+      await expect(access.locator("time").first()).toHaveAttribute(
+        "datetime",
+        portalInvitedAt,
+      );
       const link = access.getByLabel("Link to send to this client", {
         exact: true,
       });
@@ -2182,12 +2201,35 @@ const server = createServer(async (req, res) => {
       );
       assert.equal(generatedInvitations, 1);
       await captureUi("client-invitation", access);
+      portalState = "expired";
+      portalInvitedAt = "2026-10-24T23:30:00.000Z";
+      portalExpiresAt = "2026-10-31T23:30:00.000Z";
+      await access
+        .getByRole("button", { name: "Refresh access status" })
+        .click();
+      await access.getByText("Invitation expired", { exact: true }).waitFor();
+      await expect(link).toHaveCount(0);
+      await access
+        .getByText("31 Oct 2026, 23:30 (UK time)", { exact: true })
+        .waitFor();
+      await access
+        .getByText(/one-use sign-in link can expire sooner/)
+        .waitFor();
+      await captureUi("client-invitation-expired", access);
+      await access
+        .getByRole("button", { name: "Create fresh invitation", exact: true })
+        .click();
+      await access.getByText("Invitation pending", { exact: true }).waitFor();
+      await expect(link).toHaveValue(
+        `http://127.0.0.1:${appPort}/login?invited=1`,
+      );
       await access.getByText("Remove portal access", { exact: true }).click();
       await access.getByRole("checkbox").check();
       await access
         .getByRole("button", { name: "Remove client access", exact: true })
         .click();
       await access.getByText("Access revoked", { exact: true }).waitFor();
+      await expect(link).toHaveCount(0);
       await access
         .getByRole("button", { name: "Create fresh invitation", exact: true })
         .click();
@@ -2196,11 +2238,49 @@ const server = createServer(async (req, res) => {
         `http://127.0.0.1:${appPort}/login?invited=1`,
       );
       assert.equal(generatedInvitations, 1);
+      await access
+        .getByRole("button", { name: "Refresh access status" })
+        .click();
+      await expect(link).toHaveCount(0);
+      await access.getByText("Invitation pending", { exact: true }).waitFor();
+      await access
+        .getByRole("button", { name: "Create fresh invitation", exact: true })
+        .click();
+      await expect(link).toHaveValue(
+        `http://127.0.0.1:${appPort}/login?invited=1`,
+      );
       portalState = "connected";
       await access
         .getByRole("button", { name: "Refresh access status" })
         .click();
       await access.getByText("Account connected", { exact: true }).waitFor();
+      await expect(link).toHaveCount(0);
+      await expect(
+        access.getByText("Portal permission expires", { exact: true }),
+      ).toHaveCount(0);
+      await access
+        .getByText("4 Jul 2027, 00:30 (UK time)", { exact: true })
+        .waitFor();
+      await access
+        .getByRole("button", { name: "Get portal sign-in link", exact: true })
+        .click();
+      await expect(link).toHaveValue(`http://127.0.0.1:${appPort}/login`);
+      await access
+        .getByRole("button", { name: "Copy sign-in link", exact: true })
+        .click();
+      await access
+        .getByRole("button", { name: "Link copied", exact: true })
+        .waitFor();
+      await access
+        .getByRole("button", { name: "Refresh access status" })
+        .click();
+      await expect(link).toHaveCount(0);
+      await access
+        .getByRole("button", { name: "Get portal sign-in link", exact: true })
+        .click();
+      await access
+        .getByRole("button", { name: "Copy sign-in link", exact: true })
+        .waitFor();
       assert.equal(
         await access
           .getByRole("button", { name: "Create fresh invitation", exact: true })
@@ -2209,7 +2289,7 @@ const server = createServer(async (req, res) => {
       );
       assert.deepEqual(errors, []);
       console.log(
-        "PASS: owner project shortcut, guided new invite, private copyable link, pending/connected/revoked statuses, and safe reinvitation without another provider token. Fictional services only.",
+        "PASS: owner project shortcut, copyable private invite, UK creation/expiry/connection dates across BST/GMT from a non-UK browser, expired/revoked/connected states, cleared stale links/copy feedback on refresh and safe reinvitation without another provider token. Fictional services only.",
       );
       return;
     }

@@ -1,5 +1,9 @@
 # ABA Studio roadmap
 
+## 3 November — invitation edge cases
+
+Reproduced and fixed a stale owner invitation result surviving a status refresh. Refresh now clears prior displayed links/copy state, and client/email/state/eligibility checks hide link results that no longer match. Added UK invitation creation/permission-expiry/account-connection timestamps, expired-invitation guidance and an explicit distinction from provider token lifetime. The expanded fictional browser journey covers expiry, revoke/reinvite, connected sign-in links and BST/GMT display from a non-UK timezone. No SQL, account reset, new email or service is introduced; hosted edge-case acceptance remains separate.
+
 ## Current progress — 2 November 2026
 
 Public Privacy & cookies notice implemented at `/privacy`, with Alex's supplied contact, purpose-based retention criteria, provider/rights explanations and an audited description of essential sign-in cookies and fictional demo storage. Links are available before sign-in and from portal/account/contract views. No tracking or consent system is introduced. Actual retention schedules, provider regions/agreements and transfer safeguards still need operational confirmation; this page alone does not close the privacy launch gate. See docs/PRIVACY-NOTICE.md.

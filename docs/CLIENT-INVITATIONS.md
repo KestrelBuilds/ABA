@@ -22,6 +22,10 @@ An existing or returning account receives the normal ABA sign-in link with an in
 
 The owner sees Not invited, Invitation pending, Account connected, Invitation expired or Access revoked. Status is permission/account state, not proof an email was sent or delivered. Pending permission lasts seven days; a provider's one-use authentication link may expire sooner. **Create fresh invitation** renews a pending/expired/revoked invitation after checking sharing eligibility and account ownership again.
 
+The owner panel also shows recorded invitation creation, portal-permission expiry and account-connection dates in **UK time**, including the British Summer Time change. Missing or invalid timestamps are not invented. Once an account is connected, its old invitation expiry is not presented as an account-access deadline.
+
+**Refresh access status** clears any link/copy confirmation currently displayed. If the client still needs an invitation, use **Create fresh invitation** to obtain a new link to copy; connected clients use **Get portal sign-in link**. Links are also hidden if the displayed account state, client/email or sharing eligibility no longer matches the result. This prevents an earlier invitation from remaining labelled as a current sign-in link after acceptance, expiry or revocation. These are display controls; server-side identity and SQL rules remain authoritative, and clearing a link does not revoke an already-issued provider token.
+
 **Remove portal access** requires an acknowledgement, removes linked client profiles and marks invitations revoked. Auth accounts, passwords, project records and audit history remain. Existing signed file URLs may remain usable for up to 60 seconds. Old links cannot recreate revoked access without a fresh owner-authorized invitation.
 
 Exact normalized saved email, a confirmed Auth email at acceptance, owner/MFA checks, client eligibility and current profile/invitation bindings are enforced in SQL. Other-client and owner accounts cannot be attached by a crafted action. A failed invitation save never deletes an Auth account. A race which registers the email may require retrying once as an existing account. Changing a client's saved email while account/invitation history exists still requires separate account review.
@@ -48,5 +52,7 @@ The earlier optional `SUPABASE_INVITE_EMAIL_READY` delivery picker is superseded
 ## Hosted acceptance
 
 Local SQL tests cover identity binding, owner/client isolation, expiry, revocation, repeat application and returning accounts. Fixture browser checks cover owner guidance, copyable links, statuses, authenticated password setup/recovery and expired links; no real email is sent by these checks.
+
+The 3 November link-refresh regression was reproduced in the actual UI before correction. The expanded `--invitations` fixture checks expiry/revocation/reinvitation, clearing old links and copy feedback, and UK dates across BST/GMT in a browser set to America/Los_Angeles. Existing accounts reuse sign-in without creating another provider token. These local checks do not establish hosted email or account behaviour.
 
 After applying 010, test a fictional email you control: new invitation → password setup → restricted view; revoke → no data access; reinvite the same email → existing-account sign-in → intended view only. Check reset/sign-in email delivery, actual recovery in the browser, owner MFA, hidden/final file restrictions and another client's isolation. This coding workspace has no live Supabase credentials and does not establish those hosted results.

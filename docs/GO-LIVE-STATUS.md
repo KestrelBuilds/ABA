@@ -1,6 +1,8 @@
 # ABA Studio: remaining go-live work
 
-Status: 2 November 2026. The core portal workflows and the new archive/history/combined-approval code are implemented. Readiness is tracked by concrete gates; local tests are separate from live acceptance.
+Status: 3 November 2026. The core portal workflows and the new archive/history/combined-approval code are implemented. Readiness is tracked by concrete gates; local tests are separate from live acceptance.
+
+Latest development: the public Privacy & cookies page is implemented, with the cookie audit and remaining retention/provider details recorded in PRIVACY-NOTICE.md. The owner invitation panel now clears stale link results on refresh and shows UK invitation/expiry/connection dates. The `--invitations` browser fixture covers expired/revoked/connected status transitions and safe reinvitation; these are local fictional checks, not new hosted acceptance. No hosted credentials are configured in this workspace.
 
 ## Latest owner confirmation — 2 November 2026
 

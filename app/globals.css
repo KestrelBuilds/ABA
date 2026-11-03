@@ -2711,6 +2711,24 @@ summary:focus-visible {
   font-size: 11px;
   margin-top: 12px;
 }
+.invitation-dates {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+  padding: 14px;
+  background: #f0e8f7;
+  border-left: 3px solid var(--primary);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.invitation-dates dt {
+  font-weight: 600;
+}
+.invitation-dates dd {
+  margin: 2px 0 0;
+}
 .client-access .check-row {
   line-height: 1.7;
   align-items: flex-start;

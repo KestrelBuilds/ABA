@@ -1,5 +1,12 @@
 # Changelog
 
+## 3 November 2026 — invitation refresh and expiry guidance
+
+- Reproduced and fixed stale invitation links remaining after an access-status refresh. Refresh clears displayed links/copy feedback; results are hidden if client/email, account state or sharing eligibility no longer matches.
+- Added UK-time creation/permission-expiry/connection dates and specific expired-invitation guidance. Connected accounts do not show their previous invitation expiry as a continuing access deadline; provider token lifetime remains separate.
+- Extended fictional browser coverage for expired/revoked/connected states, safe reinvitation, clearing copy feedback and BST/GMT display from a non-UK browser. No SQL or changes to server-side access, passwords or invitation delivery.
+- Validation: all 108 automated tests, type check, production build and formatting passed; invitation browser checks passed at 320/390/1440px, alongside production demo, privacy and protected-route smoke checks.
+
 ## 2 November 2026 — public privacy and cookie information
 
 - Added public `/privacy` with Alex's supplied Outlook contact, data-use/lawful-basis, provider, retention-criteria, rights, security and cookie/storage explanations.

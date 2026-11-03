@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts. Phase 1 is an interactive application using **fictional demo data**, with admin management and a client journey preview.
 
+### 3 November — clearer invitation status
+
+Client portal controls now show recorded invitation/expiry/connection dates in UK time and explain the difference between portal permission and a one-use sign-in link. Refreshing clears old links and copy confirmations; account-state changes hide links that no longer match. Existing accounts, passwords and access rules are preserved. No SQL is required. See [invitation guidance](docs/CLIENT-INVITATIONS.md).
+
 The public [Privacy & cookies page](https://aba-iota.vercel.app/privacy) explains portal data use, rights, essential sign-in cookies and fictional demo storage, with Alex's supplied privacy email. It is linked before sign-in and from portal footers. No optional trackers or consent banner were introduced. See [the notice audit](docs/PRIVACY-NOTICE.md) for the evidence and retention/provider details still requiring operational confirmation.
 
 ### 2 November — upload validation and launch progress

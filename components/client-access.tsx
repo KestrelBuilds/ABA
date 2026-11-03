@@ -5,6 +5,21 @@ import { Copy, Check, ExternalLink, UserRoundPlus } from "lucide-react";
 import { inviteClient, revokeClientAccess, type Result } from "@/app/actions";
 import { portalStatusLabels, type ClientPortalStatus } from "@/lib/invitations";
 import type { DbClient } from "@/lib/workspace";
+type AccessResult = Result & {
+  linkState?: "pending" | "connected";
+  clientId?: string;
+  email?: string;
+};
+
+function invitationDate(value: string | null | undefined) {
+  if (!value || !Number.isFinite(Date.parse(value))) return null;
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/London",
+  }).format(new Date(value));
+}
+
 export default function ClientAccess({
   client,
   status,
@@ -14,18 +29,35 @@ export default function ClientAccess({
   status?: ClientPortalStatus;
   ready: boolean;
 }) {
-  const [result, setResult] = useState<Result | null>(null),
+  const [savedResult, setResult] = useState<AccessResult | null>(null),
     [pending, start] = useTransition(),
     [copied, setCopied] = useState(false);
   const router = useRouter();
   const connected = status?.state === "connected";
+  const result =
+    savedResult?.link &&
+    (!ready ||
+      savedResult.clientId !== client.id ||
+      savedResult.email !== client.email ||
+      savedResult.linkState !== status?.state ||
+      (!connected && !status?.eligible))
+      ? null
+      : savedResult;
+  const invitedAt = invitationDate(status?.invited_at),
+    expiresAt = invitationDate(status?.expires_at),
+    acceptedAt = invitationDate(status?.accepted_at);
   const submit = (form: FormData, revoke = false) =>
     start(async () => {
       setResult(null);
       setCopied(false);
       try {
         const value = await (revoke ? revokeClientAccess : inviteClient)(form);
-        setResult(value);
+        setResult({
+          ...value,
+          linkState: "pending",
+          clientId: client.id,
+          email: client.email,
+        });
         if (value.ok) router.refresh();
       } catch {
         setResult({
@@ -56,7 +88,11 @@ export default function ClientAccess({
         <button
           type="button"
           className="text-button"
-          onClick={() => router.refresh()}
+          onClick={() => {
+            setResult(null);
+            setCopied(false);
+            router.refresh();
+          }}
         >
           Refresh access status
         </button>
@@ -75,8 +111,56 @@ export default function ClientAccess({
                 ? "Their invitation is waiting to be accepted. Creating a fresh one replaces the pending invitation; their own sign-in confirms their identity."
                 : status?.state === "revoked"
                   ? "Portal permission was removed. You can invite the same email again when a shared client area is ready."
-                  : "Invite them using the email below. They’ll see only the project areas you have shared."}
+                  : status?.state === "expired"
+                    ? "This portal invitation has expired. Create a fresh invitation, then send its link to the client. Their existing account and password are kept."
+                    : "Invite them using the email below. They’ll see only the project areas you have shared."}
           </p>
+          {(invitedAt || expiresAt || (connected && acceptedAt)) && (
+            <dl className="invitation-dates">
+              {invitedAt && (
+                <div>
+                  <dt>Invitation created</dt>
+                  <dd>
+                    <time dateTime={status?.invited_at ?? undefined}>
+                      {invitedAt} (UK time)
+                    </time>
+                  </dd>
+                </div>
+              )}
+              {connected && acceptedAt && (
+                <div>
+                  <dt>Connected on</dt>
+                  <dd>
+                    <time dateTime={status?.accepted_at ?? undefined}>
+                      {acceptedAt} (UK time)
+                    </time>
+                  </dd>
+                </div>
+              )}
+              {["pending", "expired"].includes(status?.state ?? "") &&
+                expiresAt && (
+                  <div>
+                    <dt>
+                      {status?.state === "expired"
+                        ? "Portal permission expired"
+                        : "Portal permission expires"}
+                    </dt>
+                    <dd>
+                      <time dateTime={status?.expires_at ?? undefined}>
+                        {expiresAt} (UK time)
+                      </time>
+                    </dd>
+                  </div>
+                )}
+            </dl>
+          )}
+          {["pending", "expired"].includes(status?.state ?? "") && (
+            <p className="helper-note">
+              Portal invitation permission lasts seven days. The one-use sign-in
+              link can expire sooner. After refreshing, create a fresh
+              invitation if you need another link to copy.
+            </p>
+          )}
           <div className="invite-recipient">
             <span>Client sign-in email</span>
             <b>{client.email}</b>
@@ -85,14 +169,18 @@ export default function ClientAccess({
             <button
               type="button"
               className="secondary"
-              onClick={() =>
+              onClick={() => {
+                setCopied(false);
                 setResult({
                   ok: true,
                   message:
                     "Send this sign-in link to the client. They should use the email above and their own password, or request an emailed sign-in link.",
                   link: new URL("/login", window.location.href).href,
-                })
-              }
+                  linkState: "connected",
+                  clientId: client.id,
+                  email: client.email,
+                });
+              }}
             >
               Get portal sign-in link{" "}
               <ExternalLink size={16} aria-hidden="true" />
