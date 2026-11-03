@@ -1,5 +1,9 @@
 # ABA Studio roadmap
 
+## 3 November — owner deadline planning
+
+Implemented a Dates & deadlines panel in the connected owner Overview using existing project estimates, open client-action dates and accessible presentation review dates. Includes UK 7/30-day/overdue/all ranges, stable date order, show-all and project-section shortcuts through the existing filter-resetting navigation. Archived/deleting/closed pre-onboarding records and completed tasks/reviews are excluded; comments do not imply completed reviews or final approval. The view is absent from client/preview screens and does not write records, schedule reminders, add browser storage or require SQL. See docs/DEADLINES.md.
+
 ## 3 November — client account help
 
 Implemented authenticated current-email display on the no-access screen, wrong-account guidance, fixed public support links and direct recovery/email help modes on login. Expired/incomplete reset links open the correct form; invitation failures distinguish existing-account sign-in from asking for a fresh invitation. Public error pages offer retry/sign-in/contact without database instructions. Contact details are centralised with the privacy notice. The fictional browser checks verify no private project/client reads without membership, safe sign-out, connected-account redirection and non-sending/token-free help links; server permissions and Auth flows are unchanged.

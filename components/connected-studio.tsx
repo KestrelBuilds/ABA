@@ -21,6 +21,7 @@ import DeleteClient from "./delete-client";
 import ProjectFocus, { openProjectSection } from "./project-focus";
 import WorkspaceAttention from "./workspace-attention";
 import WorkspaceInsights from "./workspace-insights";
+import WorkspaceDeadlines from "./workspace-deadlines";
 import { workspaceInsights } from "@/lib/workspace-insights";
 import HandoverPreparation from "./handover-preparation";
 import type { AttentionDestination } from "@/lib/workspace-attention";
@@ -540,6 +541,7 @@ export default function ConnectedStudio({
             {admin && view === "Overview" && (
               <>
                 <WorkspaceAttention data={data} onOpen={openAttention} />
+                <WorkspaceDeadlines data={data} onOpen={openProject} />
                 <div className="stats">
                   {[
                     ["Active projects", activeProjects.length],

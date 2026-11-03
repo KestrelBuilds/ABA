@@ -8,6 +8,18 @@ const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
 const projectFinderMode = process.argv.includes("--project-finder");
+const deadlinesMode = process.argv.includes("--deadlines");
+const deadlineClock = new Date();
+const deadlineToday = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/London",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+}).format(deadlineClock);
+const deadlineDate = (offset) =>
+  new Date(Date.parse(deadlineToday + "T12:00:00Z") + offset * 86400000)
+    .toISOString()
+    .slice(0, 10);
 let finderWrites = 0,
   finderCreationRequests = 0,
   createdFinderProjectId = "";
@@ -61,6 +73,7 @@ const financeMode = process.argv.includes("--finance");
 const ownerMode =
   process.argv.includes("--owner-preview") ||
   projectFinderMode ||
+  deadlinesMode ||
   portalChecksMode ||
   secureMode ||
   lifecycleMode ||
@@ -396,6 +409,45 @@ const clientActions = [
   },
 ];
 const assets = [];
+if (deadlinesMode) {
+  project.due = deadlineDate(0);
+  finderProjects[1].due = deadlineDate(12);
+  Object.assign(finderProjects[2], {
+    due: deadlineDate(3),
+    contract_signed: false,
+    deposit_paid: false,
+  });
+  finderProjects[3].due = deadlineDate(-5);
+  Object.assign(documents[0], {
+    stage_id: fixtureStageId,
+    review_due: deadlineDate(2),
+    version_label: "v2",
+  });
+  clientActions[0].due = deadlineDate(1);
+  clientActions.push(
+    {
+      id: randomUUID(),
+      project_id: pid,
+      title: "Overdue content checklist",
+      due: deadlineDate(-2),
+      status: "To do",
+    },
+    {
+      id: randomUUID(),
+      project_id: pid,
+      title: "Finished task",
+      due: deadlineDate(0),
+      status: "Done",
+    },
+    ...[35, 36, 37].map((days) => ({
+      id: randomUUID(),
+      project_id: pid,
+      title: "Later action " + days,
+      due: deadlineDate(days),
+      status: "To do",
+    })),
+  );
+}
 if (workspaceHelpMode) {
   project.contract_signed = false;
   project.deposit_paid = false;
@@ -697,7 +749,7 @@ const server = createServer(async (req, res) => {
       return json(createdFinderProjectId);
     }
     if (table === "project_lifecycle_ready")
-      return json(lifecycleMode || projectFinderMode);
+      return json(lifecycleMode || projectFinderMode || deadlinesMode);
     if (table === "file_security_ready") return json(secureMode);
     if (table === "reserve_file_upload") {
       intakes.push({
@@ -847,7 +899,11 @@ const server = createServer(async (req, res) => {
 
     if (table === "prospect_spaces_ready")
       return json(
-        prospectMode || prospectOwnerMode || enquiriesMode || workspaceHelpMode,
+        prospectMode ||
+          prospectOwnerMode ||
+          enquiriesMode ||
+          workspaceHelpMode ||
+          deadlinesMode,
       );
     if (table === "enquiries_ready") return json(enquiriesMode);
     if (table === "set_prospect_space") {
@@ -983,7 +1039,8 @@ const server = createServer(async (req, res) => {
           stageMode ||
           contractMode ||
           contractOwnerMode ||
-          workspaceHelpMode,
+          workspaceHelpMode ||
+          deadlinesMode,
       );
     if (table === "new_proposal") {
       const id = randomUUID();
@@ -1066,6 +1123,7 @@ const server = createServer(async (req, res) => {
     if (table === "project_management_ready")
       return json(
         secureMode ||
+          deadlinesMode ||
           lifecycleMode ||
           managementMode ||
           stageMode ||
@@ -1082,8 +1140,19 @@ const server = createServer(async (req, res) => {
 
     let rows = [];
     if (table === "prospect_spaces")
-      rows =
-        prospectMode || prospectOwnerMode || enquiriesMode || workspaceHelpMode
+      rows = deadlinesMode
+        ? [
+            {
+              ...prospective,
+              project_id: combinedFinderId,
+              enabled: true,
+              enquiry_status: "closed",
+            },
+          ]
+        : prospectMode ||
+            prospectOwnerMode ||
+            enquiriesMode ||
+            workspaceHelpMode
           ? [prospective]
           : [];
     if (table === "proposal_responses") {
@@ -1120,7 +1189,7 @@ const server = createServer(async (req, res) => {
               deletion_pending: deletionPending,
             },
           ];
-    if (projectFinderMode && table === "clients")
+    if ((projectFinderMode || deadlinesMode) && table === "clients")
       rows.push({
         id: finderClientId,
         name: "Málaga Studio",
@@ -1142,7 +1211,8 @@ const server = createServer(async (req, res) => {
       if (req.method === "PATCH") Object.assign(project, body);
       rows = [project];
     }
-    if (projectFinderMode && table === "projects") rows = finderProjects;
+    if ((projectFinderMode || deadlinesMode) && table === "projects")
+      rows = finderProjects;
     if (table === "finance_settings") rows = [seller];
     if (table === "client_billing")
       rows = [
@@ -1395,8 +1465,10 @@ const server = createServer(async (req, res) => {
     });
     const page = await browser.newPage({
       viewport: { width: 390, height: 844 },
-      timezoneId: invitationsMode ? "America/Los_Angeles" : undefined,
+      timezoneId:
+        invitationsMode || deadlinesMode ? "America/Los_Angeles" : undefined,
     });
+    if (deadlinesMode) await page.clock.setFixedTime(deadlineClock);
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("console", (message) => {
       if (
@@ -1520,6 +1592,91 @@ const server = createServer(async (req, res) => {
       assert.deepEqual(errors, []);
       console.log(
         "PASS: access help shows only the authenticated account email, gives a fixed support link, makes no private project/client reads without membership, supports safe sign-out, and redirects connected accounts to their portal. Phone/desktop fixture checks only.",
+      );
+      return;
+    }
+    if (deadlinesMode) {
+      const flagsBefore = JSON.stringify(project);
+      const planner = page.getByRole("region", {
+        name: "Dates & deadlines",
+        exact: true,
+      });
+      await planner
+        .getByText("3 dates in this view", { exact: true })
+        .waitFor();
+      await expect(planner.locator(".deadline-item")).toHaveCount(3);
+      await expect(planner).toContainText("Today");
+      await expect(planner).toContainText("Tomorrow");
+      await expect(planner.locator("time").first()).toHaveAttribute(
+        "datetime",
+        deadlineToday,
+      );
+      await expect(planner).not.toContainText("Archived identity");
+      await expect(planner).not.toContainText("Brand and website");
+      await expect(planner).not.toContainText("Finished task");
+      await captureUi("deadline-week", planner);
+      await planner
+        .getByRole("button", { name: "1 overdue", exact: true })
+        .click();
+      await expect(planner.locator(".deadline-item")).toHaveCount(1);
+      await expect(planner).toContainText("Overdue content checklist");
+      await expect(planner).not.toContainText("Supply approved brand assets");
+      await planner
+        .getByRole("combobox", { name: "Date range", exact: true })
+        .selectOption("all");
+      await planner
+        .getByRole("button", { name: "Show all 8 dates", exact: true })
+        .click();
+      await expect(planner.locator(".deadline-item")).toHaveCount(8);
+      await planner
+        .getByRole("combobox", { name: "Date range", exact: true })
+        .selectOption("month");
+      await expect(planner.locator(".deadline-item")).toHaveCount(4);
+      await planner.getByRole("button", { name: /Framer website/ }).click();
+      await expect(
+        page.getByLabel("Select project", { exact: true }),
+      ).toHaveValue(websiteProjectId);
+      await expect(page.locator(".project-summary h2")).toHaveText(
+        "Framer website",
+      );
+      await page.getByRole("button", { name: "Overview", exact: true }).click();
+      await planner
+        .getByRole("button", { name: /Supply approved brand assets/ })
+        .click();
+      const action = page
+        .locator("#client-actions .client-action")
+        .filter({ hasText: "Supply approved brand assets" });
+      await action
+        .getByRole("button", { name: "Mark done", exact: true })
+        .click();
+      await action
+        .getByRole("button", { name: "Mark to do", exact: true })
+        .waitFor();
+      await page.getByRole("button", { name: "Overview", exact: true }).click();
+      await expect(planner).not.toContainText("Supply approved brand assets");
+      await planner
+        .getByRole("button", { name: /Fictional presentation.pdf/ })
+        .click();
+      await expect(page.locator("#stage-" + fixtureStageId)).toHaveAttribute(
+        "open",
+        "",
+      );
+      feedback.push({
+        id: randomUUID(),
+        document_id: presentation,
+        body: "Fictional revision response",
+        decision: "changes_requested",
+        created_at: new Date().toISOString(),
+      });
+      await page.reload();
+      await planner.getByText("1 date in this view", { exact: true }).waitFor();
+      await expect(planner).not.toContainText("Fictional presentation.pdf");
+      assert.equal(JSON.stringify(project), flagsBefore);
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await expect(planner).toHaveCount(0);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: owner deadline ranges/overdue/more controls, archived/closed/completed exclusion, project/task/stage navigation, completed task and review removal, unchanged project verification flags, client-preview exclusion and phone/desktop layouts. Fictional services only.",
       );
       return;
     }

@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts. Phase 1 is an interactive application using **fictional demo data**, with admin management and a client journey preview.
 
+### 3 November — owner dates and deadlines
+
+**Overview → Dates & deadlines** now combines project estimates, open client tasks and shared presentation review dates. Filter by the next 7/30 days, overdue or all dates, then open the relevant project section. Completed tasks, reviews with an approval/revision response and archived/closed records are excluded as described in [the planning guide](docs/DEADLINES.md). It is owner-only, uses UK calendar dates and sends no notifications. No SQL or new service is required.
+
 ### 3 November — client account help
 
 The no-access screen now shows the current signed-in email so clients can compare it with their invitation, sign out safely or contact Alex. Expired/incomplete reset links open the recovery form directly; expired invitations offer existing-account sign-in and a separate fresh-invitation contact route. Support links use Alex's supplied public email without adding private tokens or sending mail automatically. See [account-help guidance](docs/CLIENT-INVITATIONS.md). No SQL or permission changes.

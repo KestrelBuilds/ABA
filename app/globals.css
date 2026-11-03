@@ -2750,6 +2750,105 @@ summary:focus-visible {
   font-size: 14px;
   font-weight: 600;
 }
+.deadline-controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0 12px;
+}
+.deadline-controls label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  max-width: 100%;
+  min-width: 0;
+}
+.deadline-controls select {
+  max-width: 100%;
+  min-width: 0;
+  min-height: 44px;
+}
+.deadline-overdue {
+  min-height: 44px;
+}
+.deadline-count {
+  margin-bottom: 14px;
+}
+.deadline-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  list-style: none;
+  margin: 14px 0;
+  padding: 0;
+}
+.deadline-list > li {
+  min-width: 0;
+}
+.deadline-item {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  background: #f0e8f7;
+  color: var(--ink);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.deadline-item strong {
+  font:
+    600 15px/1.5 Arial,
+    Helvetica,
+    sans-serif;
+}
+.deadline-meta,
+.deadline-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 12px;
+}
+.deadline-meta {
+  font-family: var(--font-mono), monospace;
+  color: #4c286a;
+}
+.deadline-project {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.deadline-relative {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #e0ceef;
+}
+.deadline-late {
+  background: var(--ink);
+  color: var(--accent);
+}
+.deadline-today {
+  background: var(--accent);
+}
+.deadline-bottom > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.deadline-empty {
+  padding: 20px 0;
+}
+@media (max-width: 640px) {
+  .deadline-list {
+    grid-template-columns: 1fr;
+  }
+}
 .delivery-file-list {
   list-style: none;
   padding: 0;

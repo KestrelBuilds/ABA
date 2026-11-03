@@ -1,5 +1,12 @@
 # Changelog
 
+## 3 November 2026 — owner dates and deadlines
+
+- Added an owner Overview planning panel for existing project estimates, open client actions and accessible shared-presentation review dates, with 7/30-day, overdue and all-date views.
+- Added chronological ordering, show-all controls and direct project/task/stage navigation, while excluding archived/deleting/closed pre-onboarding records, invalid dates and completed tasks/review responses.
+- Kept estimates distinct from actual delivery and preserved payment/approval/sharing rules. The panel is hidden from clients/previews, uses UK calendar days and adds no SQL, external service, browser storage or notifications.
+- Validation: all 120 automated tests, type check, production build and formatting passed. The fictional deadline browser check covered filters, show-all/overdue controls, navigation, completion/removal and preview exclusion at phone/desktop widths; production demo, privacy and protected-route smoke checks also passed.
+
 ## 3 November 2026 — client sign-in and access help
 
 - Show the current authenticated email on the no-access page, with guidance to use the originally invited address and a fixed public contact link. No lookup or exposure of another account's expected email or project data.
