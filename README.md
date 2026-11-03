@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts. Phase 1 is an interactive application using **fictional demo data**, with admin management and a client journey preview.
 
+### 3 November — final delivery review
+
+**Prepare handover & goodbye packet → Review delivery files** now lists final deliverables and goodbye-stage files with their current sharing/release status, specific lock reasons and links to the correct stage or file library. Archive access and upload guidance reflect the actual project/capabilities. No files are automatically shared or verified and no SQL is required. See [handover guidance](docs/HANDOVER-GUIDE.md).
+
 ### 3 November — clearer invitation status
 
 Client portal controls now show recorded invitation/expiry/connection dates in UK time and explain the difference between portal permission and a one-use sign-in link. Refreshing clears old links and copy confirmations; account-state changes hide links that no longer match. Existing accounts, passwords and access rules are preserved. No SQL is required. See [invitation guidance](docs/CLIENT-INVITATIONS.md).

@@ -30,16 +30,26 @@ export function handoverPreparation(data: WorkspaceData, project: DbProject) {
   const packets = documents.filter((d) =>
     goodbye.some((s) => s.id === d.stage_id),
   );
-  const readyFiles = finals.filter(
-    (d) =>
-      fileVisibility(
-        d,
-        project,
-        stages,
-        data.contractExchanges,
-        data.prospectSpaces,
-      ).available,
-  );
+  const reviewFiles = documents
+    .filter((d) => d.category === "final" || packets.some((p) => p.id === d.id))
+    .map((document) => {
+      const stage = stages.find((s) => s.id === document.stage_id);
+      return {
+        document,
+        stage,
+        href: stage ? "#stage-" + stage.id : "#documents",
+        visibility: fileVisibility(
+          document,
+          project,
+          stages,
+          data.contractExchanges,
+          data.prospectSpaces,
+        ),
+      };
+    });
+  const readyFiles = reviewFiles
+    .filter((f) => f.document.category === "final" && f.visibility.available)
+    .map((f) => f.document);
   const missing = (
     [
       ["contract_signed", "Signed contract"],
@@ -57,6 +67,7 @@ export function handoverPreparation(data: WorkspaceData, project: DbProject) {
     finals,
     packets,
     readyFiles,
+    reviewFiles,
     missing,
     packetHref: goodbye.length === 1 ? "#stage-" + goodbye[0].id : "#journey",
     checksHref: verificationStage

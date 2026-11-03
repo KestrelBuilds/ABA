@@ -2729,6 +2729,38 @@ summary:focus-visible {
 .invitation-dates dd {
   margin: 2px 0 0;
 }
+.delivery-file-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+  display: grid;
+  gap: 14px;
+}
+.delivery-file-list > li {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f5f0fa;
+  overflow-wrap: anywhere;
+}
+.delivery-file-heading {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 8px;
+}
+.delivery-file-heading b {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+.delivery-file-list .text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 8px;
+}
 .client-access .check-row {
   line-height: 1.7;
   align-items: flex-start;

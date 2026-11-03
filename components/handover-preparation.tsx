@@ -20,7 +20,7 @@ export default function HandoverPreparation({
     {
       label: "Final files",
       detail: preparation.finals.length
-        ? `${preparation.finals.length} uploaded · ${preparation.readyFiles.length} available to the client`
+        ? `${preparation.finals.length} uploaded · ${preparation.readyFiles.length} meet the release rules`
         : "No files are marked as final deliverables yet.",
       href: preparation.finals[0]?.stage_id
         ? "#stage-" + preparation.finals[0].stage_id
@@ -77,6 +77,71 @@ export default function HandoverPreparation({
           </div>
         ))}
       </div>
+      {project.archived_at && (
+        <p className="helper-note">
+          {project.archived_client_access === "suspend"
+            ? "Client access is suspended for this archived project. Verified release checks do not reopen it."
+            : "This project is archived. Existing client access is read-only; file sharing and release rules still apply."}
+        </p>
+      )}
+      {preparation.reviewFiles.length > 0 && (
+        <details className="settings-disclosure delivery-file-review">
+          <summary>
+            Review delivery files ({preparation.reviewFiles.length})
+          </summary>
+          <p>
+            Check final deliverables and files in the Goodbye Packet stage
+            before sharing them. These labels describe the current sharing and
+            release rules; the client still needs account access. Nothing is
+            shared or verified by opening this list.
+          </p>
+          <ul className="delivery-file-list">
+            {preparation.reviewFiles.map(
+              ({ document, stage, href, visibility }) => (
+                <li key={document.id}>
+                  <div className="delivery-file-heading">
+                    <b>{document.name}</b>
+                    <span
+                      className={
+                        "status-badge " +
+                        (visibility.available ? "status-verified" : "")
+                      }
+                    >
+                      {visibility.available ? "Release rules met" : "Locked"}
+                    </span>
+                  </div>
+                  <p>
+                    {stage?.name ??
+                      (document.stage_id
+                        ? "Stage unavailable"
+                        : "Project file library")}
+                    {" · "}
+                    {document.category === "final"
+                      ? "Final deliverable"
+                      : "Goodbye-stage document"}
+                    {" · "}
+                    {document.published ? "Shared" : "Private draft"}
+                  </p>
+                  {!visibility.available && <p>{visibility.message}</p>}
+                  <a
+                    className="text-button"
+                    href={href}
+                    onClick={() => openProjectSection(href)}
+                    aria-label={
+                      "Review " +
+                      document.name +
+                      (stage ? " in its stage" : " in the file library")
+                    }
+                  >
+                    {stage ? "Review in stage" : "Review in file library"}
+                    <ArrowRight size={14} aria-hidden="true" />
+                  </a>
+                </li>
+              ),
+            )}
+          </ul>
+        </details>
+      )}
       {preparation.packetNeedsReleaseRule && (
         <p className="helper-note">
           Some files in the goodbye stage use an ordinary document rule.
@@ -135,9 +200,12 @@ export default function HandoverPreparation({
         {notice && <p role="status">{notice}</p>}
       </details>
       <p className="helper-note">
-        For now, the portal accepts PDFs and supported images up to 3 MB. Use
-        your agreed sharing method for ZIP, source and font files, and include
-        only licences and support covered by the agreement.
+        {data.fileSecurityReady
+          ? data.secureUploadsConfigured
+            ? "The portal accepts PDF, PNG, JPEG, WebP, Illustrator and ZIP files up to 25 MB, with security checks before download or sharing. Contract returns remain PDF-only, up to 3 MB."
+            : "New uploads are unavailable until file security checks are connected. Existing files keep their current sharing and release rules."
+          : "The portal accepts PDFs and supported images up to 3 MB. Use your agreed sharing method for ZIP, source and font files."}{" "}
+        Include only licences and support covered by the agreement.
       </p>
     </details>
   );

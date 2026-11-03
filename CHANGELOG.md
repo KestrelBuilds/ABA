@@ -1,5 +1,12 @@
 # Changelog
 
+## 3 November 2026 — handover file review
+
+- Added an owner-only review of final deliverables and recognised goodbye-stage files, with sharing state, existing release-rule explanations and links to their own stage or the file library.
+- Clarified retained/suspended archive access and changed counts to “meet the release rules”, keeping account connection separate from document release eligibility.
+- Corrected handover upload guidance to match legacy 3 MB, configured secure 25 MB or unavailable secure uploads. No SQL, automatic sharing/verification, new scanner or PDF content added.
+- Validation: all 109 automated tests, type check, production build and formatting passed. Fictional browser checks cover delivery reasons/navigation, quarantine/retry/discard, missing scanner configuration and archive retain/suspend, with phone/desktop layouts; production demo, privacy and protected-route smoke checks also passed.
+
 ## 3 November 2026 — invitation refresh and expiry guidance
 
 - Reproduced and fixed stale invitation links remaining after an access-status refresh. Refresh clears displayed links/copy feedback; results are hidden if client/email, account state or sharing eligibility no longer matches.

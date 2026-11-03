@@ -4,6 +4,8 @@ Status: 3 November 2026. The core portal workflows and the new archive/history/c
 
 Latest development: the public Privacy & cookies page is implemented, with the cookie audit and remaining retention/provider details recorded in PRIVACY-NOTICE.md. The owner invitation panel now clears stale link results on refresh and shows UK invitation/expiry/connection dates. The `--invitations` browser fixture covers expired/revoked/connected status transitions and safe reinvitation; these are local fictional checks, not new hosted acceptance. No hosted credentials are configured in this workspace.
 
+The handover panel now reviews individual final/goodbye files with existing release-rule explanations and stage/library links. It explicitly distinguishes suspended/retained archive access and actual upload capabilities; it does not publish files, confirm external delivery, create the final goodbye PDF or activate the optional scanner system. See HANDOVER-GUIDE.md.
+
 ## Latest owner confirmation — 2 November 2026
 
 Alex confirmed completion of the full live client journey (invitation, questionnaires, uploads, approvals and final delivery), password recovery, owner MFA and backup restoration. These are owner-reported passes, not new checks run from this coding workspace. No recovery secrets, credentials or client records are needed in this document.

@@ -19,7 +19,9 @@ const finderClientId = randomUUID(),
 const portalChecksMode = process.argv.includes("--portal-checks");
 const diagnosticCleanupScopes = [];
 let diagnosticAccountAttempts = 0;
-const secureMode = process.argv.includes("--secure-uploads");
+const secureUnconfiguredMode = process.argv.includes("--secure-unconfigured");
+const secureMode =
+  process.argv.includes("--secure-uploads") || secureUnconfiguredMode;
 const lifecycleMode = process.argv.includes("--lifecycle");
 const insightsMode = process.argv.includes("--insights");
 const fileLibraryMode =
@@ -405,6 +407,16 @@ if (workspaceHelpMode) {
     created_at: new Date().toISOString(),
   });
   clientActions[0].due = "2000-01-01";
+  documents[1].stage_id = goodbyeStageId;
+  documents.push({
+    id: randomUUID(),
+    project_id: pid,
+    stage_id: goodbyeStageId,
+    name: "Goodbye draft.pdf",
+    category: "document",
+    document_role: "Handover",
+    published: false,
+  });
 }
 if (fileLibraryMode) {
   documents[0].stage_id = fixtureStageId;
@@ -1040,6 +1052,7 @@ const server = createServer(async (req, res) => {
     if (table === "project_management_ready")
       return json(
         secureMode ||
+          lifecycleMode ||
           managementMode ||
           stageMode ||
           contractMode ||
@@ -1210,11 +1223,14 @@ const server = createServer(async (req, res) => {
       ];
     if (stageMode || verificationMode) documents[0].stage_id = fixtureStageId;
     if (table === "documents")
-      rows = documents.filter(
-        (d) =>
-          d.category !== "final" ||
-          (project.final_paid && project.final_approved),
-      );
+      rows =
+        workspaceHelpMode || (secureMode && ownerMode)
+          ? documents
+          : documents.filter(
+              (d) =>
+                d.category !== "final" ||
+                (project.final_paid && project.final_approved),
+            );
     if (fileLibraryMode && table === "documents")
       rows = documents.filter(
         (d) =>
@@ -1329,10 +1345,12 @@ const server = createServer(async (req, res) => {
           ...process.env,
           NEXT_PUBLIC_SUPABASE_URL: `http://127.0.0.1:${fixturePort}`,
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "fictional-public-key",
-          UPLOAD_SCAN_URL: secureMode
-            ? `http://127.0.0.1:${fixturePort}/scan`
-            : "",
-          UPLOAD_SCAN_KEY: secureMode ? "fictional-scan-key" : "",
+          UPLOAD_SCAN_URL:
+            secureMode && !secureUnconfiguredMode
+              ? `http://127.0.0.1:${fixturePort}/scan`
+              : "",
+          UPLOAD_SCAN_KEY:
+            secureMode && !secureUnconfiguredMode ? "fictional-scan-key" : "",
           SUPABASE_SERVICE_ROLE_KEY:
             invitationsMode || secureMode || portalChecksMode
               ? "fictional-service-key"
@@ -1649,8 +1667,33 @@ const server = createServer(async (req, res) => {
       );
       return;
     }
+    if (secureUnconfiguredMode) {
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      const preparation = page.locator("#handover-preparation");
+      await preparation.locator("summary").first().click();
+      await expect(preparation).toContainText(
+        "New uploads are unavailable until file security checks are connected",
+      );
+      await expect(page.locator("form.secure-upload")).toHaveCount(0);
+      assert.equal(intakes.length, 0);
+      assert.equal(scanRequests, 0);
+      assert.equal(project.final_paid, false);
+      assert.equal(project.final_approved, false);
+      await captureUi("handover-unconfigured", preparation);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: unconfigured secure uploads show unavailable guidance without an unchecked upload form, scanner call, reservation or changed release flags. Fictional services only.",
+      );
+      return;
+    }
     if (secureMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      const preparation = page.locator("#handover-preparation");
+      await preparation.locator("summary").first().click();
+      await expect(preparation).toContainText(
+        "Illustrator and ZIP files up to 25 MB",
+      );
+      await preparation.getByText(/Review delivery files/).click();
       const library = page.getByRole("region", {
         name: "All project files",
         exact: true,
@@ -1673,6 +1716,7 @@ const server = createServer(async (req, res) => {
         mimeType: "application/pdf",
         buffer: large,
       });
+      await upload.locator('select[name="category"]').selectOption("final");
       await upload
         .getByRole("button", { name: "Upload file securely", exact: true })
         .click();
@@ -1686,6 +1730,11 @@ const server = createServer(async (req, res) => {
         large.length,
       );
       assert.equal(documents.at(-1).published, false);
+      const reviewed = preparation
+        .locator(".delivery-file-list > li")
+        .filter({ hasText: "Fictional large proof.pdf" });
+      await expect(reviewed).toContainText("private draft");
+      await expect(reviewed).toContainText("final creative approval");
       const item = library
         .locator(".document-item")
         .filter({ hasText: "Fictional large proof.pdf" });
@@ -1698,6 +1747,7 @@ const server = createServer(async (req, res) => {
         mimeType: "application/pdf",
         buffer: Buffer.from("%PDF-1.7\nFictional retry\n%%EOF"),
       });
+      await upload.locator('select[name="category"]').selectOption("final");
       await upload
         .getByRole("button", { name: "Upload file securely", exact: true })
         .click();
@@ -1705,6 +1755,10 @@ const server = createServer(async (req, res) => {
         "remains quarantined",
         { timeout: 20000 },
       );
+      const pendingReview = preparation
+        .locator(".delivery-file-list > li")
+        .filter({ hasText: "Fictional retry.pdf" });
+      await expect(pendingReview).toContainText("awaiting security checks");
       const blocked = library
         .locator(".document-item")
         .filter({ hasText: "Fictional retry.pdf" });
@@ -1722,6 +1776,7 @@ const server = createServer(async (req, res) => {
         .getByRole("button", { name: "Retry security check", exact: true })
         .click();
       await expect(queue).toContainText("Blocked — choose another file.");
+      await expect(pendingReview).toContainText("blocked by security checks");
       await queue
         .getByRole("button", {
           name: "Discard quarantined upload",
@@ -1729,6 +1784,7 @@ const server = createServer(async (req, res) => {
         })
         .click();
       await expect(blocked).toHaveCount(0);
+      await expect(pendingReview).toHaveCount(0);
       assert.ok(intakes[1].discarded_at);
       assert.equal(scanRequests, 3);
       assert.equal(project.contract_signed, true);
@@ -1833,6 +1889,11 @@ const server = createServer(async (req, res) => {
       await expect(
         page.getByText(/Existing client access is retained as read-only/),
       ).toBeVisible();
+      const preparation = page.locator("#handover-preparation");
+      await preparation.locator("summary").first().click();
+      await expect(preparation).toContainText(
+        "Existing client access is read-only",
+      );
       await page.getByRole("button", { name: /Preview client portal/ }).click();
       const buttons = await page.locator("form button[type=submit]").all();
       for (const b of buttons) await expect(b).toBeDisabled();
@@ -1854,6 +1915,11 @@ const server = createServer(async (req, res) => {
         .getByRole("button", { name: "Archive project", exact: true })
         .click();
       await page.getByLabel("Project list filter").selectOption("archived");
+      if (!(await preparation.evaluate((el) => el.open)))
+        await preparation.locator("summary").first().click();
+      await expect(preparation).toContainText(
+        "Client access is suspended for this archived project",
+      );
       await page.getByRole("button", { name: /Preview client portal/ }).click();
       await expect(
         page.getByText(/This archived project is not available to the client/),
@@ -2090,6 +2156,30 @@ const server = createServer(async (req, res) => {
       const preparation = page.locator("#handover-preparation");
       await expect(preparation).toHaveAttribute("open", "");
       await preparation.getByText(/Handover notes saved/).waitFor();
+      await preparation
+        .getByText("Review delivery files (2)", { exact: true })
+        .click();
+      await expect(preparation).toContainText(
+        "1 uploaded · 0 meet the release rules",
+      );
+      const deliveryFiles = preparation.locator(".delivery-file-list > li");
+      await expect(deliveryFiles).toHaveCount(2);
+      await expect(
+        deliveryFiles.filter({ hasText: "Fictional final files.pdf" }),
+      ).toContainText("verify final creative approval");
+      await expect(
+        deliveryFiles.filter({ hasText: "Goodbye draft.pdf" }),
+      ).toContainText("share this private draft");
+      await preparation
+        .getByRole("link", {
+          name: "Review Goodbye draft.pdf in its stage",
+          exact: true,
+        })
+        .click();
+      await expect(goodbye).toHaveAttribute("open", "");
+      await expect(preparation).toContainText(
+        "PDFs and supported images up to 3 MB",
+      );
       await preparation
         .locator("summary")
         .filter({ hasText: /Copy a .*goodbye packet outline/ })

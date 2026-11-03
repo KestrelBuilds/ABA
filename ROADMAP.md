@@ -1,5 +1,9 @@
 # ABA Studio roadmap
 
+## 3 November — final delivery review
+
+Implemented an owner-only handover file review using existing permitted document records and the shared file-visibility explanation. Final deliverables and goodbye-stage documents show sharing state, release rules/blockers and direct stage/library navigation; unrelated project records and ordinary non-goodbye documents are excluded. Suspended archives remain locked despite verified flags; retained archives stay read-only for clients. Upload guidance distinguishes legacy 3 MB uploads, configured 25 MB quarantined uploads and unavailable/unconfigured secure uploads. No SQL, automatic release, scanner activation or finished owner PDF is added.
+
 ## 3 November — invitation edge cases
 
 Reproduced and fixed a stale owner invitation result surviving a status refresh. Refresh now clears prior displayed links/copy state, and client/email/state/eligibility checks hide link results that no longer match. Added UK invitation creation/permission-expiry/account-connection timestamps, expired-invitation guidance and an explicit distinction from provider token lifetime. The expanded fictional browser journey covers expiry, revoke/reinvite, connected sign-in links and BST/GMT display from a non-UK timezone. No SQL, account reset, new email or service is introduced; hosted edge-case acceptance remains separate.
