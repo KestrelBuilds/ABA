@@ -1,5 +1,13 @@
 # Changelog
 
+## 3 November 2026 — extended invitation diagnostics
+
+- Added expired/revoked invitation checks and same-account renewal/repeated acceptance to the owner-only automatic portal diagnostic. Probes use its allocated fictional accounts, current owner/client permissions and existing RPCs; no new service user, password reset, invitation token or email.
+- Verify membership/project denial, two-client isolation and unchanged payment/approval flags; revoke the renewed account again before the existing scoped cleanup.
+- Require the specific 4xx application rejection; network/5xx/unrelated failures never count as a denial. Older installations explicitly report the extended checks unrun.
+- Added strict failure/compatibility tests and a real SQL expiry-guard regression test, including unchanged unrelated records and verified cleanup. No tracked migration changed.
+- Validation: all 115 automated tests passed; type check, production build, formatting, owner diagnostic result/cleanup browser checks and production demo/privacy/protected-route smoke checks passed. Hosted results remain unrun from this workspace.
+
 ## 3 November 2026 — handover file review
 
 - Added an owner-only review of final deliverables and recognised goodbye-stage files, with sharing state, existing release-rule explanations and links to their own stage or the file library.

@@ -125,6 +125,42 @@ test("older installations retain baseline diagnostic and explicitly report the l
     await f.close();
   }
 });
+test("pre-010 installations explicitly report the extended invitation checks unrun while preserving baseline checks", async () => {
+  const f = await setup({ last: "202610290009_enquiries.sql" });
+  try {
+    const result = await f.run();
+    assert.equal(result.ok, true, result.message);
+    assert.match(
+      result.message,
+      /Extended invitation checks were not run because update 010 is unavailable/,
+    );
+    await originalUnchanged(f);
+  } finally {
+    await f.close();
+  }
+});
+
+test("an actual SQL expiry-check regression fails the diagnostic and still cleans up its own records", async () => {
+  const f = await setup();
+  try {
+    const definition = (
+      await f.system(
+        "select pg_get_functiondef('public.accept_invitation()'::regprocedure) as body",
+      )
+    ).rows[0].body as string;
+    assert.ok(definition.includes("or invitation.expires_at<=now()"));
+    await f.system(definition.replace("or invitation.expires_at<=now()", ""));
+    const result = await f.run();
+    assert.equal(result.ok, false);
+    assert.match(result.message, /Expired invitation rejection/);
+    assert.equal(result.checks?.[0].status, "failed");
+    assert.equal(result.checks?.[5].status, "passed");
+    assert.equal((await f.system("select id from auth.users")).rows.length, 2);
+    await originalUnchanged(f);
+  } finally {
+    await f.close();
+  }
+});
 test("a real archived-write policy regression fails the diagnostic and still cleans up its allocated fixtures", async () => {
   const f = await setup({ brokenReadonly: true });
   try {

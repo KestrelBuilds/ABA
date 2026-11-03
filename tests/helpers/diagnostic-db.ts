@@ -188,6 +188,7 @@ export async function diagnosticDb(
             entries.map(([k], i) => identifier(k) + "=>$" + (i + 1)).join(",") +
             ") as value";
           return {
+            status: 200,
             data: (
               await execute(
                 sql,
@@ -197,7 +198,19 @@ export async function diagnosticDb(
             error: null,
           };
         } catch (e) {
-          return { data: null, error: error(e) };
+          const failure = error(e);
+          return {
+            data: null,
+            error: failure,
+            status:
+              failure.code === "P0001"
+                ? 400
+                : failure.code === "42501"
+                  ? 403
+                  : failure.code === "42883"
+                    ? 404
+                    : 500,
+          };
         }
       },
       auth: {

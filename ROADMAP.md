@@ -1,5 +1,9 @@
 # ABA Studio roadmap
 
+## 3 November — invitation permission diagnostics
+
+Extended the owner-run diagnostic with expired invitation rejection, empty membership/project reads, owner-scoped renewal and repeated acceptance of the same disposable account. After revocation it checks rejection, safe reinvitation, two-client isolation and unchanged verification flags, then revokes again before cleanup. It requires the expected 4xx application denial; network/5xx/unrelated errors are failures. Pre-010 installs explicitly report extended invitation checks unrun. Local tests exercise the real SQL, including a deliberately removed expiry guard and verified cleanup; no hosted pass, new SQL, real-account changes or email delivery is implied.
+
 ## 3 November — final delivery review
 
 Implemented an owner-only handover file review using existing permitted document records and the shared file-visibility explanation. Final deliverables and goodbye-stage documents show sharing state, release rules/blockers and direct stage/library navigation; unrelated project records and ordinary non-goodbye documents are excluded. Suspended archives remain locked despite verified flags; retained archives stay read-only for clients. Upload guidance distinguishes legacy 3 MB uploads, configured 25 MB quarantined uploads and unavailable/unconfigured secure uploads. No SQL, automatic release, scanner activation or finished owner PDF is added.

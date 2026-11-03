@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts. Phase 1 is an interactive application using **fictional demo data**, with admin management and a client journey preview.
 
+### 3 November — extended owner access checks
+
+**My account → Check client portal access** now checks expired/revoked invitations, repeated acceptance and renewal of the same temporary account, including isolation and unchanged payment/approval flags. It revokes access again and verifies scoped cleanup. No new SQL or emails are needed; real client records are not selected for these probes. See [the diagnostic guide](docs/PORTAL-CHECKS.md). Hosted results still require running the deployed check.
+
 ### 3 November — final delivery review
 
 **Prepare handover & goodbye packet → Review delivery files** now lists final deliverables and goodbye-stage files with their current sharing/release status, specific lock reasons and links to the correct stage or file library. Archive access and upload guidance reflect the actual project/capabilities. No files are automatically shared or verified and no SQL is required. See [handover guidance](docs/HANDOVER-GUIDE.md).

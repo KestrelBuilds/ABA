@@ -7,6 +7,12 @@ import { checkPrivateStorage, assertStorageDenied } from "./storage-check";
 import { createCheckDocument } from "./check-document";
 import { checkProjectLifecycle } from "./lifecycle-check";
 import { removeCheckFiles } from "./check-cleanup";
+import {
+  invitationChecksReady,
+  checkExpiredInvitation,
+  checkReturningAccount,
+  checkRevokedReinvitation,
+} from "./invitation-check";
 import type { PortalCheckItem } from "../portal-check-results";
 
 type CheckResult = { ok: boolean; message: string; checks?: PortalCheckItem[] };
@@ -50,6 +56,7 @@ export async function checkClientPortals(
   let currentCheck = 0;
   let storageAttempted = false;
   let accountCreationUncertain = false;
+  let extendedInvitations = false;
   const users: string[] = [];
   const sessions: SupabaseClient[] = [];
   const { url, key } = supabaseSettings();
@@ -137,11 +144,15 @@ export async function checkClientPortals(
         ).error,
         "Milestone setup",
       );
+      if (index === 0) extendedInvitations = await invitationChecksReady(owner);
       requireSuccess(
         (
           await owner.from("invitations").insert({
             client_id: clients[index],
             user_id: created.data.user.id,
+            ...(extendedInvitations
+              ? { expires_at: new Date(Date.now() - 60000).toISOString() }
+              : {}),
           })
         ).error,
         "Temporary invitation setup",
@@ -155,10 +166,19 @@ export async function checkClientPortals(
         (await session.auth.signInWithPassword({ email, password })).error,
         "Client password sign-in",
       );
+      const invitationScope = {
+        clientId: clients[index],
+        projectId: projects[index],
+        userId: users[index],
+      };
+      if (extendedInvitations)
+        await checkExpiredInvitation(owner, session, invitationScope);
       requireSuccess(
         (await session.rpc("accept_invitation")).error,
         "Client invitation acceptance",
       );
+      if (extendedInvitations)
+        await checkReturningAccount(session, invitationScope);
     }
     for (let index = 0; index < 2; index++) {
       const session = sessions[index];
@@ -284,12 +304,28 @@ export async function checkClientPortals(
       paths[0],
       "Revoked-client file protection",
     );
+    if (extendedInvitations) {
+      await checkRevokedReinvitation(owner, sessions[0], sessions[1], {
+        clientId: clients[0],
+        projectId: projects[0],
+        userId: users[0],
+        otherProjectId: projects[1],
+      });
+      await assertStorageDenied(
+        sessions[0],
+        paths[0],
+        "Reinvited-then-revoked file protection",
+      );
+    }
     checks[4].status = "passed";
     result = {
       ok: true,
       checks,
       message:
         "Available portal checks passed." +
+        (extendedInvitations
+          ? " Expired/revoked invitations and same-account reinvitation checks passed."
+          : " Extended invitation checks were not run because update 010 is unavailable.") +
         (checks[3].status === "unavailable"
           ? " Lifecycle checks were not run because update 012 is unavailable."
           : "") +

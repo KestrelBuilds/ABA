@@ -51,6 +51,8 @@ The earlier optional `SUPABASE_INVITE_EMAIL_READY` delivery picker is superseded
 
 ## Hosted acceptance
 
+**My account → Check client portal access → Run automatic portal checks** now exercises database invitation expiry, repeated acceptance, revoked-invitation denial and renewal of the same disposable account, plus isolation and unchanged verification flags. It uses its own fictional records and sends no emails. It finishes by revoking access again and verifying cleanup. Run it after deployment to obtain hosted evidence; the local SQL/fixture run is not a hosted pass. Browser invitation links, inbox delivery and password recovery remain separate checks.
+
 Local SQL tests cover identity binding, owner/client isolation, expiry, revocation, repeat application and returning accounts. Fixture browser checks cover owner guidance, copyable links, statuses, authenticated password setup/recovery and expired links; no real email is sent by these checks.
 
 The 3 November link-refresh regression was reproduced in the actual UI before correction. The expanded `--invitations` fixture checks expiry/revocation/reinvitation, clearing old links and copy feedback, and UK dates across BST/GMT in a browser set to America/Los_Angeles. Existing accounts reuse sign-in without creating another provider token. These local checks do not establish hosted email or account behaviour.

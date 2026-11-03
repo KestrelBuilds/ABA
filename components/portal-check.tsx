@@ -31,10 +31,11 @@ export function PortalCheck() {
       </p>
       <p>
         This checks accounts, questionnaires, private downloads, archive access,
-        verification-history privacy and both approvals on combined projects. It
-        can take a couple of minutes. Keep this page open until cleanup
-        finishes. Email delivery, password recovery, backups and the wider
-        launch review need separate checks.
+        verification-history privacy, expired/revoked invitations, same-account
+        reinvitation and both approvals on combined projects. It can take a
+        couple of minutes. Keep this page open until cleanup finishes. Email
+        delivery, password recovery, backups and the wider launch review need
+        separate checks.
       </p>
       <button
         className="primary"
