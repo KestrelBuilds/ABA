@@ -39,6 +39,12 @@ export default function DeleteClient({
             Audit history and the underlying sign-in account are retained for
             security. That account will have no access to this client.
           </p>
+          <p>
+            Keep invoices and supporting tax records in your separate financial
+            archive before deleting their portal copies. Your seven-year
+            financial-record policy is not an automatic retention lock on
+            uploaded PDFs.
+          </p>
           {client.deletion_pending && (
             <p role="status">
               Deletion is paused and access is revoked. Retry to finish removing

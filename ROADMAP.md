@@ -2,6 +2,10 @@
 
 Current scope and remaining external launch gates: [development handover](docs/DEVELOPMENT-HANDOVER.md). Dated entries below retain the implementation history; later owner decisions and confirmations supersede older pending notes.
 
+## 6 November — sole-trader reserve planning and financial retention
+
+Added an owner-only project tax reserve planner based on estimated profit after allowable costs and a percentage Alex chooses, with no default statutory rate, saved inputs, record writes or automatic tax calculation. Recorded Alex's seven-year invoice/supporting-tax-record policy separately from other personal data and added a financial-archive reminder before client deletion. Alex deferred scanner setup until external hosting is considered as the business grows; current 3 MB checks continue and optional 013 stays disabled. No SQL, new service, fee or PC installation. See docs/TAX-RESERVE.md and docs/SECURE-UPLOADS.md.
+
 ## 6 November — remove demo entry points from the private portal
 
 Removed demonstration links from welcome/sign-in/setup and connected navigation after Alex spotted the remaining public link. Replaced landing development copy with invitation guidance and made connected readiness/version notices owner-only; client/preview headers identify a private client account. The standalone fictional `/demo` remains available directly, including its labels and isolated browser storage. No SQL, permission or launch-acceptance change.

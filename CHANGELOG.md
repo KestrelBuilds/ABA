@@ -1,5 +1,12 @@
 # Changelog
 
+## 6 November 2026 — sole-trader reserve planning and financial retention
+
+- Added an owner-only Overview tax reserve planner using projected project income less allowable costs and a percentage Alex chooses. No default/statutory rate, tax-liability calculation, saved inputs, financial-record writes or client display. Includes loss/invalid-input handling and phone/desktop layouts.
+- Recorded Alex's chosen seven-year invoice/supporting-accounting-and-tax-record policy after confirming sole-trader status. Kept other personal-data retention separate and added a reminder to preserve financial copies before deleting portal PDFs. No automatic retention/erasure or changes to protected native financial history.
+- Recorded Alex's decision to defer malware scanning and revisit external hosting as the business grows. Stopped temporary local experiments and removed their uncommitted worker; no scanner runs on Alex's PC or a hosted service. Current 3 MB format/signature checks continue, with optional 013 withheld. No SQL or purchase.
+- Validation: all 128 automated tests, strict TypeScript, production build and formatting passed. Fictional tax-planner browser checks cover profit/cost arithmetic, chosen rates, losses, invalid input, project switching, reload reset, no writes, preview exclusion and 320/390/1440 px layouts. Existing dashboard and owner-preview regressions, production privacy/protected-route checks and isolated demo smoke checks passed. Hosted deployment acceptance remains separate.
+
 ## 6 November 2026 — private portal presentation
 
 - Removed fictional-demo links from the landing page, sign-in, setup and connected sidebar. The landing page now explains private invitation-based access.

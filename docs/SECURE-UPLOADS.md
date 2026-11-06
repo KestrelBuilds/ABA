@@ -2,6 +2,8 @@
 
 **013 is optional and NOT ready for Alex to paste until an approved scanner is configured and its live acceptance checks pass.** Apply 012 independently for project archiving/history/approvals. Existing installations retain their current 3 MB upload forms until 013 is applied.
 
+**Owner decision — 6 November 2026:** Alex deferred scanner setup and will revisit external hosting as the business grows. Keep legacy 3 MB PDF/image checks; they are not malware scanning. Do not activate 013, provision a scanner or run background software on Alex's PC from that decision. Temporary local experiments were stopped; their worker was not deployed or retained as an application feature. The existing optional adapter below remains future work requiring its original prerequisites.
+
 ## What is implemented
 
 With 013 and server configuration, owners and full-access clients can upload PDF, PNG, JPEG, WebP, Illustrator (.ai) and ZIP source files up to 25 MB directly into the existing private Supabase buckets. Large file bytes bypass the 4 MB Next.js server-action request limit. Contract returns remain PDF-only, 3 MB, explicitly bound to the original contract and stage.

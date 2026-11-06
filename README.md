@@ -2,6 +2,12 @@
 
 A considered workspace for Alex Bell Arts, with a connected owner dashboard and private invited-client portal. `/demo` is a separate browser-only example using **fictional data**. The agreed core features are implemented; [the development handover](docs/DEVELOPMENT-HANDOVER.md) separates completed code from the remaining real-client launch requirements.
 
+### 6 November — sole-trader planning and retention
+
+The owner Overview includes a tax reserve planner using estimated project profit and a percentage Alex chooses. It does not calculate an HMRC bill, change financial records or save its inputs. The privacy notice records Alex's seven-year invoice/supporting-tax-record policy separately from other records. See [tax reserve guidance](docs/TAX-RESERVE.md).
+
+Alex deferred malware scanning and will revisit external hosting as the business grows. Existing 3 MB file-format/signature checks continue; optional migration 013 and larger/source uploads remain disabled. No scanner is running or installed on Alex's PC. See [upload security](docs/SECURE-UPLOADS.md).
+
 ### 6 November — private portal presentation
 
 The welcome, sign-in, setup and connected workspace screens no longer advertise the fictional demonstration. The landing page explains invitation-only access, and clients/previews see **Private client account** without the internal development banner. Owner readiness notes remain in the owner dashboard. The separate `/demo` route stays explicitly fictional for direct development checks; connected records and permissions are unchanged.
@@ -44,7 +50,7 @@ The public [Privacy & cookies page](https://aba-iota.vercel.app/privacy) explain
 
 New 3 MB PDF/image uploads now check that their extension, reported type and binary signature agree before saving. This applies to owner documents, client assets and explicit PDF contract returns, without changing release gates or requiring SQL. It is not malware scanning; optional 013 still requires a real approved scanner. See [the privacy/file review](docs/PRIVACY-REVIEW.md).
 
-Alex confirmed the live client journey, password recovery, MFA and backup restoration completed. Those owner-reported passes are recorded in [the launch checklist](docs/LAUNCH-CHECKLIST.md), separately from local tests and outstanding branch-specific/provider checks. Final privacy arrangements, scanner configuration and the actual goodbye PDFs remain open.
+Alex confirmed the live client journey, password recovery, MFA and backup restoration completed. Those owner-reported passes are recorded in [the launch checklist](docs/LAUNCH-CHECKLIST.md), separately from local tests and outstanding branch-specific/provider checks. Final privacy arrangements and the actual goodbye PDFs remain open; scanner setup is deferred by owner choice.
 
 ## Latest development update — 30 October 2026
 

@@ -23,7 +23,7 @@ export default function Privacy() {
             This notice explains how I use your information when you enquire
             about my services or use ABA Studio, your client portal.
           </p>
-          <p className="muted">Last updated: 2 November 2026</p>
+          <p className="muted">Last updated: 6 November 2026</p>
         </header>
         <nav
           className="privacy-jump-links"
@@ -143,8 +143,16 @@ export default function Privacy() {
         <section id="privacy-retention">
           <h2>How long I keep information</h2>
           <p>
-            Retention depends on the purpose of the record: whether an enquiry
-            is still active, whether information is needed to deliver or support
+            As a sole trader, I normally keep invoices and supporting accounting
+            and tax records for seven years after the end of the tax year they
+            relate to. I may keep them longer where HMRC requires it or an
+            unresolved enquiry or legal obligation needs it. Financial records
+            may be held separately from the project portal.
+          </p>
+          <p>
+            Other records follow their own retention arrangements, rather than a
+            blanket seven-year rule. Retention depends on whether an enquiry is
+            still active, whether information is needed to deliver or support
             the agreed project, applicable accounting or legal obligations, and
             whether an unresolved complaint or legal claim requires it. Please
             contact me for the retention arrangements relevant to your project.

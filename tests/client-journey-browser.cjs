@@ -50,7 +50,8 @@ const secureUnconfiguredMode = process.argv.includes("--secure-unconfigured");
 const secureMode =
   process.argv.includes("--secure-uploads") || secureUnconfiguredMode;
 const lifecycleMode = process.argv.includes("--lifecycle");
-const dashboardMode = process.argv.includes("--dashboard");
+const taxMode = process.argv.includes("--tax-reserve");
+const dashboardMode = process.argv.includes("--dashboard") || taxMode;
 const insightsMode = process.argv.includes("--insights") || dashboardMode;
 const fileLibraryMode =
   process.argv.includes("--file-library") ||
@@ -2823,6 +2824,75 @@ const server = createServer(async (req, res) => {
       assert.deepEqual(errors, []);
       console.log(
         "PASS: searchable, stage-grouped same-record file library, combined filters/reset, journey navigation, owner sharing labels, client/preview filtering and mobile layouts. Fictional services only.",
+      );
+      return;
+    }
+    if (taxMode) {
+      const before = JSON.stringify(finderProjects);
+      const planner = page.getByRole("region", {
+        name: "Tax reserve planner",
+        exact: true,
+      });
+      const selector = planner.getByLabel("Project for this estimate", {
+        exact: true,
+      });
+      await expect(selector.locator("option")).toHaveCount(6);
+      await expect(planner).not.toContainText("Archived identity");
+      await expect(planner.getByRole("status")).toContainText(
+        "Choose your planning percentage",
+      );
+      const income = planner.getByLabel("Project income before VAT (£)", {
+        exact: true,
+      });
+      const costs = planner.getByLabel(
+        "Estimated allowable project costs (£)",
+        { exact: true },
+      );
+      const percentage = planner.getByLabel("Your planning reserve (%)", {
+        exact: true,
+      });
+      await expect(income).toHaveValue("1000");
+      await costs.fill("200");
+      await percentage.fill("30");
+      await expect(
+        planner.locator(".tax-planner-results dd").nth(0),
+      ).toHaveText("£800.00");
+      await expect(planner.locator(".tax-reserve-total dd")).toHaveText(
+        "£240.00",
+      );
+      await expect(
+        planner.locator(".tax-planner-results dd").nth(2),
+      ).toHaveText("£560.00");
+      await captureUi("tax-reserve", planner);
+      await costs.fill("1200");
+      await expect(planner.locator(".tax-reserve-total dd")).toHaveText(
+        "£0.00",
+      );
+      await expect(planner.getByRole("status")).toContainText(
+        "Tax may still be due",
+      );
+      await percentage.fill("101");
+      await expect(planner.getByRole("status")).toContainText("from 0 to 100");
+      await percentage.fill("30");
+      await selector.selectOption(websiteProjectId);
+      await expect(income).toHaveValue("2400");
+      await expect(costs).toHaveValue("0");
+      await expect(planner.locator(".tax-reserve-total dd")).toHaveText(
+        "£720.00",
+      );
+      await expect(percentage).toHaveValue("30");
+      await page.reload();
+      await expect(planner.getByRole("status")).toContainText(
+        "Choose your planning percentage",
+      );
+      await expect(percentage).toHaveValue("");
+      assert.equal(JSON.stringify(finderProjects), before);
+      assert.equal(finderWrites, 0);
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await expect(planner).toHaveCount(0);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: owner-only tax reserve uses a chosen percentage of projected profit, handles losses/invalid input, resets project inputs, retains no values after reload, makes no writes and stays absent from client preview at phone/desktop widths. Planning only; no tax liability calculated.",
       );
       return;
     }

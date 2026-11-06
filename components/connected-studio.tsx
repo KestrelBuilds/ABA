@@ -22,6 +22,7 @@ import DeleteClient from "./delete-client";
 import ProjectFocus, { openProjectSection } from "./project-focus";
 import WorkspaceAttention from "./workspace-attention";
 import WorkspaceInsights from "./workspace-insights";
+import TaxReservePlanner from "./tax-reserve-planner";
 import WorkspaceDeadlines from "./workspace-deadlines";
 import { workspaceInsights } from "@/lib/workspace-insights";
 import HandoverPreparation from "./handover-preparation";
@@ -585,6 +586,7 @@ export default function ConnectedStudio({
                   onOpenProject={(id) => openProject(id, "#journey")}
                 />
                 <WorkspaceAttention data={data} onOpen={openAttention} />
+                <TaxReservePlanner data={data} />
                 <WorkspaceDeadlines data={data} onOpen={openProject} />
                 <div className="two-col">
                   <section className="panel">

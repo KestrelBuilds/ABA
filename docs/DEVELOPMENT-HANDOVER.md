@@ -4,6 +4,8 @@ The agreed core application features are implemented. The final development pass
 
 Final local validation passed: 124 automated tests, 29 fictional browser modes, production build, strict TypeScript, formatting and production demo/privacy/protected-route smoke checks. No unresolved local check failure remained at handover. The work uses fictional records only; no new migration or service is required for these final fixes.
 
+Follow-up on 6 November: the owner Overview now includes a manual, chosen-percentage tax reserve planner. The privacy notice records Alex's sole-trader seven-year financial-record policy separately from other records. Scanner setup is deferred by owner choice, with current 3 MB checks retained and optional 013 withheld; no PC software or new service is running. See [TAX-RESERVE.md](TAX-RESERVE.md) and the latest CHANGELOG.md validation for this follow-up.
+
 ## Implemented scope
 
 | Area | Implemented behaviour | Local evidence |
@@ -23,7 +25,7 @@ The final review also checked existing server identity/MFA/RLS boundaries, no-st
 
 1. **Hosted acceptance and deployment outcome.** Inspect the latest Vercel deployment and run the expanded owner diagnostic/exceptional client branches with fictional accounts. The coding environment has no hosted Supabase credential bindings or hosting connector; a GitHub push and local pass do not supply these results. Alex's previously reported normal journey, recovery, MFA and restoration passes remain valid for their stated scope.
 2. **Operational privacy/provider review.** Confirm actual retention periods, processor agreements, data locations/transfer safeguards, log/rate-limit settings and incident/removal handling. The public notice and implemented deletion/export boundaries do not make those business decisions.
-3. **Approved real upload scanner.** Select/approve a real engine and configure/test its worker before optional migration 013. The adapter exists, but no provider is provisioned or paid service authorised. Keep 013 withheld until its documented prerequisites pass; existing legacy uploads remain available under their 3 MB controls.
+3. **Upload scanning deferred by owner choice.** Alex accepts the current 3 MB format/signature checks for now and will revisit external hosting as the business grows. These checks are not malware scanning. Select/approve a real engine and configure/test its worker before any future optional migration 013 activation. No provider or PC worker is running, and no purchase is authorised. Keep 013 withheld until its documented prerequisites pass.
 4. **Final client material and launch approval.** Alex supplies the actual Illustrator goodbye/handover PDFs with agreed support/licensing/ownership terms, then approves real-client use after the launch review. Starter outlines are not those final assets or agreements.
 
 These dependencies do not require rerunning confirmed migrations 010–012, resetting client accounts, replacing the working cloud environment or sharing secrets in chat. Their authoritative checklist is [GO-LIVE-STATUS.md](GO-LIVE-STATUS.md) and [LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md).

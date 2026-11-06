@@ -1,10 +1,14 @@
 # Privacy and file-protection review
 
-Technical review: 2 November 2026. This is an internal working record, not a published privacy notice or legal approval. It does not set retention periods or authorise a new processor. Alex reports that the live client journey, password recovery, MFA and backup restoration are complete; the coding workspace has no hosted account credentials with which to independently repeat them.
+Technical review: updated 6 November 2026. This is an internal working record, not legal approval or authorisation for a new processor. Alex confirmed sole-trader status and chose seven years for invoices/supporting tax records, subject to longer HMRC/legal/enquiry requirements. This does not set a blanket period for other client records. Alex reports that the live client journey, password recovery, MFA and backup restoration are complete; the coding workspace has no hosted account credentials with which to independently repeat them.
 
 The public notice is now implemented at `/privacy`, with Alex's supplied email and purpose-based retention criteria. [PRIVACY-NOTICE.md](PRIVACY-NOTICE.md) records the cookie/source audit and the operational details still to confirm. This internal review remains separate from that client-facing page.
 
 ## Data and removal boundaries
+
+The public notice records Alex's normal seven-year financial policy from the end of the relevant tax year. HMRC's ordinary sole-trader minimum is generally five years after the relevant 31 January filing deadline, with exceptions; see https://www.gov.uk/self-employed-records/how-long-to-keep-your-records. This software does not calculate legal expiry or automatically retain/delete records. Uploaded Illustrator invoice PDFs can be removed with a project/client, unlike the separately protected native financial history. Keep authoritative tax/accounting copies outside project cleanup; the deletion screen now makes this explicit. Other record categories below still need their own schedule.
+
+Alex deferred malware scanning on 6 November, choosing to keep the current 3 MB format/signature checks and revisit external hosting as the business grows. Discovery calls vet clients, but do not establish that their files are malware-free. No scanner is active; 013 remains withheld. The temporary local scanner experiment was stopped and its uncommitted worker implementation removed. No software was installed on Alex's PC and no client file was sent to an external scanner.
 
 | Records | Purpose and access | Retention/removal decision still needed |
 | --- | --- | --- |
