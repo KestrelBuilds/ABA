@@ -22,7 +22,7 @@ import DeleteClient from "./delete-client";
 import ProjectFocus, { openProjectSection } from "./project-focus";
 import WorkspaceAttention from "./workspace-attention";
 import WorkspaceInsights from "./workspace-insights";
-import TaxReservePlanner from "./tax-reserve-planner";
+import { taxReserve } from "@/lib/tax-reserve";
 import WorkspaceDeadlines from "./workspace-deadlines";
 import { workspaceInsights } from "@/lib/workspace-insights";
 import HandoverPreparation from "./handover-preparation";
@@ -586,11 +586,14 @@ export default function ConnectedStudio({
                   onOpenProject={(id) => openProject(id, "#journey")}
                 />
                 <WorkspaceAttention data={data} onOpen={openAttention} />
-                <TaxReservePlanner data={data} />
                 <WorkspaceDeadlines data={data} onOpen={openProject} />
                 <div className="two-col">
-                  <section className="panel">
+                  <section className="panel" aria-label="Current projects">
                     <h2>Current projects</h2>
+                    <p className="helper-note">
+                      20% of each project value is shown as a tax set-aside
+                      estimate. Actual tax may differ.
+                    </p>
                     {activeProjects.length ? (
                       activeProjects.map((p) => (
                         <button
@@ -617,6 +620,10 @@ export default function ConnectedStudio({
                                     )!.enquiry_status
                                   ]
                                 : ""}
+                            </small>
+                            <small className="project-tax-reserve">
+                              Value {money(p.budget)} · 20% tax set-aside{" "}
+                              {money(taxReserve(p.budget) / 100)}
                             </small>
                             <small>{projectFocus(data, p).nextLabel}</small>
                           </div>

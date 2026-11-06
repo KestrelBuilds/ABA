@@ -1,5 +1,11 @@
 # Changelog
 
+## 6 November 2026 — simplify the project tax estimate
+
+- Replaced the manual tax reserve planner with a simple value and fixed 20% tax set-aside on each Current projects row in the owner Overview, as Alex requested. Removed the separate panel, selector, inputs, state and unused styles.
+- Retained a short estimate note, penny rounding, owner-only placement and existing project/archive/preview behaviour. No financial writes, migrations or service changes; the seven-year financial-record policy remains unchanged.
+- Validation: all 126 automated tests, strict TypeScript, production build and formatting passed. Fictional browser checks verify £1,000 → £200 and £2,400 → £480, absence of the old planner, archive exclusion, reload stability, no writes, client-preview exclusion and 320/390/1440 px layouts. Hosted deployment acceptance remains separate.
+
 ## 6 November 2026 — sole-trader reserve planning and financial retention
 
 - Added an owner-only Overview tax reserve planner using projected project income less allowable costs and a percentage Alex chooses. No default/statutory rate, tax-liability calculation, saved inputs, financial-record writes or client display. Includes loss/invalid-input handling and phone/desktop layouts.

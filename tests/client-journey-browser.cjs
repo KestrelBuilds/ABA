@@ -2829,70 +2829,37 @@ const server = createServer(async (req, res) => {
     }
     if (taxMode) {
       const before = JSON.stringify(finderProjects);
-      const planner = page.getByRole("region", {
-        name: "Tax reserve planner",
+      const projects = page.getByRole("region", {
+        name: "Current projects",
         exact: true,
       });
-      const selector = planner.getByLabel("Project for this estimate", {
-        exact: true,
-      });
-      await expect(selector.locator("option")).toHaveCount(6);
-      await expect(planner).not.toContainText("Archived identity");
-      await expect(planner.getByRole("status")).toContainText(
-        "Choose your planning percentage",
-      );
-      const income = planner.getByLabel("Project income before VAT (£)", {
-        exact: true,
-      });
-      const costs = planner.getByLabel(
-        "Estimated allowable project costs (£)",
-        { exact: true },
-      );
-      const percentage = planner.getByLabel("Your planning reserve (%)", {
-        exact: true,
-      });
-      await expect(income).toHaveValue("1000");
-      await costs.fill("200");
-      await percentage.fill("30");
       await expect(
-        planner.locator(".tax-planner-results dd").nth(0),
-      ).toHaveText("£800.00");
-      await expect(planner.locator(".tax-reserve-total dd")).toHaveText(
-        "£240.00",
+        page.getByRole("region", { name: "Tax reserve planner", exact: true }),
+      ).toHaveCount(0);
+      await expect(projects.locator(".project-tax-reserve")).toHaveCount(6);
+      await expect(projects).not.toContainText("Archived identity");
+      await expect(projects.locator(".project-tax-reserve").first()).toHaveText(
+        "Value £1,000.00 · 20% tax set-aside £200.00",
       );
       await expect(
-        planner.locator(".tax-planner-results dd").nth(2),
-      ).toHaveText("£560.00");
-      await captureUi("tax-reserve", planner);
-      await costs.fill("1200");
-      await expect(planner.locator(".tax-reserve-total dd")).toHaveText(
-        "£0.00",
-      );
-      await expect(planner.getByRole("status")).toContainText(
-        "Tax may still be due",
-      );
-      await percentage.fill("101");
-      await expect(planner.getByRole("status")).toContainText("from 0 to 100");
-      await percentage.fill("30");
-      await selector.selectOption(websiteProjectId);
-      await expect(income).toHaveValue("2400");
-      await expect(costs).toHaveValue("0");
-      await expect(planner.locator(".tax-reserve-total dd")).toHaveText(
-        "£720.00",
-      );
-      await expect(percentage).toHaveValue("30");
+        projects
+          .getByRole("button")
+          .filter({ hasText: "Framer website" })
+          .locator(".project-tax-reserve"),
+      ).toHaveText("Value £2,400.00 · 20% tax set-aside £480.00");
+      await expect(projects).toContainText("Actual tax may differ");
+      await captureUi("tax-reserve", projects);
       await page.reload();
-      await expect(planner.getByRole("status")).toContainText(
-        "Choose your planning percentage",
+      await expect(projects.locator(".project-tax-reserve").first()).toHaveText(
+        "Value £1,000.00 · 20% tax set-aside £200.00",
       );
-      await expect(percentage).toHaveValue("");
       assert.equal(JSON.stringify(finderProjects), before);
       assert.equal(finderWrites, 0);
       await page.getByRole("button", { name: /Preview client portal/ }).click();
-      await expect(planner).toHaveCount(0);
+      await expect(page.locator(".project-tax-reserve")).toHaveCount(0);
       assert.deepEqual(errors, []);
       console.log(
-        "PASS: owner-only tax reserve uses a chosen percentage of projected profit, handles losses/invalid input, resets project inputs, retains no values after reload, makes no writes and stays absent from client preview at phone/desktop widths. Planning only; no tax liability calculated.",
+        "PASS: owner Current projects shows a fixed 20% set-aside against saved project values without a planner or inputs; archives excluded, reload stable, no writes, client preview excluded and 320/390/1440 layouts pass. Planning estimate only.",
       );
       return;
     }

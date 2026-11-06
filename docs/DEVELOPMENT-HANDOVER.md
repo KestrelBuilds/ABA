@@ -4,7 +4,7 @@ The agreed core application features are implemented. The final development pass
 
 Final local validation passed: 124 automated tests, 29 fictional browser modes, production build, strict TypeScript, formatting and production demo/privacy/protected-route smoke checks. No unresolved local check failure remained at handover. The work uses fictional records only; no new migration or service is required for these final fixes.
 
-Follow-up on 6 November: the owner Overview now includes a manual, chosen-percentage tax reserve planner. The privacy notice records Alex's sole-trader seven-year financial-record policy separately from other records. Scanner setup is deferred by owner choice, with current 3 MB checks retained and optional 013 withheld; no PC software or new service is running. See [TAX-RESERVE.md](TAX-RESERVE.md) and the latest CHANGELOG.md validation for this follow-up.
+Follow-up on 6 November: the owner Overview now shows a simple 20% set-aside alongside each current project value, replacing the manual planner at Alex's request. The privacy notice records Alex's sole-trader seven-year financial-record policy separately from other records. Scanner setup is deferred by owner choice, with current 3 MB checks retained and optional 013 withheld; no PC software or new service is running. See [TAX-RESERVE.md](TAX-RESERVE.md) and the latest CHANGELOG.md validation for this follow-up.
 
 ## Implemented scope
 

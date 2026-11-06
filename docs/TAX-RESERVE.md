@@ -1,12 +1,10 @@
 # Sole-trader tax reserve planning
 
-The owner Overview includes a manual tax reserve planner. It estimates money to set aside using a percentage Alex chooses; it does not calculate tax owed or supply a statutory/default rate. Annual profit, other income, allowances and National Insurance affect actual liability.
+At Alex's request, **Current projects** on the owner Overview shows each saved project value and a fixed **20% tax set-aside**. For example, a £1,000 project shows £200 to set aside. The manual planner, project selector, costs/percentage inputs and separate panel have been removed.
 
-Choose an active project, check the full saved project value excludes VAT where applicable, enter expected allowable costs and choose a reserve percentage. The value is not limited to payments received. Costs start at zero until changed. For example, £1,000 income minus £200 costs gives £800 projected profit; a chosen 30% reserve gives £240 to set aside and £560 after that reserve. This 30% is illustrative, not a recommendation.
+The percentage applies to the full saved project value, independently of payment receipt or costs. Convert the saved value to integer pence, take one fifth and round to the nearest penny. This is Alex's chosen planning rule, not a claim that 20% is the tax owed: annual profit, other income, allowances and National Insurance affect actual liability. A short estimate note appears above the project list.
 
-Money and percentages accept up to two decimal places. Arithmetic uses bounded integer pence, with the reserve rounded once to the nearest penny. A zero-profit or loss-making project reserves £0; this does not establish a refund or remove tax due on other income. Review allowable costs and the chosen percentage with an accountant. The planner links to HMRC's Income Tax rates and allowances.
-
-Inputs live only in React memory. Switching projects resets income/costs and keeps the chosen percentage until the component is unmounted; reloading clears it. The selector is independent of chart filters. No API, database or browser-storage writes occur, and project values, invoices, payment verification and release gates are unchanged. Clients/previews do not see this planner.
+The display has no inputs or writes and does not change project values, invoices, payment verification or release gates. It is visible only in the owner Overview. Archived projects are excluded from the existing Current projects list. Client previews do not show the set-aside labels.
 
 ## Financial-record policy
 
@@ -16,4 +14,4 @@ The public privacy notice records this financial policy separately from other en
 
 ## Validation
 
-Four arithmetic tests cover profit versus turnover, pennies and rounding, zero/100% rates, losses and invalid/bounded inputs. `node tests/client-journey-browser.cjs --tax-reserve` checks the owner interface, project switching, no default rate or persistence, no writes, client-preview exclusion and 320/390/1440 px layouts against fictional records.
+Two arithmetic tests cover the fixed proportion and whole-penny rounding. `node tests/client-journey-browser.cjs --tax-reserve` checks saved project values, immediate estimates without inputs, archive exclusion, reload stability, no writes, client-preview exclusion and 320/390/1440 px layouts against fictional records.

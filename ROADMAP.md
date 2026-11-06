@@ -2,6 +2,10 @@
 
 Current scope and remaining external launch gates: [development handover](docs/DEVELOPMENT-HANDOVER.md). Dated entries below retain the implementation history; later owner decisions and confirmations supersede older pending notes.
 
+## 6 November — simplify the project tax estimate
+
+Alex requested a simple 20% of project value display instead of the manual reserve planner. Removed its separate panel, inputs, state and styles; Current projects on the owner Overview now shows each value and its 20% set-aside estimate. Kept a short actual-tax-may-differ note, owner-only placement and existing financial/privacy controls. No SQL, services or financial-record writes. This supersedes the planner description below.
+
 ## 6 November — sole-trader reserve planning and financial retention
 
 Added an owner-only project tax reserve planner based on estimated profit after allowable costs and a percentage Alex chooses, with no default statutory rate, saved inputs, record writes or automatic tax calculation. Recorded Alex's seven-year invoice/supporting-tax-record policy separately from other personal data and added a financial-archive reminder before client deletion. Alex deferred scanner setup until external hosting is considered as the business grows; current 3 MB checks continue and optional 013 stays disabled. No SQL, new service, fee or PC installation. See docs/TAX-RESERVE.md and docs/SECURE-UPLOADS.md.
