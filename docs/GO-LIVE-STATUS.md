@@ -1,6 +1,8 @@
 # ABA Studio: remaining go-live work
 
-Status: 3 November 2026. The core portal workflows and the new archive/history/combined-approval code are implemented. Readiness is tracked by concrete gates; local tests are separate from live acceptance.
+Status: 6 November 2026. The core portal workflows and the archive/history/combined-approval code are implemented. Readiness is tracked by concrete gates; local tests are separate from live acceptance.
+
+The latest development includes the visual owner chart dashboard, editable presentation review dates and preservation of unsaved entries after rejected/interrupted form actions. Pending forms lock their controls; confirmed successful saves retain normal reset/refresh behaviour. Client asset-upload guidance reflects legacy 3 MB, configured 25 MB or unavailable security checks. These changes introduce no new SQL, real scanner or service. Local validation and exact changes are in CHANGELOG.md; they do not close the operational gates below.
 
 Client account-help follow-up: the no-access page identifies the current signed-in email only, and expired/incomplete links lead to appropriate sign-in/recovery/contact routes. Browser fixtures verify no private record reads without membership and no emails/token sharing from help links. This is local UI evidence; the owner's completed live recovery/MFA/journey checks remain recorded separately below.
 
@@ -19,7 +21,7 @@ The completed-stage lime ticks are also confirmed live by Alex's mobile screensh
 ## Next update for Alex
 
 1. **Done — Alex confirmed migration 012 applied successfully.** 011 was already confirmed successful. Do not rerun either migration. Activation is owner-reported; Alex also confirmed the owner archive/list/restore steps worked on a test project. Client archive restrictions, verification privacy and combined-approval behaviour still need hosted acceptance testing. 013 remains pending until an approved real scanner is configured and tested.
-2. In the cloud setup panel, use **Finish review**, save the reviewed settings and publish the environment. Saving the assistant's setup draft alone does not publish it.
+2. Review the latest Vercel deployment outcome before treating a GitHub push as a hosted release. The coding environment is currently connected; its missing hosted Supabase credentials remain separate from the deployed app's configuration. Do not repeat working environment setup or applied migrations solely to run local development.
 3. Run My account → Check client portal access → Run automatic portal checks for the expanded archive, evidence and combined-approval checks. This specific run is not yet owner-confirmed. See PORTAL-CHECKS.md. The normal live journey and password recovery are owner-confirmed; use fictional hosted accounts for any outstanding branch-specific checks such as archived access, evidence privacy, expired/revoked invitations and direct cross-client denial. Invitation links are manually copied/sent; pending status is not email delivery.
 4. Design and upload the actual goodbye-packet PDFs, with agreed wording for each project. Starter outlines contain placeholders, not agreed licence/support/ownership promises.
 

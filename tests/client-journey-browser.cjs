@@ -8,6 +8,16 @@ const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
 const projectFinderMode = process.argv.includes("--project-finder");
+const formRetryMode = process.argv.includes("--form-retry");
+const questionnaireRetryMode = process.argv.includes("--questionnaire-retry");
+const retryNoteWrites = [],
+  retryDocumentWrites = [],
+  retryQuestionnaireWrites = [];
+let contractReturnAttempts = 0,
+  proposalResponseAttempts = 0;
+let retryNoteBody = "Original fictional note",
+  releaseRetrySave = null,
+  retryStorageWrites = 0;
 const reviewDatesMode = process.argv.includes("--review-dates");
 const deadlinesMode = process.argv.includes("--deadlines") || reviewDatesMode;
 const reviewDateWrites = [];
@@ -78,6 +88,7 @@ const fixtureStageId = randomUUID();
 const financeMode = process.argv.includes("--finance");
 const ownerMode =
   process.argv.includes("--owner-preview") ||
+  formRetryMode ||
   projectFinderMode ||
   deadlinesMode ||
   portalChecksMode ||
@@ -736,6 +747,15 @@ const server = createServer(async (req, res) => {
       });
     }
     if (path === "/auth/v1/logout") return json({});
+    if (
+      formRetryMode &&
+      path.startsWith("/storage/v1/object/project-files/") &&
+      req.method === "POST"
+    ) {
+      assert.ok(text.includes("%PDF-1.4 Fictional retry document"));
+      retryStorageWrites++;
+      return json({ Key: path.split("/object/")[1], Id: randomUUID() });
+    }
     if (path.startsWith("/storage/v1/object/sign/")) {
       if (req.method === "POST")
         return json({
@@ -1068,9 +1088,17 @@ const server = createServer(async (req, res) => {
       return json(null);
     }
     if (table === "contract_area_ready")
-      return json(contractMode || contractOwnerMode || workspaceHelpMode);
+      return json(
+        contractMode || contractOwnerMode || workspaceHelpMode || prospectMode,
+      );
     if (table === "can_read_contract_document")
-      return json(exchangeEnabled && body.target === presentation);
+      return json(
+        (exchangeEnabled && body.target === presentation) ||
+          (prospectMode &&
+            prospectDocuments().some(
+              (d) => d.id === body.target && d.document_role === "Contract",
+            )),
+      );
     if (table === "contract_area")
       return json(
         (contractMode || contractOwnerMode) && exchangeEnabled
@@ -1209,6 +1237,18 @@ const server = createServer(async (req, res) => {
     }
 
     let rows = [];
+    if (formRetryMode && table === "project_notes") {
+      if (req.method === "POST") {
+        retryNoteWrites.push(body);
+        if (retryNoteWrites.length === 1)
+          return json({ message: "Fictional save failure" }, 503);
+        await new Promise((resolve) => {
+          releaseRetrySave = resolve;
+        });
+        retryNoteBody = body.body;
+      }
+      rows = [{ project_id: pid, body: retryNoteBody }];
+    }
     if (table === "prospect_spaces")
       rows = deadlinesMode
         ? [
@@ -1226,6 +1266,12 @@ const server = createServer(async (req, res) => {
           ? [prospective]
           : [];
     if (table === "proposal_responses") {
+      if (
+        prospectMode &&
+        req.method === "POST" &&
+        ++proposalResponseAttempts === 1
+      )
+        return json({ message: "Fictional proposal response failure" }, 503);
       if (req.method === "POST")
         proposalResponses.push({
           ...body,
@@ -1324,6 +1370,12 @@ const server = createServer(async (req, res) => {
           ? [{ project_id: pid, body: "Private final handover guidance" }]
           : [];
     if (table === "client_assets") {
+      if (
+        (contractMode || prospectMode) &&
+        req.method === "POST" &&
+        ++contractReturnAttempts === 1
+      )
+        return json({ message: "Fictional returned-file save failure" }, 503);
       if (req.method === "POST")
         assets.push({ ...body, created_at: new Date().toISOString() });
       rows = assets;
@@ -1406,6 +1458,12 @@ const server = createServer(async (req, res) => {
         )
           Object.assign(d, body);
     }
+    if (formRetryMode && table === "documents" && req.method === "POST") {
+      retryDocumentWrites.push(body);
+      if (retryDocumentWrites.length === 1)
+        return json({ message: "Fictional metadata save failure" }, 503);
+      documents.push(body);
+    }
     if (table === "documents")
       rows =
         workspaceHelpMode || (secureMode && ownerMode)
@@ -1424,6 +1482,11 @@ const server = createServer(async (req, res) => {
               (project.final_paid && project.final_approved))),
       );
     if (table === "questionnaires") {
+      if (questionnaireRetryMode && req.method === "POST") {
+        retryQuestionnaireWrites.push(body);
+        if (retryQuestionnaireWrites.length === 1)
+          return json({ message: "Fictional questionnaire save failure" }, 503);
+      }
       if (req.method === "POST")
         questionnaires.push({
           ...body,
@@ -1700,6 +1763,162 @@ const server = createServer(async (req, res) => {
       assert.deepEqual(errors, []);
       console.log(
         "PASS: access help shows only the authenticated account email, gives a fixed support link, makes no private project/client reads without membership, supports safe sign-out, and redirects connected accounts to their portal. Phone/desktop fixture checks only.",
+      );
+      return;
+    }
+    if (formRetryMode) {
+      const flagsBefore = JSON.stringify(project);
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      const notes = page.locator("form").filter({
+        has: page.locator('textarea[name="notes"]'),
+      });
+      const input = notes.locator('textarea[name="notes"]');
+      const draft =
+        "Fictional unsaved project notes.\nKeep this second line when the save fails.";
+      await expect(input).toHaveValue("Original fictional note");
+      await input.fill(draft);
+      await notes
+        .getByRole("button", { name: "Save internal notes", exact: true })
+        .click();
+      await expect(notes.getByRole("status")).toContainText(
+        "The change could not be saved",
+      );
+      await expect(input).toHaveValue(draft);
+      assert.equal(retryNoteBody, "Original fictional note");
+      await page.route(
+        `http://127.0.0.1:${appPort}/workspace`,
+        (route) =>
+          route.request().method() === "POST"
+            ? route.abort("failed")
+            : route.continue(),
+        { times: 1 },
+      );
+      await notes
+        .getByRole("button", { name: "Save internal notes", exact: true })
+        .click();
+      await expect(notes.getByRole("status")).toContainText(
+        "The request failed. Please try again.",
+      );
+      await expect(input).toHaveValue(draft);
+      assert.equal(retryNoteWrites.length, 1);
+      await captureUi("form-retry-notes", notes);
+      await notes
+        .getByRole("button", { name: "Save internal notes", exact: true })
+        .click();
+      await expect.poll(() => retryNoteWrites.length).toBe(2);
+      await expect(input).toBeDisabled();
+      await expect(notes.getByRole("status")).toHaveCount(0);
+      await expect(
+        notes.getByRole("button", { name: "Saving…", exact: true }),
+      ).toBeDisabled();
+      await notes.evaluate((form) => form.requestSubmit());
+      releaseRetrySave();
+      await expect(notes.getByRole("status")).toHaveText("Saved.");
+      await expect(input).toBeEnabled();
+      await expect(input).toHaveValue(draft);
+      assert.equal(
+        retryNoteWrites.length,
+        2,
+        "a pending form cannot start another save",
+      );
+      assert.equal(retryNoteBody.replaceAll("\r\n", "\n"), draft);
+      await page.reload();
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await expect(input).toHaveValue(draft);
+      const upload = page.locator(".project-file-library .library-upload");
+      await upload.locator("summary").click();
+      const file = upload.getByLabel("File", { exact: true });
+      await upload
+        .locator('select[name="category"]')
+        .selectOption("presentation");
+      await file.setInputFiles({
+        name: "Fictional retry.pdf",
+        mimeType: "application/pdf",
+        buffer: Buffer.from("%PDF-1.4 Fictional retry document\n%%EOF"),
+      });
+      await upload
+        .getByRole("button", { name: "Upload privately", exact: true })
+        .click();
+      await expect(upload.getByRole("status")).toContainText(
+        "The change could not be saved",
+      );
+      await expect(upload.locator('select[name="category"]')).toHaveValue(
+        "presentation",
+      );
+      assert.equal(
+        await file.evaluate((el) => el.files[0]?.name),
+        "Fictional retry.pdf",
+      );
+      assert.equal(retryStorageWrites, 0);
+      await upload
+        .getByRole("button", { name: "Upload privately", exact: true })
+        .click();
+      await expect(upload.getByRole("status")).toContainText(
+        "Uploaded privately",
+      );
+      await expect(upload.locator('select[name="category"]')).toHaveValue(
+        "document",
+      );
+      assert.equal(
+        await file.evaluate((el) => el.files.length),
+        0,
+        "successful uploads still clear the file picker",
+      );
+      assert.equal(retryStorageWrites, 1);
+      assert.equal(retryDocumentWrites.length, 2);
+      assert.equal(documents.at(-1).name, "Fictional retry.pdf");
+      assert.equal(documents.at(-1).category, "presentation");
+      assert.equal(documents.at(-1).published, false);
+      assert.equal(JSON.stringify(project), flagsBefore);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: rejected and interrupted saves retain note drafts; pending controls prevent a second submission; retry persists through reload; failed uploads retain their selected file/category and success clears them. Fictional records only.",
+      );
+      return;
+    }
+    if (questionnaireRetryMode) {
+      const flagsBefore = JSON.stringify(project);
+      const discovery = page.locator(".questionnaire").first();
+      await discovery.locator("summary").click();
+      const fields = discovery.locator("textarea");
+      const answers = [];
+      for (const [index, field] of (await fields.all()).entries()) {
+        const answer = `Fictional answer ${index + 1}.\nKeep my detailed response.`;
+        answers.push(answer);
+        await field.fill(answer);
+      }
+      await discovery
+        .getByRole("button", { name: "Send my answers", exact: true })
+        .click();
+      await expect(discovery.getByRole("status")).toContainText(
+        "The change could not be saved",
+      );
+      for (const [index, field] of (await fields.all()).entries())
+        await expect(field).toHaveValue(answers[index]);
+      assert.equal(questionnaires.length, 0);
+      await captureUi("questionnaire-retry");
+      await discovery
+        .getByRole("button", { name: "Send my answers", exact: true })
+        .click();
+      await discovery
+        .locator("summary")
+        .filter({ hasText: "Submitted" })
+        .waitFor();
+      assert.equal(questionnaires.length, 1);
+      assert.equal(retryQuestionnaireWrites.length, 2);
+      assert.deepEqual(
+        retryQuestionnaireWrites[0],
+        retryQuestionnaireWrites[1],
+      );
+      await page.reload();
+      await discovery
+        .locator("summary")
+        .filter({ hasText: "Submitted" })
+        .waitFor();
+      assert.equal(JSON.stringify(project), flagsBefore);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: a rejected questionnaire retains every multiline answer, retry saves one submission with the same answers, and the submitted state survives reload without changing release flags. Fictional records only.",
       );
       return;
     }
@@ -2221,6 +2440,12 @@ const server = createServer(async (req, res) => {
     }
     if (secureUnconfiguredMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await expect(page.locator("#client-assets")).toContainText(
+        "New file uploads are temporarily unavailable",
+      );
+      await expect(page.locator("#client-assets")).not.toContainText(
+        "up to 3 MB",
+      );
       const preparation = page.locator("#handover-preparation");
       await preparation.locator("summary").first().click();
       await expect(preparation).toContainText(
@@ -2240,6 +2465,12 @@ const server = createServer(async (req, res) => {
     }
     if (secureMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await expect(page.locator("#client-assets")).toContainText(
+        "Illustrator or ZIP files up to 25 MB",
+      );
+      await expect(page.locator("#client-assets")).not.toContainText(
+        "up to 3 MB",
+      );
       const preparation = page.locator("#handover-preparation");
       await preparation.locator("summary").first().click();
       await expect(preparation).toContainText(
@@ -3206,11 +3437,25 @@ const server = createServer(async (req, res) => {
       await page
         .getByLabel("Message", { exact: true })
         .fill("I would like to proceed after our call");
+      await page.locator('select[name="decision"]').selectOption("question");
+      await page
+        .getByRole("button", { name: "Send my proposal response" })
+        .click();
+      await expect(
+        page.locator(".connected-form").getByRole("alert"),
+      ).toContainText("Your response could not be saved");
+      await expect(page.getByLabel("Message", { exact: true })).toHaveValue(
+        "I would like to proceed after our call",
+      );
+      await expect(page.locator('select[name="decision"]')).toHaveValue(
+        "question",
+      );
+      assert.equal(proposalResponses.length, 0);
       await page
         .getByRole("button", { name: "Send my proposal response" })
         .click();
       await page
-        .getByText(/Your proposal response has been sent to me/)
+        .getByText(/Your proposal response has been sent\. Contact me/)
         .waitFor();
       assert.equal(proposalResponses.length, 1);
       assert.equal(project.contract_signed, false);
@@ -3226,6 +3471,36 @@ const server = createServer(async (req, res) => {
         0,
       );
       await captureUi("agreement");
+      const signedFile = page.getByLabel("Signed or completed PDF");
+      await signedFile.setInputFiles({
+        name: "Fictional prospect signed.pdf",
+        mimeType: "application/pdf",
+        buffer: Buffer.from("%PDF-1.4\nFictional prospect return\n%%EOF"),
+      });
+      await page
+        .getByRole("button", { name: "Send signed PDF for review" })
+        .click();
+      await expect(
+        page.locator(".connected-form").getByRole("alert"),
+      ).toContainText("The change could not be saved");
+      assert.equal(
+        await signedFile.evaluate((input) => input.files[0]?.name),
+        "Fictional prospect signed.pdf",
+      );
+      assert.equal(assets.length, 0);
+      await page
+        .getByRole("button", { name: "Send signed PDF for review" })
+        .click();
+      await page
+        .getByText(/Your completed PDF has been sent for my review/)
+        .waitFor();
+      assert.equal(
+        assets[0].contract_document_id,
+        documents.find((d) => d.document_role === "Contract").id,
+      );
+      assert.equal(await signedFile.evaluate((input) => input.files.length), 0);
+      assert.equal(project.contract_signed, false);
+      assert.equal(project.deposit_paid, false);
       prospective.enquiry_status = "closed";
       await page.goto(`http://127.0.0.1:${appPort}/welcome`);
       await page
@@ -3587,6 +3862,12 @@ const server = createServer(async (req, res) => {
         .filter({ hasText: "Choose a completed PDF up to 3 MB." })
         .waitFor();
       assert.equal(assets.length, 0);
+      assert.equal(
+        await page
+          .getByLabel("Signed or completed PDF")
+          .evaluate((input) => input.files[0]?.name),
+        "Invalid.pdf",
+      );
       const bytes = Buffer.from(
         "%PDF-1.4\nFictional Acrobat completed contract; keep signed bytes unchanged\n%%EOF",
       );
@@ -3595,6 +3876,19 @@ const server = createServer(async (req, res) => {
         mimeType: "application/pdf",
         buffer: bytes,
       });
+      await page
+        .getByRole("button", { name: "Send signed PDF for review" })
+        .click();
+      await expect(
+        page.locator(".connected-form").getByRole("alert"),
+      ).toContainText("The change could not be saved");
+      assert.equal(
+        await page
+          .getByLabel("Signed or completed PDF")
+          .evaluate((input) => input.files[0]?.name),
+        "Signed agreement.pdf",
+      );
+      assert.equal(assets.length, 0);
       await page
         .getByRole("button", { name: "Send signed PDF for review" })
         .click();

@@ -1,5 +1,13 @@
 # Changelog
 
+## 6 November 2026 — form reliability and final workflow review
+
+- Reproduced and fixed discarded drafts after rejected saves. A shared hook now resets connected business forms, prospective responses and restricted signed-PDF returns only after confirmed success; failed/interrupted submissions keep existing inputs/files for retry.
+- Lock pending controls, suppress a second pending submission and hide stale result messages while saving. Preserve successful creation/upload reset and saved-edit refresh behaviour without new browser storage or automatic retries.
+- Corrected client asset guidance for legacy 3 MB, configured secure 25 MB and unavailable uploads. Kept existing file checks, permissions, publication and release verification intact.
+- Corrected setup/security/launch documents that still described implemented features or owner-confirmed setup as missing. No SQL, hosted configuration, real client changes, new scanner or purchases.
+- Validation: all 124 automated tests, strict TypeScript, production build, formatting and 29 fictional browser modes passed. Coverage includes rejected/interrupted notes, questionnaire/proposal/PDF retries, pending controls, successful creation/verification, all three templates, legacy/secure/unavailable uploads, accounts/invitations, restricted views, previews/archives, diagnostics, file libraries and Overview charts/deadlines. Production demo/privacy/protected-route smoke checks also passed. No unresolved local check failure remained at handover; hosted acceptance remains separate.
+
 ## 6 November 2026 — visual owner Overview
 
 - Moved totals and charts to the top of the Overview and applied dark ABA panels with purple/lime graph accents, keeping existing attention/deadline tools below.

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
+import { useSavedFormReset } from "./use-saved-form-reset";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PasswordForm } from "./auth-forms";
@@ -11,14 +12,20 @@ function ReturnContract({ id }: { id: string }) {
   const [result, setResult] = useState<Result | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
+  const { formRef, onReset, resetAfterSave } = useSavedFormReset();
   return (
     <form
+      ref={formRef}
+      onReset={onReset}
+      aria-busy={pending}
       className="connected-form"
-      action={(form) =>
+      action={(form) => {
+        if (pending) return;
         start(async () => {
           try {
             const r = await uploadSignedContract(form);
             setResult(r);
+            if (r.ok) resetAfterSave();
             if (r.ok || r.refresh) router.refresh();
           } catch {
             setResult({
@@ -26,13 +33,19 @@ function ReturnContract({ id }: { id: string }) {
               message: "Upload failed. Please try again.",
             });
           }
-        })
-      }
+        });
+      }}
     >
       <input type="hidden" name="documentId" value={id} />
       <label>
         Signed or completed PDF
-        <input name="file" type="file" accept="application/pdf" required />
+        <input
+          name="file"
+          type="file"
+          accept="application/pdf"
+          required
+          disabled={pending}
+        />
       </label>
       <p>
         Save your completed copy from Acrobat, then upload it here. PDF only, up
@@ -41,7 +54,9 @@ function ReturnContract({ id }: { id: string }) {
       <button className="primary" disabled={pending}>
         {pending ? "Uploading…" : "Send signed PDF for review"}
       </button>
-      {result && <p role={result.ok ? "status" : "alert"}>{result.message}</p>}
+      {result && !pending && (
+        <p role={result.ok ? "status" : "alert"}>{result.message}</p>
+      )}
     </form>
   );
 }

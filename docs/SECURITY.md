@@ -2,26 +2,26 @@
 
 ## Current boundary
 
-Latest review: [PRIVACY-REVIEW.md](PRIVACY-REVIEW.md), 2 November 2026. Alex reports the live journey, password recovery, MFA and backup restoration completed. These owner-reported results supersede earlier pending notes for those items; branch-specific isolation/lifecycle checks and privacy/scanner decisions remain separate.
+Latest development review: 6 November 2026; privacy inventory in [PRIVACY-REVIEW.md](PRIVACY-REVIEW.md). Alex reports the live journey, password recovery, MFA and backup restoration completed. These owner-reported results supersede earlier pending notes for those items; branch-specific isolation/lifecycle checks and privacy/scanner decisions remain separate.
 
 The `/demo` route uses fictional localStorage records. The connected workspace `/workspace` and `/portal` uses verified Supabase identities and database row-level policies on every request. Nothing from the demo is automatically imported. Protected UI state never acts as an access check. No live client data is authorised until hosted acceptance testing is complete.
 
 ## Data controls implemented
 
 - Admin role is explicitly provisioned; users cannot assign roles or client membership.
-- Client account assignment is accepted from a pending Supabase Auth user ID; invitations require a signed contract and recorded deposit.
-- Contract/deposit requirements apply to every client project read, questionnaire, document, feedback and storage access.
+- Client account assignment uses the saved email and a scoped live invitation. Full creative-project access requires a signed contract and recorded deposit. The explicit prospective/contract-only exceptions below permit selected early documents without unlocking the full project.
+- Full project records, questionnaires, creative feedback and general project files/Storage require both onboarding checks. Early document/return exceptions remain tied to the owner's released phase, matching project/stage/document and invited account.
 - Internal notes are a separate admin-only table; they are never loaded by client pages.
 - Hidden milestones, unpublished documents and other clients' records are filtered by PostgreSQL policies, including direct API access.
 - Private files use opaque paths and short-lived signed download URLs with attachment disposition. Final files additionally require final payment and an owner-verified final approval.
 - Server actions validate input, re-check identity/role and rely on Next.js same-origin action protections. Supabase limits/rate controls need configuring before launch.
 - Cookies are HTTP-only, SameSite=Lax and Secure in production. Proxy refreshes sessions; private responses are not cached.
 - Database triggers create non-client-writable audit records for significant changes. Audit events record actor/entity/action without copying private record contents. Internal note contents are never logged.
-- Service credentials are confined to the server-only invitation helper; normal operations never use service-role bypass.
+- Service credentials are confined to documented server-only invitation, diagnostic, verified Tally intake and optional upload-security/scoped-cleanup helpers. Ordinary project reads/writes/downloads use the caller's session and RLS; the narrowly scoped exceptions are described below and in SECURE-UPLOADS.md.
 
 ## Remaining review
 
-This is not a claim of GDPR compliance. Alex is the data controller; establish lawful basis, privacy notices, processor agreements and transfer safeguards with Supabase/Vercel/email providers. Choose and document retention periods, subject-access/export and deletion handling; audit/feedback foreign keys require a deliberate deletion process. Define incident handling, access reviews, backups/restore and owner MFA enforcement. Do not collect unnecessary sensitive information in free-text answers.
+This is not a claim of GDPR compliance. Alex is the data controller; confirm lawful basis, processor agreements, actual data locations and transfer safeguards with Supabase/Vercel/email providers. The public privacy notice is implemented; operational retention periods, subject-access/removal handling, incident response and provider log/rate-limit settings still need confirmation. Owner MFA/recovery and backup restoration are owner-reported complete; keep their recovery records securely and verify the actual backup scope. Do not collect unnecessary sensitive information in free-text answers.
 
 New 3 MB uploads check the filename extension, reported MIME type and recognised binary signature before creating metadata or writing to Storage. This rejects common disguised files; it is not full file parsing or malware scanning. Direct Storage clients still rely on deployed bucket/RLS policies. Existing files are not rechecked or given invented scan history. All files download as attachments; add malware scanning/retention limits before real file exchange. Signed URLs are bearer links until their 60-second expiry. Supabase email links and invitations are sensitive credentials; never log or publish them. Production logs and provider logs need a redaction/retention review.
 
@@ -50,7 +50,11 @@ Migration 202610280007 adds a scoped prepare/finish workflow. Exact-name confirm
 008 scopes prospective project metadata through a minimal DTO and explicit released document bindings; it does not broaden full projects/stages/briefs/financial tables. Prospect configurations override legacy early-contract permissions. Proposal responses record non-contractual intent and cannot alter payment/contract flags. 009 authenticates inbound Tally bodies with HMAC before a server-only fixed-table intake. Private enquiry content is removed with its converted client; minimal non-contact webhook receipt IDs persist to prevent replay recreation. See POTENTIAL-CLIENTS-AND-TALLY.md for precise boundaries and hosted checks.
 
 ### Invitation/account lifecycle update
-Migration 010 binds invitations to the saved normalized client email and rejects owner/other-client profiles or live invitations. Acceptance requires a confirmed email, active eligibility and an unexpired/unrevoked pending invitation, under the authenticated user ID. Owner statuses/lookups remain admin/MFA-only; no general Auth directory or browser-selected target email is exposed. Existing accounts receive only an ordinary login URL and must authenticate themselves. Generated invite tokens are limited to new unconfirmed matching accounts and are returned only after the SQL binding succeeds. Invitation failures never delete or reset Auth users. Revocation removes profiles and retains invitation/audit history; client deletion can still remove its dependent invitation rows. Password recovery uses Supabase, uniform anonymous responses and a verified Auth session; owner password changes still require MFA. Callback success targets the configured origin and accepts only the fixed reset-password next destination. Hosted email, MFA and isolation acceptance remains outstanding.
+Migration 010 binds invitations to the saved normalized client email and rejects owner/other-client profiles or live invitations. Acceptance requires a confirmed email, active eligibility and an unexpired/unrevoked pending invitation, under the authenticated user ID. Owner statuses/lookups remain admin/MFA-only; no general Auth directory or browser-selected target email is exposed. Existing accounts receive only an ordinary login URL and must authenticate themselves. Generated invite tokens are limited to new unconfirmed matching accounts and are returned only after the SQL binding succeeds. Invitation failures never delete or reset Auth users. Revocation removes profiles and retains invitation/audit history; client deletion can still remove its dependent invitation rows. Password recovery uses Supabase, uniform anonymous responses and a verified Auth session; owner password changes still require MFA. Callback success targets the configured origin and accepts only the fixed reset-password next destination. Alex reports the normal live journey/recovery/MFA complete; the newer expired/revoked invitation and lifecycle branches still require their own hosted acceptance.
+
+### Unsaved business forms
+
+Business drafts and selected upload files remain in the current page after a rejected/interrupted action. A shared reset hook prevents React's implicit reset; only a confirmed successful result permits the normal reset/refresh. Pending controls prevent edits and repeated submissions while their captured data is being saved. No draft contents are copied into localStorage, sessionStorage, logs or an external service. Navigation/reload can still discard unsaved entries; this is not persistent autosave. Password/MFA and destructive-confirmation forms retain their existing handling. See FORM-RELIABILITY.md for local reproduction and coverage.
 
 ## Lifecycle and optional quarantined upload update
 

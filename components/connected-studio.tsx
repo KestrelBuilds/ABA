@@ -1,5 +1,6 @@
 "use client";
 import ProjectFinder from "./project-finder";
+import { useSavedFormReset } from "./use-saved-form-reset";
 import {
   defaultProjectFilters,
   findProjects,
@@ -99,17 +100,23 @@ function ActionForm({
   const preview = useContext(PreviewContext);
   const [pending, start] = useTransition();
   const [result, setResult] = useState<Result | null>(null);
+  const { formRef, onReset, resetAfterSave } = useSavedFormReset();
   const router = useRouter();
   return (
     <form
+      ref={formRef}
+      aria-busy={pending}
       className={"connected-form " + className}
-      action={(data) =>
+      onReset={onReset}
+      action={(data) => {
+        if (preview || pending) return;
+        setResult(null);
         start(async () => {
-          if (preview) return;
           try {
             const r = await action(data);
             setResult(r);
             if (r.ok) {
+              resetAfterSave();
               onSuccess?.();
               router.refresh();
             }
@@ -119,16 +126,16 @@ function ActionForm({
               message: "The request failed. Please try again.",
             });
           }
-        })
-      }
+        });
+      }}
     >
-      <fieldset disabled={preview} className="action-fields">
+      <fieldset disabled={preview || pending} className="action-fields">
         {children}
         <button type="submit" className="primary" disabled={pending}>
           {pending ? "Saving…" : label}
         </button>
       </fieldset>
-      {result && (
+      {result && !pending && (
         <div
           className={result.ok ? "form-result" : "form-result error"}
           role="status"

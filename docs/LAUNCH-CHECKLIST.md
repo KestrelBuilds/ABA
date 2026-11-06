@@ -1,6 +1,6 @@
 # ABA Studio: getting ready for real clients
 
-Updated 2 November 2026. The app is already online at https://aba-iota.vercel.app. This checklist concerns using it with real clients, not simply publishing a website.
+Updated 6 November 2026. The app is already online at https://aba-iota.vercel.app. This checklist concerns using it with real clients, not simply publishing a website. The outcome of the latest individual deployment still needs checking.
 
 **Core portal development is implemented; real-client launch is not yet cleared.** The earlier 80% figure was only a planning estimate. Track the remaining hosted acceptance, recovery/privacy and scanner prerequisites in [GO-LIVE-STATUS.md](GO-LIVE-STATUS.md); a percentage is not a security sign-off.
 
@@ -18,6 +18,7 @@ Updated 2 November 2026. The app is already online at https://aba-iota.vercel.ap
 - Explicit project archive retain/suspend/restore, private dated verification evidence and separate combined-project final approvals, 012 activation confirmed by Alex; hosted behaviour checks remain pending.
 - Optional larger/source uploads with quarantine and scanner adapter; 013 is withheld until an approved real scanner is configured/tested.
 - Owner Overview charts and clearer brand-colour panels, verified locally with fictional records; hosted review remains pending.
+- Editable presentation review dates, visual value/phase/payment/progress charts and retained form entries after rejected/interrupted saves; successful saves still refresh normally.
 
 Alex still designs proposals, contracts, invoices and goodbye PDFs in Illustrator. No automatic signing, automatic signature/payment verification, live payments, automatic invitations or Framer launch/transfer is implied.
 

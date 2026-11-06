@@ -1,6 +1,6 @@
 # Connect the private workspace
 
-Phase 2 code is implemented but a hosted Supabase connection is not yet configured. Local PostgreSQL policy tests do not prove the hosted authentication, email or storage service is working. Use fictional information until the checklist below passes.
+This is a setup reference for a new environment, not an instruction to rebuild Alex's existing portal. As of 6 November 2026, Alex has confirmed the hosted normal client journey, recovery, MFA and backup restoration; migrations 010–012 are confirmed applied. Do not rerun applied SQL. The coding workspace has no hosted Supabase credentials and cannot independently repeat those checks. Local PostgreSQL/browser tests remain separate from hosted acceptance. Current remaining launch gates are in [GO-LIVE-STATUS.md](GO-LIVE-STATUS.md).
 
 ## 1. Create your development database
 
@@ -41,17 +41,17 @@ This explicit step prevents public sign-ups or editable profile metadata from be
 
 In Supabase Auth URL settings, set the Site URL to `APP_ORIGIN` and allow the exact `APP_ORIGIN/auth/callback` redirect. Avoid broad redirect wildcards. Use the same browser to request and open passwordless links (PKCE verification). Password login works for accounts with a password. Invited clients may set a password from My account after accepting an invitation.
 
-Configure verified email delivery/SMTP before sending to clients; Supabase's default email service has recipient and rate restrictions. Enable suitable provider rate limits and review CAPTCHA/MFA requirements before real launch. Secure the owner account with provider-supported MFA before production; app-level MFA enforcement and account recovery need a further pass.
+Configure verified email delivery/SMTP before sending to clients; Supabase's default email service has recipient and rate restrictions. Review the actual provider rate limits and abuse protection. Owner TOTP enrollment, assurance checks and password recovery are implemented; database enforcement requires the existing 003 migration. Alex reports their hosted normal flows complete. Keep provider recovery instructions securely outside the repository; never remove a working factor just to repeat setup.
 
 ## 5. Test a fictional client journey
 
 1. Sign in at `/login`; your owner account should open `/workspace`.
 2. Create two fictional clients with email addresses you control, and a Brand Identity project for one and Website Design for the other. Also create a combined project to verify separate workstreams.
 3. In project controls, mark contract signed and deposit received for each test project. These are manual records, not an e-signature or payment integration.
-4. In Clients, create a private invitation. This creates a Supabase invite and displays a sensitive, single-use link. No email is sent automatically. Copy it privately into a separate test browser/session. Do not include it in screenshots or public messages. Expired or already-existing Auth accounts need management in Supabase; automatic resend/reinvite is not implemented.
+4. In Clients, create a private invitation. New matching accounts receive a sensitive, single-use provider link; existing matching accounts receive an ordinary sign-in route and authenticate themselves. No invitation email is sent automatically. Share privately into a separate test browser/session; never screenshot or publish a token. Expired/revoked permissions can be renewed through the current owner invitation controls; never reset/delete an account to make an invitation work. See CLIENT-INVITATIONS.md for 010 compatibility and expiry rules.
 5. Accept the invitation. Client role and ownership come from the database's pending invitation, never from a URL client ID or editable user metadata.
 6. Complete the appropriate discovery questionnaire. Website-only projects must not show the logo exercise. Responses are immutable after submission; ask Alex for corrections. Structured editing/versioning is a follow-up.
-7. As owner, upload a fictional PDF/image; publish it. Check the client can download it, comment, request revisions and record a creative approval. Uploads are PDF/PNG/JPEG/WebP, up to 3 MB. Clients currently provide attachments outside ABA; client-side uploads are a follow-up.
+7. As owner, upload a fictional PDF/image; publish it. Check the client can download it, comment, request revisions and record a creative approval. Client asset/stage uploads are implemented behind the existing project-management upgrade. Legacy uploads allow PDF/PNG/JPEG/WebP up to 3 MB with binary-signature validation. Optional 013 permits larger/source files only with approved, configured security checks; do not apply it before the scanner prerequisites in SECURE-UPLOADS.md. Contract returns remain PDF-only up to 3 MB.
 8. A published final file must stay inaccessible until both final payment and final approval are verified in owner controls. Creative feedback does not automatically mark the project approved. The owner explicitly confirms final approval after checking all workstreams.
 9. Revoke the client's portal access from Clients. Open sessions must lose data access. Previously issued signed download URLs expire within 60 seconds. This feature revokes all accounts attached to that client.
 

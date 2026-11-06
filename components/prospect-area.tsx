@@ -1,5 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
+import { useSavedFormReset } from "./use-saved-form-reset";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -30,16 +31,22 @@ function ProspectForm({
   const [result, setResult] = useState<Result | null>(null),
     [pending, start] = useTransition();
   const router = useRouter();
+  const { formRef, onReset, resetAfterSave } = useSavedFormReset();
   return (
     <form
+      ref={formRef}
+      onReset={onReset}
+      aria-busy={pending}
       className="connected-form"
-      action={(form) =>
+      action={(form) => {
+        if (pending) return;
         start(async () => {
           try {
             const value = await (
               kind === "proposal" ? respondToProposal : uploadSignedContract
             )(form);
             setResult(value);
+            if (value.ok) resetAfterSave();
             if (value.ok || value.refresh) router.refresh();
           } catch {
             setResult({
@@ -47,8 +54,8 @@ function ProspectForm({
               message: "Your response could not be sent. Please try again.",
             });
           }
-        })
-      }
+        });
+      }}
     >
       <fieldset disabled={pending} className="action-fields">
         <input name="documentId" type="hidden" value={documentId} />
@@ -97,7 +104,7 @@ function ProspectForm({
               ? "Send my proposal response"
               : "Send signed PDF for review"}
         </button>
-        {result && (
+        {result && !pending && (
           <p
             className={result.ok ? "form-result" : "form-result error"}
             role={result.ok ? "status" : "alert"}

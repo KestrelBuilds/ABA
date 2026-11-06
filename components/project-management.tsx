@@ -206,8 +206,11 @@ export default function ProjectManagement({
       <section className="panel" id="client-assets">
         <h2>Content & asset uploads</h2>
         <p>
-          Share approved PDFs and PNG, JPEG or WebP images up to 3 MB each. ZIP,
-          design-source and font files need an agreed sharing method for now.
+          {data.fileSecurityReady
+            ? data.secureUploadsConfigured
+              ? "Share PDF, PNG, JPEG, WebP, Illustrator or ZIP files up to 25 MB each. Files stay unavailable until their security checks pass."
+              : "New file uploads are temporarily unavailable. Existing permitted downloads remain available."
+            : "Share approved PDFs and PNG, JPEG or WebP images up to 3 MB each. ZIP, design-source and font files need an agreed sharing method for now."}{" "}
           Please include licence information where relevant and never upload
           passwords.
         </p>
