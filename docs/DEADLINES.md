@@ -18,8 +18,20 @@ Calendar calculations use date-only values and the Europe/London current day, in
 
 Choose a card to open its existing project and relevant section: journey for an estimate, Client actions for a task, or the presentation's own stage/file library for a review. The existing project-opening handler resets stale finder filters and preserves the correct project target. No item is automatically shared, rescheduled, approved or marked paid.
 
+## Changing dates
+
+Project estimates remain editable under **Project controls → Edit project details**. Client-action dates remain editable under **Client actions → Edit action**.
+
+For a presentation, open its journey stage or **All project files**, then choose **Change review date**. Save a new feedback date, or leave the field empty to clear it. The saved date is shown in both locations and in the client view. Agree changes directly with the client; saving sends no notification. A shared, accessible presentation awaiting a response moves to its new date in the owner planner, or leaves the planner when its date is cleared. Private/locked files remain subject to the same visibility rules.
+
+Changing a date keeps the same file, version, publication state and feedback. If that version already has an approval or revision-request response, the date does not reopen its completed review in the planner. Upload a new document for a new design revision. Project-level final approval/payment remain separate explicit checks.
+
+The editor requires the existing project-management capability (migration 004); no new migration is needed. Every submission authenticates the owner, including existing MFA enforcement, before checking that capability. It validates the document UUID and real date/empty value, then updates only `review_due` on a matching presentation through the normal authenticated database client. Ordinary documents/final deliverables cannot be targeted through this action. Database RLS and existing audit/version/deletion guards remain authoritative; it uses no service credential.
+
 ## Privacy and validation
 
-This is an owner-only derived view of records already loaded under the current account's permissions. It performs no extra API reads/writes, creates no stored deadline table or browser-storage key, and sends no reminders or external messages. It does not change client visibility or substitute for server/RLS checks.
+The planning panel is an owner-only derived view of records already loaded under the current account's permissions. The panel performs no extra API reads/writes, creates no stored deadline table or browser-storage key, and sends no reminders or external messages. It does not change client visibility or substitute for server/RLS checks. The separate explicit date-edit action uses the existing document record and permissions described above.
 
 Unit tests cover range boundaries, invalid/leap dates, UK midnight and BST changes, role/privacy exclusion, completed responses and immutable source data. `node tests/client-journey-browser.cjs --deadlines` uses fictional projects in a non-UK browser timezone to exercise filters, overdue/show-all controls, project/task/stage navigation, removal after an explicit task/review response and client-preview exclusion at phone/desktop widths. This is local UI evidence, not hosted launch acceptance.
+
+`tests/presentation-review.test.ts` uses the existing SQL to verify owner date changes/clearing, denied same-/other-client writes, unchanged feedback/version/project flags and normal audit entries. `node tests/client-journey-browser.cjs --review-dates` checks both editors, reload persistence, planner updates, invalid/forged submissions, repeated owner/capability checks, save failures, preserved completed responses and read-only client display at phone/desktop widths. No real records, email or hosted acceptance is involved.

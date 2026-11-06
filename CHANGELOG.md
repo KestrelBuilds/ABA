@@ -1,5 +1,12 @@
 # Changelog
 
+## 6 November 2026 — editable presentation review dates
+
+- Added shared review-date display to presentation stage files and the project library, with owner controls to reschedule or clear the date without replacing the file. Saved dates refresh the existing planner and remain read-only for clients/previews.
+- Preserve the chosen date after a rejected save. Repeat owner/MFA/capability checks at submission, validate real dates and scope the update to a presentation's `review_due` only; failures do not claim a save.
+- Keep existing responses, immutable reviewed versions, publication and payment/approval checks intact. An answered version remains absent from the planner after rescheduling. No new SQL, services or notifications.
+- Validation: all 121 automated tests, strict TypeScript, production build and formatting passed. Fictional browser checks covered both editors, date clearing/reload, planner changes, invalid/forged inputs, permission/capability/save failures, retained retry values, immutable responses and client read-only display at phone/desktop widths. Existing deadline/client-file workflows and production demo/privacy/protected-route smoke checks also passed. Hosted acceptance remains separate.
+
 ## 3 November 2026 — owner dates and deadlines
 
 - Added an owner Overview planning panel for existing project estimates, open client actions and accessible shared-presentation review dates, with 7/30-day, overdue and all-date views.

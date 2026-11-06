@@ -1,5 +1,9 @@
 # ABA Studio roadmap
 
+## 6 November — editable presentation review dates
+
+Implemented shared review-date display and owner editing in journey-stage files and the project file library. Dates can be rescheduled or cleared without replacing a PDF. The action repeats owner/MFA and existing capability checks, validates real calendar dates and updates only a presentation's review date under ordinary RLS. Client views remain read-only; existing version/feedback/release records and completed-review exclusion remain intact. Saved changes refresh the existing deadline view. No new SQL, notifications or services. See docs/DEADLINES.md.
+
 ## 3 November — owner deadline planning
 
 Implemented a Dates & deadlines panel in the connected owner Overview using existing project estimates, open client-action dates and accessible presentation review dates. Includes UK 7/30-day/overdue/all ranges, stable date order, show-all and project-section shortcuts through the existing filter-resetting navigation. Archived/deleting/closed pre-onboarding records and completed tasks/reviews are excluded; comments do not imply completed reviews or final approval. The view is absent from client/preview screens and does not write records, schedule reminders, add browser storage or require SQL. See docs/DEADLINES.md.

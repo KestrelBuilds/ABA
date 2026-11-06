@@ -8,7 +8,12 @@ const { randomUUID } = require("node:crypto");
 const fixturePort = 35431,
   appPort = 35432;
 const projectFinderMode = process.argv.includes("--project-finder");
-const deadlinesMode = process.argv.includes("--deadlines");
+const reviewDatesMode = process.argv.includes("--review-dates");
+const deadlinesMode = process.argv.includes("--deadlines") || reviewDatesMode;
+const reviewDateWrites = [];
+let reviewDateOwner = true,
+  reviewDatesReady = true,
+  failReviewDateSave = false;
 const deadlineClock = new Date();
 const deadlineToday = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Europe/London",
@@ -1122,15 +1127,17 @@ const server = createServer(async (req, res) => {
     }
     if (table === "project_management_ready")
       return json(
-        secureMode ||
-          deadlinesMode ||
-          lifecycleMode ||
-          managementMode ||
-          stageMode ||
-          contractMode ||
-          contractOwnerMode ||
-          workspaceHelpMode ||
-          fileLibraryMode,
+        reviewDatesMode
+          ? reviewDatesReady
+          : secureMode ||
+              deadlinesMode ||
+              lifecycleMode ||
+              managementMode ||
+              stageMode ||
+              contractMode ||
+              contractOwnerMode ||
+              workspaceHelpMode ||
+              fileLibraryMode,
       );
     if (table === "complete_client_action") {
       const a = clientActions.find((a) => a.id === body.target);
@@ -1172,8 +1179,14 @@ const server = createServer(async (req, res) => {
           : [
               {
                 id: uid,
-                role: ownerMode ? "admin" : "client",
-                client_id: ownerMode ? null : cid,
+                role:
+                  ownerMode && (!reviewDatesMode || reviewDateOwner)
+                    ? "admin"
+                    : "client",
+                client_id:
+                  ownerMode && (!reviewDatesMode || reviewDateOwner)
+                    ? null
+                    : cid,
               },
             ];
     if (table === "clients")
@@ -1309,6 +1322,21 @@ const server = createServer(async (req, res) => {
         },
       ];
     if (stageMode || verificationMode) documents[0].stage_id = fixtureStageId;
+    if (reviewDatesMode && table === "documents" && req.method === "PATCH") {
+      reviewDateWrites.push({
+        body,
+        id: url.searchParams.get("id"),
+        category: url.searchParams.get("category"),
+      });
+      if (failReviewDateSave)
+        return json({ message: "Fictional save failure" }, 503);
+      for (const d of documents)
+        if (
+          url.searchParams.get("id") === "eq." + d.id &&
+          url.searchParams.get("category") === "eq." + d.category
+        )
+          Object.assign(d, body);
+    }
     if (table === "documents")
       rows =
         workspaceHelpMode || (secureMode && ownerMode)
@@ -1402,6 +1430,14 @@ const server = createServer(async (req, res) => {
     for (const [key, value] of url.searchParams)
       if (value.startsWith("eq."))
         rows = rows.filter((r) => String(r[key]) === value.slice(3));
+    if (
+      reviewDatesMode &&
+      table === "documents" &&
+      req.method === "PATCH" &&
+      rows.length !== 1 &&
+      (req.headers.accept || "").includes("vnd.pgrst.object+json")
+    )
+      return json({ code: "PGRST116", message: "Expected one document" }, 406);
     if ((req.headers.accept || "").includes("vnd.pgrst.object+json"))
       return json(rows[0] ?? null);
     return json(rows, req.method === "POST" ? 201 : 200);
@@ -1592,6 +1628,214 @@ const server = createServer(async (req, res) => {
       assert.deepEqual(errors, []);
       console.log(
         "PASS: access help shows only the authenticated account email, gives a fixed support link, makes no private project/client reads without membership, supports safe sign-out, and redirects connected accounts to their portal. Phone/desktop fixture checks only.",
+      );
+      return;
+    }
+    if (reviewDatesMode) {
+      const flagsBefore = JSON.stringify(project);
+      const documentBefore = { ...documents[0] };
+      const planner = page.getByRole("region", {
+        name: "Dates & deadlines",
+        exact: true,
+      });
+      await planner
+        .getByRole("button", { name: /Fictional presentation.pdf/ })
+        .click();
+      const stage = page.locator("#stage-" + fixtureStageId);
+      const editor = stage.getByRole("group", {
+        name: "Review date for Fictional presentation.pdf",
+        exact: true,
+      });
+      const library = page.locator(".project-file-library");
+      const libraryEditor = library.getByRole("group", {
+        name: "Review date for Fictional presentation.pdf",
+        exact: true,
+      });
+      await expect(editor.locator("time")).toHaveAttribute(
+        "datetime",
+        deadlineDate(2),
+      );
+      await editor.getByText("Change review date", { exact: true }).click();
+      const input = editor.getByLabel("Feedback due date", { exact: true });
+      const save = editor.getByRole("button", {
+        name: "Save review date",
+        exact: true,
+      });
+      await input.fill(deadlineDate(10));
+      await save.click();
+      await expect(editor.locator("time")).toHaveAttribute(
+        "datetime",
+        deadlineDate(10),
+      );
+      await expect(libraryEditor.locator("time")).toHaveAttribute(
+        "datetime",
+        deadlineDate(10),
+      );
+      await expect(input).toHaveValue(deadlineDate(10));
+      assert.deepEqual(documents[0], {
+        ...documentBefore,
+        review_due: deadlineDate(10),
+      });
+      assert.deepEqual(reviewDateWrites[0], {
+        body: { review_due: deadlineDate(10) },
+        id: "eq." + presentation,
+        category: "eq.presentation",
+      });
+      await captureUi("review-date-editor", editor);
+      await page.getByRole("button", { name: "Overview", exact: true }).click();
+      await expect(
+        planner.getByRole("button", { name: /Fictional presentation.pdf/ }),
+      ).toHaveCount(0);
+      await planner
+        .getByLabel("Date range", { exact: true })
+        .selectOption("month");
+      await planner
+        .getByRole("button", { name: /Fictional presentation.pdf/ })
+        .click();
+      await libraryEditor
+        .getByText("Change review date", { exact: true })
+        .click();
+      await libraryEditor
+        .getByLabel("Feedback due date", { exact: true })
+        .fill("");
+      await libraryEditor
+        .getByRole("button", { name: "Save review date", exact: true })
+        .click();
+      await expect(libraryEditor).toContainText("Review date to be agreed.");
+      await expect(editor).toContainText("Review date to be agreed.");
+      assert.equal(documents[0].review_due, null);
+      await page.reload();
+      await expect(
+        planner.getByRole("button", { name: /Fictional presentation.pdf/ }),
+      ).toHaveCount(0);
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await stage.locator("summary").first().click();
+      await editor.getByText("Change review date", { exact: true }).click();
+      await expect(input).toHaveValue("");
+      await editor.locator("form").evaluate((form) => {
+        form.addEventListener(
+          "formdata",
+          (event) => {
+            event.formData.set("review_due", "2027-02-30");
+          },
+          { once: true },
+        );
+      });
+      await save.click();
+      await expect(editor.getByRole("status")).toContainText(
+        "Please check the form fields",
+      );
+      assert.equal(
+        reviewDateWrites.length,
+        2,
+        "invalid calendar date never reaches the database",
+      );
+      await input.fill(deadlineDate(3));
+      reviewDateOwner = false;
+      await save.click();
+      await expect(editor.getByRole("status")).toContainText(
+        "You do not have access",
+      );
+      assert.equal(
+        reviewDateWrites.length,
+        2,
+        "owner check is repeated at submission",
+      );
+      reviewDateOwner = true;
+      reviewDatesReady = false;
+      await save.click();
+      await expect(editor.getByRole("status")).toContainText(
+        "project management SQL upgrade",
+      );
+      assert.equal(
+        reviewDateWrites.length,
+        2,
+        "missing capability never attempts an update",
+      );
+      reviewDatesReady = true;
+      failReviewDateSave = true;
+      await save.click();
+      await expect(editor.getByRole("status")).toContainText(
+        "The change could not be saved",
+      );
+      assert.equal(documents[0].review_due, null);
+      await expect(editor).toContainText("Review date to be agreed.");
+      await expect(input).toHaveValue(deadlineDate(3));
+      failReviewDateSave = false;
+      await editor.locator("form").evaluate((form, value) => {
+        form.addEventListener(
+          "formdata",
+          (event) => {
+            event.formData.set("id", value);
+          },
+          { once: true },
+        );
+      }, finalDoc);
+      await save.click();
+      await expect.poll(() => reviewDateWrites.length).toBe(4);
+      await expect(editor.getByRole("status")).toContainText(
+        "The change could not be saved",
+      );
+      assert.equal(
+        documents[1].review_due,
+        undefined,
+        "a forged non-presentation ID does not receive a date",
+      );
+      feedback.push({
+        id: randomUUID(),
+        document_id: presentation,
+        decision: "approved",
+        body: "Fictional approved version",
+        approver_name: "Jamie Example",
+        reviewed_version: "v2",
+        created_at: new Date().toISOString(),
+      });
+      await save.click();
+      await expect(editor.locator("time")).toHaveAttribute(
+        "datetime",
+        deadlineDate(3),
+      );
+      await expect(editor).toContainText(
+        "This version already has a review response",
+      );
+      const feedbackBefore = JSON.stringify(feedback);
+      await input.fill(deadlineDate(4));
+      await save.click();
+      await expect(editor.locator("time")).toHaveAttribute(
+        "datetime",
+        deadlineDate(4),
+      );
+      assert.equal(JSON.stringify(feedback), feedbackBefore);
+      assert.deepEqual(documents[0], {
+        ...documentBefore,
+        review_due: deadlineDate(4),
+      });
+      assert.equal(JSON.stringify(project), flagsBefore);
+      await page.getByRole("button", { name: "Overview", exact: true }).click();
+      await planner
+        .getByLabel("Date range", { exact: true })
+        .selectOption("all");
+      await expect(
+        planner.getByRole("button", { name: /Fictional presentation.pdf/ }),
+      ).toHaveCount(0);
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await expect(
+        page.getByText("Change review date", { exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        page
+          .getByRole("group", {
+            name: "Review date for Fictional presentation.pdf",
+            exact: true,
+          })
+          .last()
+          .locator("time"),
+      ).toHaveAttribute("datetime", deadlineDate(4));
+      await captureUi("review-date-client");
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: presentation dates can be rescheduled/cleared from stage/library and survive reload; planner updates, invalid dates/forged categories/role changes/missing capability/save failures are rejected, and reviewed versions, feedback, release flags and client read-only dates remain intact. Fictional browser checks only.",
       );
       return;
     }

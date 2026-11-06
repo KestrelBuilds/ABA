@@ -1,5 +1,6 @@
 "use client";
 import SecureUpload from "./secure-upload";
+import PresentationReviewDate from "./presentation-review-date";
 import { FileScanStatus, UploadQueue } from "./upload-status";
 import { fileAvailable } from "@/lib/upload-policy";
 import { useState, type ComponentType, type ReactNode } from "react";
@@ -289,13 +290,14 @@ export default function ProjectFiles({
                         ? "Final deliverable"
                         : "Project document"}
                   {d.version_label ? " · " + d.version_label : ""}
-                  {d.review_due
+                  {d.category !== "presentation" && d.review_due
                     ? " · Review by " +
                       new Date(d.review_due + "T12:00:00").toLocaleDateString(
                         "en-GB",
                       )
                     : ""}
                 </small>
+                <PresentationReviewDate document={d} data={data} Form={Form} />
                 {admin && (
                   <span className="pill library-sharing">
                     {!d.published

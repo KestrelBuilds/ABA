@@ -1,5 +1,6 @@
 "use client";
 import SecureUpload from "./secure-upload";
+import PresentationReviewDate from "./presentation-review-date";
 import { FileScanStatus, UploadQueue } from "./upload-status";
 import { fileAvailable } from "@/lib/upload-policy";
 import type { ComponentType, ReactNode } from "react";
@@ -234,6 +235,7 @@ export default function StageWorkspace({
               </p>
             </div>
           </header>
+          <PresentationReviewDate document={d} data={data} Form={Form} />
           <FileScanStatus file={d} />
           {fileAvailable(d) && (
             <a

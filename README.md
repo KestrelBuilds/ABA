@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts. Phase 1 is an interactive application using **fictional demo data**, with admin management and a client journey preview.
 
+### 6 November — change presentation review dates
+
+Owners can now change or clear a presentation's feedback date from its journey stage or **All project files → Change review date**. Clients see the saved date, and the owner deadline panel reflects it. Existing review responses remain attached to the same version; changing the date does not reopen an answered review or send a notification. Uses the existing project-management upgrade; no new SQL or service. See [the planning guide](docs/DEADLINES.md#changing-dates).
+
 ### 3 November — owner dates and deadlines
 
 **Overview → Dates & deadlines** now combines project estimates, open client tasks and shared presentation review dates. Filter by the next 7/30 days, overdue or all dates, then open the relevant project section. Completed tasks, reviews with an approval/revision response and archived/closed records are excluded as described in [the planning guide](docs/DEADLINES.md). It is owner-only, uses UK calendar dates and sends no notifications. No SQL or new service is required.

@@ -919,6 +919,27 @@ async function managementDb(owner = false) {
     );
   return account;
 }
+export async function savePresentationReviewDate(form: FormData) {
+  return run(async () => {
+    const { db } = await managementDb(true);
+    const id = uuid.parse(form.get("id"));
+    const due = z
+      .union([z.iso.date(), z.literal("")])
+      .parse(form.get("review_due"));
+    checked(
+      (
+        await db
+          .from("documents")
+          .update({ review_due: due || null })
+          .eq("id", id)
+          .eq("category", "presentation")
+          .select("id")
+          .single()
+      ).error,
+    );
+    return due ? "Review date saved." : "Review date cleared.";
+  });
+}
 export async function saveBrief(form: FormData) {
   return run(async () => {
     const { db } = await managementDb(true);
