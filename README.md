@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts. Phase 1 is an interactive application using **fictional demo data**, with admin management and a client journey preview.
 
+### 6 November — visual owner Overview
+
+The connected Overview now leads with totals and a dark ABA chart grid: project-value outlook, project-phase bars, a payment-progress ring and clickable milestone-progress rows. Shared service filters, 6/12-month outlooks, month inspection and project links use current saved records. Values are grouped by estimated completion date; they are not a historical revenue series. Phone layouts and text values accompany the graphs. No SQL or new service. See [Overview chart guidance](docs/OVERVIEW-CHARTS.md).
+
 ### 6 November — change presentation review dates
 
 Owners can now change or clear a presentation's feedback date from its journey stage or **All project files → Change review date**. Clients see the saved date, and the owner deadline panel reflects it. Existing review responses remain attached to the same version; changing the date does not reopen an answered review or send a notification. Uses the existing project-management upgrade; no new SQL or service. See [the planning guide](docs/DEADLINES.md#changing-dates).

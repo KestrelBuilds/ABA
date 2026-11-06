@@ -540,8 +540,6 @@ export default function ConnectedStudio({
             )}
             {admin && view === "Overview" && (
               <>
-                <WorkspaceAttention data={data} onOpen={openAttention} />
-                <WorkspaceDeadlines data={data} onOpen={openProject} />
                 <div className="stats">
                   {[
                     ["Active projects", activeProjects.length],
@@ -576,6 +574,8 @@ export default function ConnectedStudio({
                   data={data}
                   onOpenProject={(id) => openProject(id, "#journey")}
                 />
+                <WorkspaceAttention data={data} onOpen={openAttention} />
+                <WorkspaceDeadlines data={data} onOpen={openProject} />
                 <div className="two-col">
                   <section className="panel">
                     <h2>Current projects</h2>

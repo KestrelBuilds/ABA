@@ -74,5 +74,83 @@ export function workspaceInsights(
     projects,
     phases,
     value: { ...value, outstanding: value.total - value.received },
+    progress: projects.map((project) => {
+      const stages = data.stages.filter((s) => s.project_id === project.id);
+      const completed = stages.filter(
+        (s) => verifiedStageStatus(s, project) === "Completed",
+      ).length;
+      return {
+        project,
+        completed,
+        total: stages.length,
+        percent: stages.length
+          ? Math.round((completed / stages.length) * 100)
+          : 0,
+      };
+    }),
   };
+}
+
+// A schedule of current values by estimated completion, never revenue history.
+export function workspaceOutlook(
+  data: WorkspaceData,
+  filter: InsightFilter,
+  startMonth: string,
+  count: 6 | 12 = 6,
+) {
+  type Month = {
+    month: string;
+    total: number;
+    received: number;
+    projects: DbProject[];
+  };
+  const months: Month[] = [];
+  const empty = { months, outsidePeriod: 0, undated: 0 };
+  if (
+    data.role !== "admin" ||
+    !/^\d{4}-(0[1-9]|1[0-2])$/.test(startMonth) ||
+    ![6, 12].includes(count)
+  )
+    return empty;
+  const first = new Date(startMonth + "-01T12:00:00Z");
+  if (!Number.isFinite(first.getTime())) return empty;
+  for (let i = 0; i < count; i++) {
+    const date = new Date(first);
+    date.setUTCMonth(date.getUTCMonth() + i);
+    if (date.getUTCFullYear() > 9999) return { ...empty, months: [] };
+    months.push({
+      month: date.toISOString().slice(0, 7),
+      total: 0,
+      received: 0,
+      projects: [],
+    });
+  }
+  let outsidePeriod = 0,
+    undated = 0;
+  for (const project of workspaceInsights(data, filter).projects) {
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(project.due)
+      ? new Date(project.due + "T12:00:00Z")
+      : null;
+    if (
+      !date ||
+      !Number.isFinite(date.getTime()) ||
+      date.toISOString().slice(0, 10) !== project.due
+    ) {
+      undated++;
+      continue;
+    }
+    const month = months.find((m) => m.month === project.due.slice(0, 7));
+    if (!month) {
+      outsidePeriod++;
+      continue;
+    }
+    const value = Math.round(Number(project.budget) * 100);
+    const split = splitPayment(value);
+    month.total += value;
+    month.received +=
+      (project.deposit_paid ? split.deposit : 0) +
+      (project.final_paid ? split.final : 0);
+    month.projects.push(project);
+  }
+  return { months, outsidePeriod, undated };
 }

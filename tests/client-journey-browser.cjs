@@ -40,7 +40,8 @@ const secureUnconfiguredMode = process.argv.includes("--secure-unconfigured");
 const secureMode =
   process.argv.includes("--secure-uploads") || secureUnconfiguredMode;
 const lifecycleMode = process.argv.includes("--lifecycle");
-const insightsMode = process.argv.includes("--insights");
+const dashboardMode = process.argv.includes("--dashboard");
+const insightsMode = process.argv.includes("--insights") || dashboardMode;
 const fileLibraryMode =
   process.argv.includes("--file-library") ||
   process.argv.includes("--file-library-client");
@@ -181,6 +182,66 @@ const finderProjects = [
     archived_client_access: "suspend",
   },
 ];
+const dashboardMonth = (offset) => {
+  const date = new Date(deadlineToday.slice(0, 7) + "-01T12:00:00Z");
+  date.setUTCMonth(date.getUTCMonth() + offset);
+  return date.toISOString().slice(0, 10);
+};
+if (insightsMode) project.due = dashboardMonth(0);
+if (dashboardMode) {
+  Object.assign(finderProjects[1], {
+    due: dashboardMonth(1),
+    budget: 2400,
+    deposit_paid: false,
+  });
+  Object.assign(finderProjects[2], { due: dashboardMonth(2), budget: 3000 });
+  for (const [name, offset, budget, paid] of [
+    ["Packaging design", 3, 1250.01, false],
+    ["Motion assets", 4, 4000, true],
+    ["Future identity", 8, 7000, false],
+  ]) {
+    const id = randomUUID();
+    finderProjects.push({
+      ...project,
+      id,
+      name,
+      due: dashboardMonth(offset),
+      budget,
+      final_paid: paid,
+    });
+    finderExtraStages.push(
+      ...["Research", "Design", "Review"].map((name, position) => ({
+        id: randomUUID(),
+        project_id: id,
+        name,
+        stream: "Brand Identity",
+        position,
+        status: paid || position === 0 ? "Completed" : "In Progress",
+        visible: true,
+      })),
+    );
+  }
+  finderExtraStages.push(
+    {
+      id: randomUUID(),
+      project_id: websiteProjectId,
+      name: "Wireframes",
+      stream: "Website Design",
+      position: 0,
+      status: "Completed",
+      visible: true,
+    },
+    {
+      id: randomUUID(),
+      project_id: websiteProjectId,
+      name: "Framer build",
+      stream: "Website Design",
+      position: 1,
+      status: "In Progress",
+      visible: true,
+    },
+  );
+}
 const intakes = [],
   storedUploads = new Map();
 let scannerOutage = false,
@@ -526,7 +587,7 @@ const server = createServer(async (req, res) => {
     )
       accessPrivateReads++;
     if (
-      projectFinderMode &&
+      (projectFinderMode || dashboardMode) &&
       /^\/rest\/v1\/(projects|clients|documents|client_assets|stages|profiles)$/.test(
         path,
       ) &&
@@ -754,7 +815,9 @@ const server = createServer(async (req, res) => {
       return json(createdFinderProjectId);
     }
     if (table === "project_lifecycle_ready")
-      return json(lifecycleMode || projectFinderMode || deadlinesMode);
+      return json(
+        lifecycleMode || projectFinderMode || deadlinesMode || dashboardMode,
+      );
     if (table === "file_security_ready") return json(secureMode);
     if (table === "reserve_file_upload") {
       intakes.push({
@@ -1202,7 +1265,10 @@ const server = createServer(async (req, res) => {
               deletion_pending: deletionPending,
             },
           ];
-    if ((projectFinderMode || deadlinesMode) && table === "clients")
+    if (
+      (projectFinderMode || deadlinesMode || dashboardMode) &&
+      table === "clients"
+    )
       rows.push({
         id: finderClientId,
         name: "Málaga Studio",
@@ -1224,7 +1290,10 @@ const server = createServer(async (req, res) => {
       if (req.method === "PATCH") Object.assign(project, body);
       rows = [project];
     }
-    if ((projectFinderMode || deadlinesMode) && table === "projects")
+    if (
+      (projectFinderMode || deadlinesMode || dashboardMode) &&
+      table === "projects"
+    )
       rows = finderProjects;
     if (table === "finance_settings") rows = [seller];
     if (table === "client_billing")
@@ -1295,7 +1364,7 @@ const server = createServer(async (req, res) => {
           visible: true,
         },
       ];
-    if (projectFinderMode && table === "stages")
+    if ((projectFinderMode || dashboardMode) && table === "stages")
       rows = [...rows, ...finderExtraStages];
     if (table === "stages" && templateMode) rows = liveTemplate;
     if (table === "stages" && (prospectMode || prospectOwnerMode))
@@ -1502,9 +1571,12 @@ const server = createServer(async (req, res) => {
     const page = await browser.newPage({
       viewport: { width: 390, height: 844 },
       timezoneId:
-        invitationsMode || deadlinesMode ? "America/Los_Angeles" : undefined,
+        invitationsMode || deadlinesMode || insightsMode
+          ? "America/Los_Angeles"
+          : undefined,
     });
-    if (deadlinesMode) await page.clock.setFixedTime(deadlineClock);
+    if (deadlinesMode || insightsMode)
+      await page.clock.setFixedTime(deadlineClock);
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("console", (message) => {
       if (
@@ -2522,6 +2594,111 @@ const server = createServer(async (req, res) => {
       );
       return;
     }
+    if (dashboardMode) {
+      const before = JSON.stringify(finderProjects);
+      const insights = page.getByRole("region", {
+        name: "Studio insights",
+        exact: true,
+      });
+      const outlook = insights.getByRole("region", {
+        name: "Project value outlook",
+        exact: true,
+      });
+      const payment = insights.getByRole("region", {
+        name: "Project payment progress",
+        exact: true,
+      });
+      const progress = insights.getByRole("region", {
+        name: "Project milestone progress",
+        exact: true,
+      });
+      const pipeline = insights.getByRole("region", {
+        name: "Projects by phase",
+        exact: true,
+      });
+      const filter = insights.getByLabel("Show projects", { exact: true });
+      const monthPicker = outlook.getByLabel("Inspect month", { exact: true });
+      await expect(monthPicker.locator("option")).toHaveCount(6);
+      await expect(outlook.locator(".outlook-summary strong")).toHaveText(
+        "£11,650.01",
+      );
+      await expect(outlook).toContainText("1 project outside this period");
+      await expect(payment).toContainText("£18,650.01");
+      await expect(payment).toContainText("54%");
+      await expect(
+        progress.locator(".project-progress-rows > button"),
+      ).toHaveCount(5);
+      await progress
+        .getByRole("button", { name: "Show all 6 projects", exact: true })
+        .click();
+      await expect(
+        progress.locator(".project-progress-rows > button"),
+      ).toHaveCount(6);
+      await expect(progress).not.toContainText("Archived identity");
+      await outlook
+        .getByLabel("Outlook period", { exact: true })
+        .selectOption("12");
+      await expect(monthPicker.locator("option")).toHaveCount(12);
+      await expect(outlook.locator(".outlook-summary strong")).toHaveText(
+        "£18,650.01",
+      );
+      await monthPicker.selectOption(dashboardMonth(8).slice(0, 7));
+      await expect(outlook.locator(".outlook-detail")).toContainText(
+        "£7,000.00 project value · £3,500.00 marked received",
+      );
+      await outlook.locator("summary").click();
+      await expect(
+        outlook.getByRole("button", { name: /Future identity/ }),
+      ).toBeVisible();
+      await monthPicker.focus();
+      await page.keyboard.press("End");
+      await page.keyboard.press("Enter");
+      await expect(monthPicker).toHaveValue(dashboardMonth(11).slice(0, 7));
+      await expect(outlook).toContainText(
+        "No projects scheduled in this month",
+      );
+      await expect(outlook.locator(".outlook-detail")).toContainText("£0.00");
+      await filter.selectOption("Website Design");
+      await expect(payment).toContainText("£2,400.00");
+      await expect(payment).toContainText("0%");
+      await expect(
+        progress.locator(".project-progress-rows > button"),
+      ).toHaveCount(1);
+      await expect(progress).toContainText("50%");
+      await expect(outlook.locator(".outlook-summary strong")).toHaveText(
+        "£2,400.00",
+      );
+      await filter.selectOption("All projects");
+      await expect(
+        progress.locator(".project-progress-rows > button"),
+      ).toHaveCount(5);
+      await monthPicker.selectOption(dashboardMonth(2).slice(0, 7));
+      await outlook.locator("summary").click();
+      await captureUi("overview-dashboard", insights);
+      await outlook.getByRole("button", { name: /Brand and website/ }).click();
+      await expect(
+        page.getByLabel("Select project", { exact: true }),
+      ).toHaveValue(combinedFinderId);
+      await page.getByRole("button", { name: "Overview", exact: true }).click();
+      await progress.getByRole("button", { name: /Motion assets/ }).click();
+      await expect(page.locator(".project-summary h2")).toHaveText(
+        "Motion assets",
+      );
+      await page.getByRole("button", { name: "Overview", exact: true }).click();
+      await pipeline.getByRole("button", { name: /^Branding/ }).click();
+      await expect(
+        pipeline.getByRole("button", { name: /Packaging design/ }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await expect(insights).toHaveCount(0);
+      assert.equal(finderWrites, 0);
+      assert.equal(JSON.stringify(finderProjects), before);
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: owner area/bar/donut/progress dashboard uses current records, 6/12-month and shared service filters, monthly drill-down and keyboard navigation, project shortcuts, show-all, archive exclusion, no writes, client-preview exclusion and 320/390/1440 layouts. Fictional records only.",
+      );
+      return;
+    }
     if (insightsMode) {
       const insights = page.getByRole("region", {
         name: "Studio insights",
@@ -2545,7 +2722,7 @@ const server = createServer(async (req, res) => {
       await expect(payment).toContainText(
         "not an invoice balance or bank total",
       );
-      const filter = insights.locator("select");
+      const filter = insights.getByLabel("Show projects", { exact: true });
       await filter.selectOption("Website Design");
       await expect(pipeline).toContainText("No projects in this view yet");
       await expect(payment).toContainText("No project value recorded");
@@ -2560,12 +2737,12 @@ const server = createServer(async (req, res) => {
       await captureUi("overview-charts", page);
       assert.equal(
         await page
-          .locator(".workspace-attention")
+          .locator(".workspace-insights")
           .evaluate(
             (el) =>
               !!(
                 el.compareDocumentPosition(
-                  document.querySelector(".workspace-insights"),
+                  document.querySelector(".workspace-attention"),
                 ) & Node.DOCUMENT_POSITION_FOLLOWING
               ),
           ),

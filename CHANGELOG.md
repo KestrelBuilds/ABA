@@ -1,5 +1,13 @@
 # Changelog
 
+## 6 November 2026 — visual owner Overview
+
+- Moved totals and charts to the top of the Overview and applied dark ABA panels with purple/lime graph accents, keeping existing attention/deadline tools below.
+- Added a project-value area graph with 6/12-month ranges, a full month/year inspector, exact values and project links. Dates represent estimated completion; current payment flags do not become a revenue history.
+- Changed phase counts to interactive vertical bars, added a payment ring with exact GBP legend and added clickable verified milestone-progress bars/show-all. Shared service/archive/deletion scope and client-preview exclusion remain intact.
+- Added keyboard/touch month inspection, readable mobile bar labels, zero-data states and explanatory chart text. No new SQL, dependency, service, browser storage or changes to project/payment/sharing records.
+- Validation: all 124 automated tests, strict TypeScript, production build and formatting passed. Fictional Chromium checked shared filters, 6/12-month values, keyboard month inspection, phase/month/progress project navigation, show-all, empty states, no writes, archived-project/client-preview exclusion and 320/390/1440 px layouts. Existing deadline and production demo/privacy/protected-route smoke checks also passed. Hosted deployment acceptance remains separate.
+
 ## 6 November 2026 — editable presentation review dates
 
 - Added shared review-date display to presentation stage files and the project library, with owner controls to reschedule or clear the date without replacing the file. Saved dates refresh the existing planner and remain read-only for clients/previews.

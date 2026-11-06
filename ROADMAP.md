@@ -1,5 +1,9 @@
 # ABA Studio roadmap
 
+## 6 November — visual Overview dashboard
+
+Expanded the existing owner insights into a dark ABA purple/lime grid inspired by Alex's supplied dashboard reference. Totals/charts now precede attention/deadline panels. Added a 6/12-month area graph of current project values by estimated completion month, exact month inspection/project links, a payment ring and verified milestone-progress bars with show-all. Retained phase drill-downs and shared service filters; mobile phase labels use three columns. Current-value/payment estimates remain distinct from historical revenue and release verification. No SQL, external chart service, financial automation or client-facing analytics. See docs/OVERVIEW-CHARTS.md.
+
 ## 6 November — editable presentation review dates
 
 Implemented shared review-date display and owner editing in journey-stage files and the project file library. Dates can be rescheduled or cleared without replacing a PDF. The action repeats owner/MFA and existing capability checks, validates real calendar dates and updates only a presentation's review date under ordinary RLS. Client views remain read-only; existing version/feedback/release records and completed-review exclusion remain intact. Saved changes refresh the existing deadline view. No new SQL, notifications or services. See docs/DEADLINES.md.
