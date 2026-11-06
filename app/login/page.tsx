@@ -54,9 +54,6 @@ export default async function Login({
             </Link>
           </>
         )}
-        <Link className="resource" href="/demo">
-          Explore the fictional demonstration →
-        </Link>
       </section>
       <BrandSignature />
     </main>

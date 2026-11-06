@@ -2,6 +2,10 @@
 
 Current scope and remaining external launch gates: [development handover](docs/DEVELOPMENT-HANDOVER.md). Dated entries below retain the implementation history; later owner decisions and confirmations supersede older pending notes.
 
+## 6 November — remove demo entry points from the private portal
+
+Removed demonstration links from welcome/sign-in/setup and connected navigation after Alex spotted the remaining public link. Replaced landing development copy with invitation guidance and made connected readiness/version notices owner-only; client/preview headers identify a private client account. The standalone fictional `/demo` remains available directly, including its labels and isolated browser storage. No SQL, permission or launch-acceptance change.
+
 ## 6 November — form reliability and development handover
 
 Reproduced React's implicit reset discarding drafts after a resolved failure Result, then added a shared confirmed-save reset hook to connected, prospective and restricted-contract business forms. Failed/interrupted notes, questionnaires, messages and file choices survive for retry; successful saves still reset/refresh. Pending forms lock editable controls and ignore another submission. Updated asset guidance to actual upload capabilities and corrected stale setup/security/launch notes using existing owner confirmations. No schema, credentials, real records, automatic retries, persistent drafts or new service. Remaining launch work is operational/provider/asset acceptance, tracked in docs/GO-LIVE-STATUS.md.

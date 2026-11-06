@@ -1667,6 +1667,7 @@ const server = createServer(async (req, res) => {
     };
 
     await page.goto(`http://127.0.0.1:${appPort}/login`);
+    await expect(page.locator('a[href="/demo"]')).toHaveCount(0);
     if (accountMode) {
       await page.goto(`http://127.0.0.1:${appPort}/reset-password`);
       await page.waitForURL("**/login?error=reset");
@@ -4231,6 +4232,13 @@ const server = createServer(async (req, res) => {
       await page
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
+      await expect(page.locator('a[href="/demo"]')).toHaveCount(0);
+      await expect(page.locator(".topbar")).toContainText(
+        "Private owner account · Development version",
+      );
+      await expect(
+        page.getByText(/Development workspace — use fictional records/),
+      ).toBeVisible();
       assert.equal(
         await page
           .getByRole("link", { name: "Privacy & cookies", exact: true })
@@ -4244,6 +4252,16 @@ const server = createServer(async (req, res) => {
           exact: true,
         })
         .waitFor();
+      await expect(page.locator('a[href="/demo"]')).toHaveCount(0);
+      await expect(page.locator(".topbar")).toContainText(
+        "Private client account",
+      );
+      await expect(page.locator(".topbar")).not.toContainText(
+        "Development version",
+      );
+      await expect(
+        page.getByText(/Development workspace — use fictional records/),
+      ).toHaveCount(0);
       assert.equal(
         await page
           .getByRole("link", { name: "Privacy & cookies", exact: true })
@@ -4291,6 +4309,16 @@ const server = createServer(async (req, res) => {
     await page
       .getByRole("heading", { name: "Fictional client journey", exact: true })
       .waitFor();
+    await expect(page.locator('a[href="/demo"]')).toHaveCount(0);
+    await expect(page.locator(".topbar")).toContainText(
+      "Private client account",
+    );
+    await expect(page.locator(".topbar")).not.toContainText(
+      "Development version",
+    );
+    await expect(
+      page.getByText(/Development workspace — use fictional records/),
+    ).toHaveCount(0);
     assert.equal(
       await page
         .getByText("Fictional final files.pdf", { exact: true })

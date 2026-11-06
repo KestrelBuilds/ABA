@@ -1,5 +1,12 @@
 # Changelog
 
+## 6 November 2026 — private portal presentation
+
+- Removed fictional-demo links from the landing page, sign-in, setup and connected sidebar. The landing page now explains private invitation-based access.
+- Show clients and client previews a Private client account header without the internal development banner. Retain owner-only readiness/version notices and the explicitly fictional standalone `/demo` route.
+- Preserve authentication, file/project permissions, demo storage isolation and existing launch gates. No SQL or new service.
+- Validation: all 124 automated tests, strict TypeScript, production build and formatting passed. Client/account/owner-preview browser checks verify removed demo navigation, clean client headers and owner-only readiness notes. Production welcome/login/setup checks verify no demo links, invitation guidance and 320/390/1440 px layouts; protected routes and the standalone fictional demo smoke checks also passed.
+
 ## 6 November 2026 — form reliability and final workflow review
 
 - Reproduced and fixed discarded drafts after rejected saves. A shared hook now resets connected business forms, prospective responses and restricted signed-PDF returns only after confirmed success; failed/interrupted submissions keep existing inputs/files for retry.

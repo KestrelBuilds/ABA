@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts, with a connected owner dashboard and private invited-client portal. `/demo` is a separate browser-only example using **fictional data**. The agreed core features are implemented; [the development handover](docs/DEVELOPMENT-HANDOVER.md) separates completed code from the remaining real-client launch requirements.
 
+### 6 November — private portal presentation
+
+The welcome, sign-in, setup and connected workspace screens no longer advertise the fictional demonstration. The landing page explains invitation-only access, and clients/previews see **Private client account** without the internal development banner. Owner readiness notes remain in the owner dashboard. The separate `/demo` route stays explicitly fictional for direct development checks; connected records and permissions are unchanged.
+
 ### 6 November — safer form retries
 
 Rejected/interrupted business-form saves now keep notes, questionnaire answers, proposal messages and selected upload files on the current page. Pending controls lock while saving; successful saves retain normal reset/refresh behaviour. Asset-upload instructions match the enabled legacy/secure/unavailable capability. No SQL or persistent draft storage. See [form reliability](docs/FORM-RELIABILITY.md) and [current launch gates](docs/GO-LIVE-STATUS.md).

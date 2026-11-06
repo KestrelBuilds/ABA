@@ -40,6 +40,7 @@ const assert = require("node:assert/strict");
       .getByRole("link", { name: "Return to sign in", exact: true })
       .click();
     await page.waitForURL("**/login");
+    assert.equal(await page.locator('a[href="/demo"]').count(), 0);
     await page
       .getByRole("link", { name: "Privacy & cookies", exact: true })
       .click();
@@ -49,6 +50,27 @@ const assert = require("node:assert/strict");
     await page
       .getByRole("heading", { name: "Your vision. My creative direction." })
       .waitFor();
+    assert.equal(await page.locator('a[href="/demo"]').count(), 0);
+    assert.match(
+      await page.locator("body").innerText(),
+      /Access is by invitation/,
+    );
+    assert.doesNotMatch(
+      await page.locator("body").innerText(),
+      /Development version|fictional demonstration/i,
+    );
+    for (const width of [320, 390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+      await page.screenshot({
+        path: `/tmp/aba-portal-welcome-${width}.png`,
+        fullPage: true,
+      });
+    }
     await page.getByRole("link", { name: "Open my workspace" }).click();
     await page.waitForURL("**/login");
     await page
@@ -71,6 +93,7 @@ const assert = require("node:assert/strict");
     await page
       .getByRole("heading", { name: "A home for your projects." })
       .waitFor();
+    assert.equal(await page.locator('a[href="/demo"]').count(), 0);
     await page.screenshot({
       path: "/tmp/aba-phase2-setup.png",
       fullPage: true,

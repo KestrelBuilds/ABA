@@ -11,9 +11,8 @@ export default function Home() {
         <div className="eyebrow">ALEX BELL ARTS</div>
         <h1>Your vision. My creative direction.</h1>
         <p>
-          A personalised creative journey, built on research and clear
-          communication. Explore the thinking behind the design, share your
-          feedback and see what happens next.
+          Your private project space with Alex Bell Arts. Sign in to view your
+          shared files, give feedback and follow your next steps.
         </p>
         <div className="brand-values" aria-label="Brand values">
           {[
@@ -30,12 +29,8 @@ export default function Home() {
         <Link className="primary full" href="/portal">
           Open my workspace →
         </Link>
-        <Link className="resource" href="/demo">
-          Explore the fictional demonstration →
-        </Link>
         <p className="muted">
-          Development version. Use fictional details until security and
-          deployment checks are complete.
+          Access is by invitation. Sign in using the email address Alex invited.
         </p>
       </section>
       <BrandSignature />

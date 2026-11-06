@@ -10,8 +10,8 @@ export default function Setup() {
         <div className="eyebrow">ABA STUDIO / CONNECTION SETUP</div>
         <h1>A home for your projects.</h1>
         <p>
-          The secure workspace needs a Supabase development project. The
-          fictional demo remains available while this is connected.
+          This setup reference is for the workspace owner. Connect Supabase
+          before signing in to the private workspace.
         </p>
         <ol>
           <li>
@@ -41,9 +41,6 @@ export default function Setup() {
           </li>
         </ol>
         <p>No connection settings or secret values should be posted in chat.</p>
-        <Link className="primary" href="/demo">
-          Open fictional demo
-        </Link>{" "}
         <Link className="secondary" href="/login">
           Sign in
         </Link>

@@ -357,9 +357,6 @@ export default function ConnectedStudio({
                 </button>
               </form>
             )}
-            <Link className="resource" href="/demo">
-              Fictional demo <ArrowUpRight size={14} />
-            </Link>
           </div>
         </aside>
         <div className="main-wrap">
@@ -368,13 +365,19 @@ export default function ConnectedStudio({
               ABA Studio{" "}
               <b>{admin ? "ABA Owner Dashboard" : "ABA Client Portal"}</b>
             </span>
-            <span>Private account · Development version</span>
+            <span>
+              {admin
+                ? "Private owner account · Development version"
+                : "Private client account"}
+            </span>
           </header>
           <main>
-            <div className="banner">
-              Development workspace — use fictional records until hosted
-              security checks and deployment review are complete.
-            </div>
+            {admin && (
+              <div className="banner">
+                Development workspace — use fictional records until hosted
+                security checks and deployment review are complete.
+              </div>
+            )}
             <div className="page-heading">
               <div>
                 <div className="eyebrow">
