@@ -4,7 +4,7 @@ A considered workspace for Alex Bell Arts, with a connected owner dashboard and 
 
 ### 6 November — sole-trader planning and retention
 
-Current projects on the owner Overview shows each project value and a simple 20% tax set-aside estimate. The earlier planner and inputs have been removed at Alex's request. This does not calculate an HMRC bill or change financial records. The privacy notice records Alex's seven-year invoice/supporting-tax-record policy separately from other records. See [tax reserve guidance](docs/TAX-RESERVE.md).
+The owner Overview totals bar shows only **Predicted tax** and the combined 20% estimate for active project values. The earlier planner, inputs, project-list tax lines and explanation banner have been removed at Alex's request. This does not calculate an HMRC bill or change financial records. The privacy notice records Alex's seven-year invoice/supporting-tax-record policy separately from other records. See [tax reserve guidance](docs/TAX-RESERVE.md).
 
 Alex deferred malware scanning and will revisit external hosting as the business grows. Existing 3 MB file-format/signature checks continue; optional migration 013 and larger/source uploads remain disabled. No scanner is running or installed on Alex's PC. See [upload security](docs/SECURE-UPLOADS.md).
 

@@ -2829,37 +2829,38 @@ const server = createServer(async (req, res) => {
     }
     if (taxMode) {
       const before = JSON.stringify(finderProjects);
+      const totals = page.getByRole("region", {
+        name: "Overview totals",
+        exact: true,
+      });
+      const predictedTax = totals
+        .locator(".stat")
+        .filter({ hasText: "Predicted tax" });
+      await expect(totals.locator(".stat")).toHaveCount(5);
+      await expect(predictedTax.locator("strong")).toHaveText("£3,730.00");
+      await expect(predictedTax).toHaveText("Predicted tax£3,730.00");
       const projects = page.getByRole("region", {
         name: "Current projects",
         exact: true,
       });
+      await expect(projects).not.toContainText(/tax|20%|set-aside/i);
       await expect(
         page.getByRole("region", { name: "Tax reserve planner", exact: true }),
       ).toHaveCount(0);
-      await expect(projects.locator(".project-tax-reserve")).toHaveCount(6);
-      await expect(projects).not.toContainText("Archived identity");
-      await expect(projects.locator(".project-tax-reserve").first()).toHaveText(
-        "Value £1,000.00 · 20% tax set-aside £200.00",
-      );
-      await expect(
-        projects
-          .getByRole("button")
-          .filter({ hasText: "Framer website" })
-          .locator(".project-tax-reserve"),
-      ).toHaveText("Value £2,400.00 · 20% tax set-aside £480.00");
-      await expect(projects).toContainText("Actual tax may differ");
-      await captureUi("tax-reserve", projects);
+      await expect(page.locator(".project-tax-reserve")).toHaveCount(0);
+      await captureUi("predicted-tax", totals);
       await page.reload();
-      await expect(projects.locator(".project-tax-reserve").first()).toHaveText(
-        "Value £1,000.00 · 20% tax set-aside £200.00",
-      );
+      await expect(predictedTax.locator("strong")).toHaveText("£3,730.00");
       assert.equal(JSON.stringify(finderProjects), before);
       assert.equal(finderWrites, 0);
       await page.getByRole("button", { name: /Preview client portal/ }).click();
-      await expect(page.locator(".project-tax-reserve")).toHaveCount(0);
+      await expect(totals).toHaveCount(0);
+      await expect(
+        page.getByText("Predicted tax", { exact: true }),
+      ).toHaveCount(0);
       assert.deepEqual(errors, []);
       console.log(
-        "PASS: owner Current projects shows a fixed 20% set-aside against saved project values without a planner or inputs; archives excluded, reload stable, no writes, client preview excluded and 320/390/1440 layouts pass. Planning estimate only.",
+        "PASS: owner totals bar shows only Predicted tax and the combined 20% estimate, excludes archived value, removes all project-list tax copy and planner, survives reload without writes, stays absent from client preview and fits 320/390/1440 widths. Fictional records only.",
       );
       return;
     }

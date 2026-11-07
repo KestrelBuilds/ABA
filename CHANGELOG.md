@@ -1,5 +1,11 @@
 # Changelog
 
+## 7 November 2026 — predicted tax in the Overview totals bar
+
+- Moved the combined 20% estimate into the existing owner totals bar as just Predicted tax and an amount. Preserved all four existing summary figures and excluded archived project values.
+- Removed the Current projects explanation banner and all per-project tax lines. No planner, extra controls, financial writes, SQL or new services. The bar remains owner-only and adapts to narrow layouts.
+- Validation: 126 automated tests, production build, strict TypeScript, formatting and the fictional tax-summary browser checks passed, including the combined amount, archive exclusion, removal of old copy, reload stability, no writes, preview exclusion and 320/390/1440 px layouts. Hosted deployment acceptance remains separate.
+
 ## 6 November 2026 — simplify the project tax estimate
 
 - Replaced the manual tax reserve planner with a simple value and fixed 20% tax set-aside on each Current projects row in the owner Overview, as Alex requested. Removed the separate panel, selector, inputs, state and unused styles.

@@ -1343,6 +1343,27 @@ details summary {
 .connected .stats {
   margin-bottom: 25px;
 }
+.connected .owner-overview-stats {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.connected .owner-overview-stats .stat {
+  min-width: 0;
+}
+.connected .owner-overview-stats strong {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1150px) {
+  .connected .owner-overview-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 25px;
+  }
+  .connected .owner-overview-stats .stat:nth-child(even) {
+    border-right: 0;
+  }
+  .connected .owner-overview-stats .stat:last-child {
+    grid-column: 1 / -1;
+  }
+}
 .connected .milestone-form {
   padding: 20px 0;
   border-top: 1px solid var(--line);

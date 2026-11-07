@@ -551,7 +551,11 @@ export default function ConnectedStudio({
             )}
             {admin && view === "Overview" && (
               <>
-                <div className="stats">
+                <div
+                  className="stats owner-overview-stats"
+                  role="region"
+                  aria-label="Overview totals"
+                >
                   {[
                     ["Active projects", activeProjects.length],
                     [
@@ -574,6 +578,15 @@ export default function ConnectedStudio({
                       money(workspaceInsights(data).value.outstanding / 100),
                     ],
                     ["Clients", data.clients.length],
+                    [
+                      "Predicted tax",
+                      money(
+                        activeProjects.reduce(
+                          (sum, p) => sum + taxReserve(p.budget),
+                          0,
+                        ) / 100,
+                      ),
+                    ],
                   ].map(([label, value]) => (
                     <div className="stat" key={label}>
                       <div>{label}</div>
@@ -590,10 +603,6 @@ export default function ConnectedStudio({
                 <div className="two-col">
                   <section className="panel" aria-label="Current projects">
                     <h2>Current projects</h2>
-                    <p className="helper-note">
-                      20% of each project value is shown as a tax set-aside
-                      estimate. Actual tax may differ.
-                    </p>
                     {activeProjects.length ? (
                       activeProjects.map((p) => (
                         <button
@@ -620,10 +629,6 @@ export default function ConnectedStudio({
                                     )!.enquiry_status
                                   ]
                                 : ""}
-                            </small>
-                            <small className="project-tax-reserve">
-                              Value {money(p.budget)} · 20% tax set-aside{" "}
-                              {money(taxReserve(p.budget) / 100)}
                             </small>
                             <small>{projectFocus(data, p).nextLabel}</small>
                           </div>

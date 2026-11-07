@@ -1,10 +1,10 @@
 # Sole-trader tax reserve planning
 
-At Alex's request, **Current projects** on the owner Overview shows each saved project value and a fixed **20% tax set-aside**. For example, a £1,000 project shows £200 to set aside. The manual planner, project selector, costs/percentage inputs and separate panel have been removed.
+At Alex's request on 7 November, the owner Overview totals bar shows only **Predicted tax** and a single amount: the sum of 20% estimates for active project values. For one £1,000 active project it shows £200. Archived projects are excluded. The existing Clients and other summary figures remain.
 
-The percentage applies to the full saved project value, independently of payment receipt or costs. Convert the saved value to integer pence, take one fifth and round to the nearest penny. This is Alex's chosen planning rule, not a claim that 20% is the tax owed: annual profit, other income, allowances and National Insurance affect actual liability. A short estimate note appears above the project list.
+Each saved project value is converted to integer pence, divided by five and rounded to the nearest penny before summing. The estimate uses full project values, independently of payment receipt and costs. This is Alex's chosen planning rule, not statutory tax owed: annual profit, other income, allowances and National Insurance affect actual liability.
 
-The display has no inputs or writes and does not change project values, invoices, payment verification or release gates. It is visible only in the owner Overview. Archived projects are excluded from the existing Current projects list. Client previews do not show the set-aside labels.
+The manual planner, inputs, separate panel, per-project tax labels and explanation banner are removed. There are no new tax controls, extra visible copy, inputs or writes. Project values, invoices, payment verification and release gates stay unchanged. Clients/previews do not see the owner totals bar.
 
 ## Financial-record policy
 
@@ -14,4 +14,4 @@ The public privacy notice records this financial policy separately from other en
 
 ## Validation
 
-Two arithmetic tests cover the fixed proportion and whole-penny rounding. `node tests/client-journey-browser.cjs --tax-reserve` checks saved project values, immediate estimates without inputs, archive exclusion, reload stability, no writes, client-preview exclusion and 320/390/1440 px layouts against fictional records.
+Two existing arithmetic tests cover the fixed proportion and whole-penny rounding. `node tests/client-journey-browser.cjs --tax-reserve` checks the combined amount, archive exclusion, unchanged existing summary figures, removal of older tax copy, reload stability, no writes, client-preview exclusion and 320/390/1440 px layouts using fictional records.

@@ -2,6 +2,10 @@
 
 Current scope and remaining external launch gates: [development handover](docs/DEVELOPMENT-HANDOVER.md). Dated entries below retain the implementation history; later owner decisions and confirmations supersede older pending notes.
 
+## 7 November — tax amount in the Overview bar
+
+Replaced project-list tax lines and their explanation banner with just Predicted tax and one combined 20% estimate in the existing owner totals bar, as Alex requested. Preserved existing totals, excluded archived project values and kept the number owner-only. No new inputs, records, SQL or services. This supersedes the earlier per-project display.
+
 ## 6 November — simplify the project tax estimate
 
 Alex requested a simple 20% of project value display instead of the manual reserve planner. Removed its separate panel, inputs, state and styles; Current projects on the owner Overview now shows each value and its 20% set-aside estimate. Kept a short actual-tax-may-differ note, owner-only placement and existing financial/privacy controls. No SQL, services or financial-record writes. This supersedes the planner description below.
