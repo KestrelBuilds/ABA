@@ -13,12 +13,16 @@ import {
   uploadDocument,
   publishDocument,
   uploadClientAsset,
+  saveStage,
 } from "@/app/actions";
 import { discoveryBookingUrl } from "@/lib/stage-links";
 import JourneyVerification from "./journey-verification";
 import { fileVisibility } from "@/lib/file-visibility";
 import { stageVerification } from "@/lib/journey-verification";
 import { stageGuidance } from "@/lib/stage-copy";
+import StageQuestionnaires from "./stage-questionnaires";
+import DocumentFeedback from "./document-feedback";
+import { clientUploadsAllowed, stageUnlocked } from "@/lib/stage-access";
 import { stageFileDefaults } from "@/lib/handover";
 import { openProjectSection } from "./project-focus";
 type FormProps = {
@@ -46,26 +50,53 @@ export default function StageWorkspace({
       ? discoveryBookingUrl
       : "";
   const project = data.projects.find((p) => p.id === stage.project_id);
-  const name = stage.name.toLowerCase();
   const defaults = stageFileDefaults(stage);
-  const briefStage =
-    /discovery|questionnaire|brief/.test(name) && !name.includes("call");
-  const questionnaire = /goodbye/.test(name)
-    ? project?.final_paid && project?.final_approved
-      ? "goodbye"
-      : null
-    : name === "onboarding" && stage.stream === "Onboarding" && project
-      ? project.type === "Website Design"
-        ? "website"
-        : "brand"
-      : briefStage && stage.stream === "Brand Identity"
-        ? "brand"
-        : briefStage && stage.stream === "Website Design"
-          ? "website"
-          : null;
+  if (!admin && !stageUnlocked(data, stage))
+    return (
+      <p className="stage-lock-message">
+        This stage will open when Alex completes the previous stages.
+      </p>
+    );
   return (
     <div className="stage-workspace">
       <p>{resource?.instructions || stageGuidance(stage.name)}</p>
+      {admin &&
+        project &&
+        !(project.contract_signed && project.deposit_paid) &&
+        stage.name.trim().toLowerCase() === "onboarding" &&
+        data.stages.some(
+          (s) =>
+            s.project_id === stage.project_id &&
+            s.position > stage.position &&
+            stageVerification(s).some(
+              (f) => f === "contract_signed" || f === "deposit_paid",
+            ),
+        ) && (
+          <p className="helper-note">
+            Move Onboarding below Contract and Invoice using the stage settings
+            before inviting this client. The contract and deposit need to come
+            first.
+          </p>
+        )}
+      {admin && data.stageAccessReady && !stageUnlocked(data, stage) && (
+        <p className="helper-note">
+          Clients reach this stage after you complete the earlier stages. You
+          can prepare its files now.
+        </p>
+      )}
+      {!admin && !clientUploadsAllowed(stage) && (
+        <p>I’ll upload your goodbye packet here.</p>
+      )}
+      {!clientUploadsAllowed(stage) &&
+        data.handovers?.find((h) => h.project_id === stage.project_id)
+          ?.body && (
+          <p className="brief-copy">
+            {
+              data.handovers.find((h) => h.project_id === stage.project_id)
+                ?.body
+            }
+          </p>
+        )}
       {admin && data.managementReady && defaults.category === "final" && (
         <a
           className="resource"
@@ -90,9 +121,11 @@ export default function StageWorkspace({
             ? data.prospectSpaces?.some((s) => s.project_id === project.id)
               ? "locked until the signed contract and deposit are verified. Early documents follow the step released in the potential-client area."
               : "locked until the signed contract and deposit are verified. An enabled initial contract area is separate and only exposes shared contracts."
-            : !stage.visible
-              ? "this stage is internal; its files stay private."
-              : "shared files in this stage are available; final deliverables also need verified final approval and payment."}
+            : !stageUnlocked(data, stage)
+              ? "clients reach these files after the earlier stages are complete."
+              : !stage.visible
+                ? "this stage is internal; its files stay private."
+                : "shared files in this stage are available; final deliverables also need verified final approval and payment."}
         </p>
       )}
       {admin &&
@@ -156,58 +189,13 @@ export default function StageWorkspace({
           Book a call with me ↗
         </a>
       )}
-      {questionnaire && (
-        <>
-          <a
-            className="resource"
-            href={"#questionnaire-" + stage.project_id + "-" + questionnaire}
-            onClick={() => {
-              const section = document.getElementById(
-                "questionnaire-" + stage.project_id + "-" + questionnaire,
-              );
-              if (section instanceof HTMLDetailsElement) section.open = true;
-            }}
-          >
-            Open{" "}
-            {questionnaire === "brand"
-              ? "brand discovery"
-              : questionnaire === "website"
-                ? "website discovery"
-                : "goodbye & feedback"}{" "}
-            questionnaire ↓
-          </a>
-          {name === "onboarding" && project?.type === "Both" && (
-            <a
-              className="resource"
-              href={"#questionnaire-" + stage.project_id + "-website"}
-              onClick={() => {
-                const section = document.getElementById(
-                  "questionnaire-" + stage.project_id + "-website",
-                );
-                if (section instanceof HTMLDetailsElement) section.open = true;
-              }}
-            >
-              Open website discovery questionnaire ↓
-            </a>
-          )}
-          {questionnaire !== "website" && (
-            <a
-              className="resource"
-              href={
-                questionnaire === "brand"
-                  ? "https://tally.so/r/mRAXk9"
-                  : "https://tally.so/r/Z9jk9o"
-              }
-              target="_blank"
-              rel="noreferrer"
-            >
-              {questionnaire === "brand"
-                ? "Logo Direction & Inspiration"
-                : "Goodbye & feedback form"}{" "}
-              ↗
-            </a>
-          )}
-        </>
+      {project && (
+        <StageQuestionnaires
+          data={data}
+          stage={stage}
+          project={project}
+          Form={Form}
+        />
       )}
       <h3 className="files-heading">Files for this stage</h3>
       <UploadQueue
@@ -258,6 +246,14 @@ export default function StageWorkspace({
                 ).message
               }
             </p>
+          )}
+          {project && (
+            <DocumentFeedback
+              data={data}
+              project={project}
+              document={d}
+              Form={Form}
+            />
           )}
           {admin && fileAvailable(d) && (
             <Form
@@ -321,7 +317,7 @@ export default function StageWorkspace({
                 </Form>
               </details>
               <details className="settings-disclosure stage-upload">
-                <summary>Upload my PDF or presentation for this stage</summary>
+                <summary>Upload my files</summary>
                 {data.fileSecurityReady ? (
                   <SecureUpload
                     data={data}
@@ -380,16 +376,19 @@ export default function StageWorkspace({
                       <input
                         name="file"
                         type="file"
-                        accept="application/pdf,image/png,image/jpeg,image/webp"
+                        accept={
+                          data.stageAccessReady
+                            ? ".pdf,.ai,.svg,.png,.jpg,.jpeg,.webp"
+                            : "application/pdf,image/png,image/jpeg,image/webp"
+                        }
                         required
                       />
                     </label>
                     <p>
-                      PDFs and supported images up to 3 MB. Uploads are private
-                      drafts until you share them. Proposal, contract and
-                      invoice PDFs made in Illustrator belong here. Clients can
-                      download shared files and return completed copies in this
-                      stage.
+                      {data.stageAccessReady
+                        ? "PDF, AI, SVG, PNG and JPEG files up to 3 MB. Use Handover or Final deliverable for AI/SVG files."
+                        : "PDFs and supported images up to 3 MB."}{" "}
+                      Files start private until you share them.
                     </p>
                     {defaults.category === "final" && (
                       <p className="helper-note">
@@ -404,7 +403,7 @@ export default function StageWorkspace({
               </details>
             </>
           )}
-          {!admin && (
+          {!admin && clientUploadsAllowed(stage) && (
             <details>
               <summary>Return a completed PDF or upload a file</summary>
               <Form
@@ -441,6 +440,16 @@ export default function StageWorkspace({
           Your current project library still works.
         </p>
       ) : null}
+      {admin &&
+        !stageVerification(stage).length &&
+        stage.status !== "Completed" && (
+          <Form action={saveStage} label="Mark stage complete">
+            <input type="hidden" name="id" value={stage.id} />
+            <input type="hidden" name="name" value={stage.name} />
+            <input type="hidden" name="status" value="Completed" />
+            {stage.visible && <input type="hidden" name="visible" value="on" />}
+          </Form>
+        )}
     </div>
   );
 }

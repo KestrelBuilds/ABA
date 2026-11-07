@@ -4311,3 +4311,36 @@ h2,
 .project-finder-summary p {
   margin: 0;
 }
+
+.journey-layout {
+  display: grid;
+  gap: 24px;
+}
+.journey-layout > div {
+  min-width: 0;
+}
+.project-library-disclosure,
+.project-support-disclosure,
+.project-settings-disclosure {
+  margin: 20px 0;
+}
+.project-library-disclosure > summary,
+.project-support-disclosure > summary,
+.project-settings-disclosure > summary,
+.account-panel > summary {
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 0;
+}
+.stage-locked {
+  opacity: 0.75;
+}
+.stage-lock-message {
+  padding: 12px 20px;
+}
+.stage-questionnaires {
+  margin: 20px 0;
+}
+.document-feedback {
+  margin-top: 16px;
+}

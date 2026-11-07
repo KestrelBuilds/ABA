@@ -3,7 +3,7 @@ export function stageGuidance(name: string) {
   if (n === "enquiry stage")
     return "Start with your enquiry and, when useful, book a discovery call using my Calendly link. I’ll confirm what you need before preparing your proposal.";
   if (n === "onboarding")
-    return "Your welcome information and relevant project questionnaires live here. Prepare your brief and existing materials; full portal access opens after I verify the signed contract and deposit. For combined projects, shared business questions are asked once.";
+    return "Complete the questions for your project and share any existing materials here.";
   if (n === "creative direction")
     return "I’ll use your branding brief, research and references to develop the visual direction. Review the shared creative-direction PDF and send consolidated feedback.";
   if (n === "logo design")
@@ -21,11 +21,11 @@ export function stageGuidance(name: string) {
   if (n === "website design")
     return "I’ll develop the website’s visual design, typography, colours and key page layouts using your existing or newly approved identity. Share one consolidated set of feedback on the design presentation.";
   if (n === "framer build & review")
-    return "I’ll build the agreed design in Framer, check desktop and mobile layouts, links and forms, and work through your agreed revisions. Framer remains the website platform; no custom software development is implied.";
+    return "I’ll build the agreed design in Framer, check desktop and mobile layouts, links and forms, and work through your agreed revisions.";
   if (n === "launch & handover")
     return "After I verify final design approval and payment, I’ll complete the agreed Framer launch, domain connection and handover. Account ownership, hosting costs and support follow your proposal; access should be shared by invitation, never by uploading passwords.";
   if (n === "goodbye packet")
-    return "Your goodbye packet belongs here: final handover/support information and the feedback form. I’ll add my packet when it is ready. Final files and goodbye feedback remain gated by verified final approval and payment; finishing this milestone does not itself release files.";
+    return "Your goodbye packet will appear here, with your final handover information and next steps.";
   if (n.includes("discovery call"))
     return "Book the initial conversation using the booking link when one is available. I’ll use this call to discuss your goals, scope and next steps.";
   if (n.includes("proposal"))

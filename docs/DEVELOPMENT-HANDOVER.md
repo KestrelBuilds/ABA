@@ -6,6 +6,8 @@ Final local validation passed: 124 automated tests, 29 fictional browser modes, 
 
 Follow-up on 6 November: the owner Overview totals bar now shows Predicted tax and one combined 20% estimate of active project values. Alex requested removal of the planner, per-project tax copy and explanation banner (latest simplification: 7 November). The privacy notice records Alex's sole-trader seven-year financial-record policy separately from other records. Scanner setup is deferred by owner choice, with current 3 MB checks retained and optional 013 withheld; no PC software or new service is running. See [TAX-RESERVE.md](TAX-RESERVE.md) and the latest CHANGELOG.md validation for this follow-up.
 
+7 November journey follow-up: the owner/client project screen now follows one vertical journey with stage questionnaires and feedback inline and supporting panels collapsed. Goodbye Packet is owner-uploaded. Independent 014 (after 012; skip deferred 013) is required to activate sequential database/Storage/form gates and 3 MB owner AI/SVG handovers alongside PNG/JPEG. No live SQL was applied here. See [STAGE-JOURNEY.md](STAGE-JOURNEY.md).
+
 ## Implemented scope
 
 | Area | Implemented behaviour | Local evidence |

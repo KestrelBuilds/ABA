@@ -1,15 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { newProjectStages } from "../lib/workflow-templates";
-test("live branding stages match Alex's supplied folder order plus goodbye packet", () => {
+test("live branding stages put contract and deposit before onboarding, with the agreed creative stages and goodbye packet", () => {
   assert.deepEqual(
     newProjectStages("Brand Identity").map((s) => s.name),
     [
       "Enquiry Stage",
       "Project Proposal",
-      "Onboarding",
       "Contract",
       "Invoice",
+      "Onboarding",
       "Creative Direction",
       "Logo Design",
       "Logo Presentation",

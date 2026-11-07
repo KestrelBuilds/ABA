@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts, with a connected owner dashboard and private invited-client portal. `/demo` is a separate browser-only example using **fictional data**. The agreed core features are implemented; [the development handover](docs/DEVELOPMENT-HANDOVER.md) separates completed code from the remaining real-client launch requirements.
 
+### 7 November — one project journey
+
+The project screen now follows a single vertical journey with stage files, questionnaires and feedback together. Supporting details, file library, settings and account tools are collapsed. Goodbye Packet has no client upload form. Owner handover uploads add AI/SVG alongside PNG/JPEG after **database update 014**, which also enforces stage-by-stage release. Apply 014 after confirmed 012; **skip deferred 013**. See [stage journey setup](docs/STAGE-JOURNEY.md).
+
 ### 6 November — sole-trader planning and retention
 
 The owner Overview totals bar shows only **Predicted tax** and the combined 20% estimate for active project values. The earlier planner, inputs, project-list tax lines and explanation banner have been removed at Alex's request. This does not calculate an HMRC bill or change financial records. The privacy notice records Alex's seven-year invoice/supporting-tax-record policy separately from other records. See [tax reserve guidance](docs/TAX-RESERVE.md).

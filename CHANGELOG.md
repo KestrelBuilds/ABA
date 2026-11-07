@@ -1,5 +1,13 @@
 # Changelog
 
+## 7 November 2026 — sequential project journey and owner handover files
+
+- Simplified owner/client projects into one vertical journey. Questionnaires, file feedback and permitted returns live inside their stages; the file library, supporting details/tasks, settings and account tools are collapsed. Existing project/document associations and private owner tools remain available.
+- Added explicit owner completion buttons for ordinary stages and a migration-backed lock state for later client stages. Independent 014 after 012 enforces prior-stage completion on metadata, raw/signed Storage, early prospect/contract access, questionnaires and final handover text. Existing ownership, archive, verification, quarantine and final approval/payment rules remain cumulative. No live migration was applied.
+- Removed Goodbye Packet client uploads, with a durable database restriction across renames. New templates place contract/deposit before onboarding; existing saved order is preserved with an owner reminder for unfinished projects needing a move.
+- Added owner 3 MB AI/SVG handover validation and MIME support through 014 alongside PNG/JPEG/PDF. AI supports PDF-compatible/PostScript exports; SVG is parsed, rejects active/external content and is downloaded rather than rendered. Uploads remain private with normal release rules. No scanner, new provider, purchase or PC software. Optional 013 stays deferred.
+- Validation: all 131 automated tests and 13 representative fictional browser modes passed: primary journey, client review/release, owner preview, asset management, owner/client file library, verification, restricted contracts, form/questionnaire retries, combined template, archives and optional quarantined uploads. Browser checks include phone/desktop layouts. Production build, strict TypeScript, formatting and production privacy/protected-route/demo smoke checks also passed. Hosted 014 activation and acceptance remain separate. See docs/STAGE-JOURNEY.md.
+
 ## 7 November 2026 — predicted tax in the Overview totals bar
 
 - Moved the combined 20% estimate into the existing owner totals bar as just Predicted tax and an amount. Preserved all four existing summary figures and excluded archived project values.

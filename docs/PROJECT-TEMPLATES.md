@@ -4,14 +4,14 @@ These are the live templates for newly created projects. Existing projects, thei
 
 ## Brand Identity
 
-Matches Alex’s supplied folder screenshot, with the requested Goodbye Packet added.
+Uses Alex’s agreed creative stages and Goodbye Packet. The 7 November sequence places contract/deposit before onboarding to avoid an access deadlock. Existing saved stages are not reordered automatically.
 
 ```text
 CLI001 Enquiry Stage
 CLI002 Project Proposal
-CLI003 Onboarding
-CLI004 Contract
-CLI005 Invoice
+CLI003 Contract
+CLI004 Invoice
+CLI005 Onboarding
 CLI006 Creative Direction
 CLI007 Logo Design
 CLI008 Logo Presentation
@@ -25,9 +25,9 @@ CLI011 Goodbye Packet
 ```text
 WEB001 Enquiry Stage
 WEB002 Project Proposal
-WEB003 Onboarding
-WEB004 Contract
-WEB005 Invoice
+WEB003 Contract
+WEB004 Invoice
+WEB005 Onboarding
 WEB006 Website Brief & Content
 WEB007 Page Structure & Layout
 WEB008 Website Design

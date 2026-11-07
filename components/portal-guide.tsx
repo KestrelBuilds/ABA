@@ -1,3 +1,5 @@
+import { openProjectSection } from "./project-focus";
+import { clientUploadsAllowed, questionnaireStage } from "@/lib/stage-access";
 import type { DbProject, DbStage, ClientAction } from "@/lib/workspace";
 export default function PortalGuide({
   project,
@@ -24,7 +26,12 @@ export default function PortalGuide({
   );
   const sections = [
     [
-      "questionnaires",
+      "stage-" +
+        (questionnaireStage(
+          stages,
+          project,
+          project.type === "Website Design" ? "website" : "brand",
+        )?.id ?? ""),
       "Project brief & onboarding",
       "Your goals, agreed brief and onboarding.",
     ],
@@ -99,7 +106,11 @@ export default function PortalGuide({
           <h2>Everything for your project</h2>
           <div className="portal-section-grid">
             {sections.map(([id, title, description]) => (
-              <a key={title} href={"#" + id}>
+              <a
+                key={title}
+                href={"#" + id}
+                onClick={() => openProjectSection("#" + id)}
+              >
                 <h3>{title}</h3>
                 <p>{description}</p>
                 <span aria-hidden="true">↗</span>
@@ -190,16 +201,19 @@ export default function PortalGuide({
               support, maintenance and ongoing costs. If you need help, contact
               me with the page or file affected and a description of the issue.
             </p>
-            {project.final_paid && project.final_approved && (
-              <a
-                className="resource"
-                href="https://tally.so/r/Z9jk9o"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Leave your project feedback & review ↗
-              </a>
-            )}
+            {project.final_paid &&
+              project.final_approved &&
+              visible.find((s) => !clientUploadsAllowed(s))?.client_unlocked !==
+                false && (
+                <a
+                  className="resource"
+                  href="https://tally.so/r/Z9jk9o"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Leave your project feedback & review ↗
+                </a>
+              )}
           </section>
           <section className="panel" id="working-together">
             <h2>Help & working together</h2>

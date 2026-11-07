@@ -1,3 +1,4 @@
+import { stageUnlocked, questionnaireStage } from "./stage-access";
 import type { WorkspaceData } from "./workspace";
 // Owner-only visual projection. Authentication and RLS remain in force separately.
 export function clientPreview(
@@ -11,20 +12,29 @@ export function clientPreview(
   const eligible = Boolean(
     allowed && project?.contract_signed && project.deposit_paid,
   );
+  const open = (id: string | null | undefined) =>
+    !id ||
+    data.stages.some(
+      (s) =>
+        s.id === id &&
+        s.visible &&
+        s.project_id === projectId &&
+        stageUnlocked(data, s),
+    );
   const documents = eligible
     ? data.documents.filter(
         (d) =>
           d.project_id === projectId &&
           (!d.scan_state || ["legacy", "clean"].includes(d.scan_state)) &&
           d.published &&
-          (!d.stage_id ||
-            data.stages.some((s) => s.id === d.stage_id && s.visible)) &&
+          (!d.stage_id || open(d.stage_id)) &&
           (d.category !== "final" ||
             (project!.final_paid && project!.final_approved)),
       )
     : [];
   return {
     readOnly: true,
+    stageAccessReady: data.stageAccessReady,
     fileSecurityReady: data.fileSecurityReady,
     secureUploadsConfigured: data.secureUploadsConfigured,
     pendingUploads: [],
@@ -32,7 +42,10 @@ export function clientPreview(
       ? (data.stageResources ?? []).filter((r) =>
           data.stages.some(
             (s) =>
-              s.id === r.stage_id && s.project_id === projectId && s.visible,
+              s.id === r.stage_id &&
+              s.project_id === projectId &&
+              s.visible &&
+              stageUnlocked(data, s),
           ),
         )
       : [],
@@ -61,7 +74,11 @@ export function clientPreview(
       ? (data.projectDetails ?? []).filter((d) => d.project_id === projectId)
       : [],
     handovers:
-      eligible && project?.final_paid && project.final_approved
+      eligible &&
+      project?.final_paid &&
+      project.final_approved &&
+      (!data.stageAccessReady ||
+        open(questionnaireStage(data.stages, project, "goodbye")?.id))
         ? (data.handovers ?? []).filter((h) => h.project_id === projectId)
         : [],
     clientActions: eligible
@@ -72,8 +89,7 @@ export function clientPreview(
           (a) =>
             a.project_id === projectId &&
             (!a.scan_state || ["legacy", "clean"].includes(a.scan_state)) &&
-            (!a.stage_id ||
-              data.stages.some((s) => s.id === a.stage_id && s.visible)),
+            (!a.stage_id || open(a.stage_id)),
         )
       : [],
     role: "client",
@@ -83,14 +99,21 @@ export function clientPreview(
       : [],
     projects: project && eligible ? [project] : [],
     stages: eligible
-      ? data.stages.filter((s) => s.project_id === projectId && s.visible)
+      ? data.stages
+          .filter((s) => s.project_id === projectId && s.visible)
+          .map((s) => ({ ...s, client_unlocked: stageUnlocked(data, s) }))
       : [],
     documents,
     feedback: data.feedback.filter((f) =>
       documents.some((d) => d.id === f.document_id),
     ),
     questionnaires: eligible
-      ? data.questionnaires.filter((q) => q.project_id === projectId)
+      ? data.questionnaires.filter(
+          (q) =>
+            q.project_id === projectId &&
+            (!data.stageAccessReady ||
+              open(questionnaireStage(data.stages, project!, q.kind)?.id)),
+        )
       : [],
     notes: [],
     audit: [],

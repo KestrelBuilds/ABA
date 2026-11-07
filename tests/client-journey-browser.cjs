@@ -85,9 +85,11 @@ let stageName = "Contract and Deposit",
   stagePurpose = "contract_deposit";
 const managementMode = process.argv.includes("--management");
 const stageMode = process.argv.includes("--stages");
+const journeyMode = process.argv.includes("--journey");
 const fixtureStageId = randomUUID();
 const financeMode = process.argv.includes("--finance");
 const ownerMode =
+  journeyMode ||
   process.argv.includes("--owner-preview") ||
   formRetryMode ||
   projectFinderMode ||
@@ -387,6 +389,47 @@ if (contractMode || contractOwnerMode)
     version_label: "v1",
     stage_id: fixtureStageId,
   });
+const journeyUploadedTypes = [];
+const journeySecondId = randomUUID();
+const journeyStages = [
+  {
+    id: fixtureStageId,
+    project_id: pid,
+    name: "Onboarding",
+    stream: "Onboarding",
+    position: 0,
+    status: "In Progress",
+    visible: true,
+    purpose: "progress",
+    client_uploads_allowed: true,
+  },
+  {
+    id: journeySecondId,
+    project_id: pid,
+    name: "Logo Presentation",
+    stream: "Brand Identity",
+    position: 1,
+    status: "Not Started",
+    visible: true,
+    purpose: "progress",
+    client_uploads_allowed: true,
+  },
+  {
+    id: goodbyeStageId,
+    project_id: pid,
+    name: "Goodbye Packet",
+    stream: "Delivery",
+    position: 2,
+    status: "Not Started",
+    visible: true,
+    purpose: "progress",
+    client_uploads_allowed: false,
+  },
+];
+if (journeyMode) {
+  documents[0].stage_id = journeySecondId;
+  documents[1].stage_id = goodbyeStageId;
+}
 const remainingDeletionPaths = new Set(documents.map((d) => d.object_path));
 const prospective = {
   project_id: pid,
@@ -757,6 +800,14 @@ const server = createServer(async (req, res) => {
       retryStorageWrites++;
       return json({ Key: path.split("/object/")[1], Id: randomUUID() });
     }
+    if (
+      journeyMode &&
+      path.startsWith("/storage/v1/object/project-files/") &&
+      req.method === "POST"
+    ) {
+      journeyUploadedTypes.push(/content-type: ([^\r\n]+)/i.exec(text)?.[1]);
+      return json({ Key: path.split("/object/")[1], Id: randomUUID() });
+    }
     if (path.startsWith("/storage/v1/object/sign/")) {
       if (req.method === "POST")
         return json({
@@ -835,6 +886,9 @@ const server = createServer(async (req, res) => {
       );
       return json(createdFinderProjectId);
     }
+    if (table === "stage_access_ready") return json(journeyMode);
+    if (table === "client_stage_access")
+      return json(journeyStages.map((s) => ({ id: s.id, unlocked: true })));
     if (table === "project_lifecycle_ready")
       return json(
         lifecycleMode || projectFinderMode || deadlinesMode || dashboardMode,
@@ -1132,7 +1186,8 @@ const server = createServer(async (req, res) => {
       );
     if (table === "business_documents_ready")
       return json(
-        financeMode ||
+        journeyMode ||
+          financeMode ||
           stageMode ||
           contractMode ||
           contractOwnerMode ||
@@ -1221,7 +1276,8 @@ const server = createServer(async (req, res) => {
       return json(
         reviewDatesMode
           ? reviewDatesReady
-          : secureMode ||
+          : journeyMode ||
+              secureMode ||
               deadlinesMode ||
               lifecycleMode ||
               managementMode ||
@@ -1419,6 +1475,16 @@ const server = createServer(async (req, res) => {
       ];
     if ((projectFinderMode || dashboardMode) && table === "stages")
       rows = [...rows, ...finderExtraStages];
+    if (journeyMode && table === "stages") {
+      if (req.method === "PATCH")
+        Object.assign(
+          journeyStages.find(
+            (s) => url.searchParams.get("id") === "eq." + s.id,
+          ),
+          body,
+        );
+      rows = journeyStages;
+    }
     if (table === "stages" && templateMode) rows = liveTemplate;
     if (table === "stages" && (prospectMode || prospectOwnerMode))
       rows = potentialStages;
@@ -1465,9 +1531,11 @@ const server = createServer(async (req, res) => {
         return json({ message: "Fictional metadata save failure" }, 503);
       documents.push(body);
     }
+    if (journeyMode && table === "documents" && req.method === "POST")
+      documents.push(body);
     if (table === "documents")
       rows =
-        workspaceHelpMode || (secureMode && ownerMode)
+        journeyMode || workspaceHelpMode || (secureMode && ownerMode)
           ? documents
           : documents.filter(
               (d) =>
@@ -1667,6 +1735,22 @@ const server = createServer(async (req, res) => {
       await page.setViewportSize({ width: 390, height: 844 });
     };
 
+    // Existing tool-specific checks explicitly expand the now-collapsed supporting UI.
+    // The --journey mode checks the uncluttered default and primary stage flow.
+    const showSupportingTools = async () => {
+      if (journeyMode) return;
+      for (const selector of [
+        ".project-settings-disclosure > summary",
+        ".project-support-disclosure > summary",
+      ]) {
+        const summary = page.locator(selector);
+        if (
+          (await summary.count()) &&
+          !(await summary.evaluate((el) => el.parentElement.open))
+        )
+          await summary.click();
+      }
+    };
     await page.goto(`http://127.0.0.1:${appPort}/login`);
     await expect(page.locator('a[href="/demo"]')).toHaveCount(0);
     if (accountMode) {
@@ -1771,6 +1855,7 @@ const server = createServer(async (req, res) => {
     if (formRetryMode) {
       const flagsBefore = JSON.stringify(project);
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       const notes = page.locator("form").filter({
         has: page.locator('textarea[name="notes"]'),
       });
@@ -1826,7 +1911,14 @@ const server = createServer(async (req, res) => {
       assert.equal(retryNoteBody.replaceAll("\r\n", "\n"), draft);
       await page.reload();
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       await expect(input).toHaveValue(draft);
+      if (
+        !(await page
+          .locator(".project-library-disclosure")
+          .evaluate((el) => el.open))
+      )
+        await page.locator(".project-library-disclosure > summary").click();
       const upload = page.locator(".project-file-library .library-upload");
       await upload.locator("summary").click();
       const file = upload.getByLabel("File", { exact: true });
@@ -2002,6 +2094,7 @@ const server = createServer(async (req, res) => {
         planner.getByRole("button", { name: /Fictional presentation.pdf/ }),
       ).toHaveCount(0);
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       await stage.locator("summary").first().click();
       await editor.getByText("Change review date", { exact: true }).click();
       await expect(input).toHaveValue("");
@@ -2112,6 +2205,7 @@ const server = createServer(async (req, res) => {
         planner.getByRole("button", { name: /Fictional presentation.pdf/ }),
       ).toHaveCount(0);
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       await page.getByRole("button", { name: /Preview client portal/ }).click();
       await expect(
         page.getByText("Change review date", { exact: true }),
@@ -2219,6 +2313,7 @@ const server = createServer(async (req, res) => {
     }
     if (projectFinderMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       const finder = page.getByRole("region", {
           name: "Find a project",
           exact: true,
@@ -2442,6 +2537,7 @@ const server = createServer(async (req, res) => {
     }
     if (secureUnconfiguredMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       await expect(page.locator("#client-assets")).toContainText(
         "New file uploads are temporarily unavailable",
       );
@@ -2449,6 +2545,7 @@ const server = createServer(async (req, res) => {
         "up to 3 MB",
       );
       const preparation = page.locator("#handover-preparation");
+      await showSupportingTools();
       await preparation.locator("summary").first().click();
       await expect(preparation).toContainText(
         "New uploads are unavailable until file security checks are connected",
@@ -2467,6 +2564,7 @@ const server = createServer(async (req, res) => {
     }
     if (secureMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       await expect(page.locator("#client-assets")).toContainText(
         "Illustrator or ZIP files up to 25 MB",
       );
@@ -2474,11 +2572,18 @@ const server = createServer(async (req, res) => {
         "up to 3 MB",
       );
       const preparation = page.locator("#handover-preparation");
+      await showSupportingTools();
       await preparation.locator("summary").first().click();
       await expect(preparation).toContainText(
         "Illustrator and ZIP files up to 25 MB",
       );
       await preparation.getByText(/Review delivery files/).click();
+      if (
+        !(await page
+          .locator(".project-library-disclosure")
+          .evaluate((el) => el.open))
+      )
+        await page.locator(".project-library-disclosure > summary").click();
       const library = page.getByRole("region", {
         name: "All project files",
         exact: true,
@@ -2585,6 +2690,7 @@ const server = createServer(async (req, res) => {
     }
     if (lifecycleMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       const history = page.locator("#project-history");
       await history.locator("summary").click();
       await expect(history).toContainText(
@@ -2675,6 +2781,7 @@ const server = createServer(async (req, res) => {
         page.getByText(/Existing client access is retained as read-only/),
       ).toBeVisible();
       const preparation = page.locator("#handover-preparation");
+      await showSupportingTools();
       await preparation.locator("summary").first().click();
       await expect(preparation).toContainText(
         "Existing client access is read-only",
@@ -2701,7 +2808,8 @@ const server = createServer(async (req, res) => {
         .click();
       await page.getByLabel("Project list filter").selectOption("archived");
       if (!(await preparation.evaluate((el) => el.open)))
-        await preparation.locator("summary").first().click();
+        await showSupportingTools();
+      await preparation.locator("summary").first().click();
       await expect(preparation).toContainText(
         "Client access is suspended for this archived project",
       );
@@ -2721,6 +2829,12 @@ const server = createServer(async (req, res) => {
         await page
           .getByRole("button", { name: "Projects", exact: true })
           .click();
+      if (
+        !(await page
+          .locator(".project-library-disclosure")
+          .evaluate((el) => el.open))
+      )
+        await page.locator(".project-library-disclosure > summary").click();
       const library = page.getByRole("region", {
         name: "All project files",
         exact: true,
@@ -2808,6 +2922,12 @@ const server = createServer(async (req, res) => {
         await page
           .getByRole("button", { name: /Preview client portal/ })
           .click();
+        if (
+          !(await page
+            .locator(".project-library-disclosure")
+            .evaluate((el) => el.open))
+        )
+          await page.locator(".project-library-disclosure > summary").click();
         await expect(
           page
             .getByRole("region", { name: "All project files", exact: true })
@@ -2824,6 +2944,114 @@ const server = createServer(async (req, res) => {
       assert.deepEqual(errors, []);
       console.log(
         "PASS: searchable, stage-grouped same-record file library, combined filters/reset, journey navigation, owner sharing labels, client/preview filtering and mobile layouts. Fictional services only.",
+      );
+      return;
+    }
+    if (journeyMode) {
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
+      await expect(page.locator(".journey-layout .two-col")).toHaveCount(0);
+      const first = page.locator("#stage-" + fixtureStageId),
+        second = page.locator("#stage-" + journeySecondId),
+        goodbye = page.locator("#stage-" + goodbyeStageId);
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await expect(first.locator(".questionnaire")).toHaveCount(1);
+      await expect(second).toContainText("Locked");
+      await expect(
+        second.locator('a[href="/files/' + presentation + '"]'),
+      ).toHaveCount(0);
+      await expect(goodbye).toContainText("Locked");
+      await captureUi("journey-locked");
+      await page
+        .getByRole("button", { name: "Back to owner workspace" })
+        .click();
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
+      await first.locator("summary").first().click();
+      await first
+        .getByRole("button", { name: "Mark stage complete", exact: true })
+        .click();
+      await expect(first.locator("summary").first()).toContainText("Completed");
+      assert.equal(journeyStages[0].status, "Completed");
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await expect(
+        second.locator('a[href="/files/' + presentation + '"]'),
+      ).toHaveCount(1);
+      await expect(second).not.toContainText("Locked");
+      await page
+        .getByRole("button", { name: "Back to owner workspace" })
+        .click();
+      await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
+      await second.locator("summary").first().click();
+      await second
+        .getByRole("button", { name: "Mark stage complete", exact: true })
+        .click();
+      await expect(second.locator("summary").first()).toContainText(
+        "Completed",
+      );
+      await goodbye.locator("summary").first().click();
+      await goodbye.getByText("Upload my files", { exact: true }).click();
+      for (const [name, mimeType, buffer] of [
+        [
+          "Identity.ai",
+          "application/octet-stream",
+          Buffer.from("%PDF-1.7 Fictional AI"),
+        ],
+        [
+          "Logo.svg",
+          "image/svg+xml",
+          Buffer.from(
+            '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L10 10"/></svg>',
+          ),
+        ],
+        [
+          "Logo.png",
+          "image/png",
+          Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+        ],
+        ["Logo.jpeg", "image/jpeg", Buffer.from([255, 216, 255, 224])],
+      ]) {
+        await goodbye
+          .getByLabel("File", { exact: true })
+          .setInputFiles({ name, mimeType, buffer });
+        await goodbye
+          .getByRole("button", { name: "Upload to this stage", exact: true })
+          .click();
+        await expect(
+          goodbye.getByRole("link", { name: "Download " + name, exact: true }),
+        ).toBeVisible();
+        assert.equal(documents.find((d) => d.name === name)?.published, false);
+        assert.equal(documents.find((d) => d.name === name)?.category, "final");
+      }
+      assert.deepEqual(journeyUploadedTypes, [
+        "application/postscript",
+        "image/svg+xml",
+        "image/png",
+        "image/jpeg",
+      ]);
+      assert.equal(project.final_paid, false);
+      assert.equal(project.final_approved, false);
+      project.final_paid = true;
+      project.final_approved = true;
+      await page.reload();
+      await page.getByRole("button", { name: /Preview client portal/ }).click();
+      await goodbye.locator("summary").first().click();
+      await expect(goodbye).toContainText(
+        "I’ll upload your goodbye packet here",
+      );
+      await expect(
+        goodbye.getByRole("button", { name: "Upload my file to this stage" }),
+      ).toHaveCount(0);
+      await expect(
+        goodbye.getByText("Return a completed PDF or upload a file", {
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      await captureUi("journey-goodbye");
+      assert.deepEqual(errors, []);
+      console.log(
+        "PASS: one-column stage journey, inline questionnaire, owner-only completion unlocks next stage, locked files absent from preview, AI/SVG/PNG/JPEG owner handover uploads stay private/final-gated, goodbye has no client upload, and phone/desktop layouts pass. Fictional services only.",
       );
       return;
     }
@@ -3068,6 +3296,7 @@ const server = createServer(async (req, res) => {
         .waitFor();
       assert.equal(project.contract_signed, false);
       assert.equal(project.deposit_paid, false);
+      await showSupportingTools();
       await page
         .getByRole("region", { name: "Project at a glance" })
         .getByText(/Discovery booking area available/)
@@ -3143,7 +3372,7 @@ const server = createServer(async (req, res) => {
       if (!(await goodbye.evaluate((el) => el.open)))
         await goodbye.locator("summary").first().click();
       await goodbye
-        .getByText("Upload my PDF or presentation for this stage", {
+        .getByText("Upload my files", {
           exact: true,
         })
         .click();
@@ -3175,6 +3404,7 @@ const server = createServer(async (req, res) => {
     }
     if (invitationsMode) {
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       await page
         .getByRole("button", {
           name: "Invite / manage client access",
@@ -3569,6 +3799,7 @@ const server = createServer(async (req, res) => {
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       const management = page.locator("details.panel").filter({
         has: page.getByText(
           "Potential client · discovery, proposal & onboarding",
@@ -3783,6 +4014,7 @@ const server = createServer(async (req, res) => {
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       assert.equal(
         await page.locator(".milestone-disclosure").count(),
         templateMode === "combined" ? 16 : 11,
@@ -3794,15 +4026,11 @@ const server = createServer(async (req, res) => {
       const onboarding = findStage("Onboarding");
       await onboarding.locator("summary").first().click();
       assert.equal(
-        await onboarding
-          .getByRole("link", { name: /Open brand discovery/ })
-          .count(),
+        await onboarding.locator("#questionnaire-" + pid + "-brand").count(),
         templateMode === "website" ? 0 : 1,
       );
       assert.equal(
-        await onboarding
-          .getByRole("link", { name: /Open website discovery/ })
-          .count(),
+        await onboarding.locator("#questionnaire-" + pid + "-website").count(),
         templateMode === "brand" ? 0 : 1,
       );
       const enquiry = findStage("Enquiry Stage");
@@ -3836,19 +4064,16 @@ const server = createServer(async (req, res) => {
       const goodbye = findStage("Goodbye Packet");
       await goodbye.locator("summary").first().click();
       assert.equal(
-        await goodbye
-          .getByRole("link", { name: /goodbye.*questionnaire/i })
-          .count(),
+        await goodbye.locator("#questionnaire-" + pid + "-goodbye").count(),
         0,
       );
       project.final_paid = true;
       project.final_approved = true;
       await page.reload();
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       await goodbye.locator("summary").first().click();
-      await goodbye
-        .getByRole("link", { name: /goodbye.*questionnaire/i })
-        .waitFor();
+      await goodbye.locator("#questionnaire-" + pid + "-goodbye").waitFor();
       assert.ok(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -3976,6 +4201,7 @@ const server = createServer(async (req, res) => {
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       const stage = page.locator("#stage-" + fixtureStageId);
       await stage.locator("summary").first().click();
       await stage.getByText("Initial contract area", { exact: true }).click();
@@ -4025,6 +4251,7 @@ const server = createServer(async (req, res) => {
         .getByRole("heading", { name: "ABA Owner Dashboard", exact: true })
         .waitFor();
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       const stage = page.locator("#stage-" + fixtureStageId);
       assert.equal(
         await page
@@ -4122,6 +4349,12 @@ const server = createServer(async (req, res) => {
         await purposeSettings.locator("summary").first().click();
       }
       await stageSettings.locator("summary").first().click();
+      if (
+        !(await page
+          .locator(".project-library-disclosure")
+          .evaluate((el) => el.open))
+      )
+        await page.locator(".project-library-disclosure > summary").click();
       const stageFile = stage.locator(".file-visibility").first();
       const libraryFile = page
         .locator(".document-item .file-visibility")
@@ -4204,6 +4437,7 @@ const server = createServer(async (req, res) => {
         0,
       );
       await page.getByRole("button", { name: "Projects", exact: true }).click();
+      await showSupportingTools();
       await page
         .getByRole("link", { name: "View existing invoice records" })
         .click();
@@ -4286,7 +4520,7 @@ const server = createServer(async (req, res) => {
       await page.getByRole("button", { name: /Preview client portal/ }).click();
       await page
         .getByRole("heading", {
-          name: "Everything for your project",
+          name: "Your project journey",
           exact: true,
         })
         .waitFor();
@@ -4365,7 +4599,8 @@ const server = createServer(async (req, res) => {
     );
     if (stageMode) {
       const stage = page.locator("details.portal-stage-detail").first();
-      await stage.locator("summary").first().click();
+      if (!(await stage.evaluate((el) => el.open)))
+        await stage.locator("summary").first().click();
       assert.equal(
         await stage
           .getByRole("link", { name: "Book a call with me" })
@@ -4397,6 +4632,7 @@ const server = createServer(async (req, res) => {
       );
     }
     if (managementMode) {
+      await page.locator(".project-support-disclosure > summary").click();
       await page
         .getByRole("button", { name: "Mark done", exact: true })
         .click();
@@ -4468,6 +4704,13 @@ const server = createServer(async (req, res) => {
     const doc = page
       .locator(".document-item")
       .filter({ hasText: "Fictional presentation.pdf" });
+    if (
+      !(await page
+        .locator(".project-library-disclosure")
+        .evaluate((el) => el.open))
+    )
+      await page.locator(".project-library-disclosure > summary").click();
+    await doc.locator(".document-feedback > summary").click();
     for (const decision of ["changes_requested", "approved"]) {
       await doc.getByLabel("My response").selectOption(decision);
       await doc
@@ -4513,6 +4756,12 @@ const server = createServer(async (req, res) => {
     );
     project.final_approved = true;
     await page.reload();
+    if (
+      !(await page
+        .locator(".project-library-disclosure")
+        .evaluate((el) => el.open))
+    )
+      await page.locator(".project-library-disclosure > summary").click();
     await page
       .getByText("Fictional final files.pdf", { exact: true })
       .waitFor();

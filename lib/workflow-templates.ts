@@ -5,9 +5,9 @@ import type { ProjectType } from "./projects";
 export const sharedProjectStages = [
   "Enquiry Stage",
   "Project Proposal",
-  "Onboarding",
   "Contract",
   "Invoice",
+  "Onboarding",
 ] as const;
 export const brandProjectStages = [
   "Creative Direction",

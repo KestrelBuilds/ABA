@@ -13,6 +13,7 @@ import {
   credentials,
   uuid,
 } from "@/lib/validation";
+import { validateHandoverFile } from "@/lib/handover-file";
 import { validateUploadContents } from "@/lib/file-inspection";
 import { stagePurposes } from "@/lib/stage-purpose";
 import { newProjectStages } from "@/lib/workflow-templates";
@@ -554,7 +555,24 @@ export async function uploadDocument(form: FormData) {
       .parse(form.get("category"));
     const file = form.get("file");
     if (!(file instanceof File)) throw Error("Choose a file to upload.");
-    await validateUploadContents(file);
+    const sourceFile = /\.(ai|svg)$/i.test(file.name);
+    let contentType = file.type;
+    if (sourceFile) {
+      if (category !== "final" && form.get("document_role") !== "Handover")
+        throw Error(
+          "Use the Handover type or Final deliverable rule for Illustrator/SVG files.",
+        );
+      const ready = await db.rpc("stage_access_ready");
+      if (ready.error || ready.data !== true)
+        throw Error(
+          "Apply database update 014 before uploading Illustrator or SVG handover files.",
+        );
+      contentType = await validateHandoverFile(file);
+    } else await validateUploadContents(file);
+    // Storage uses the Blob's multipart MIME, so normalise browser AI/SVG variants.
+    const uploadFile = sourceFile
+      ? new File([file], file.name, { type: contentType })
+      : file;
     const id = crypto.randomUUID();
     const path = projectId + "/" + id;
     const capability = await db.rpc("project_management_ready");
@@ -601,7 +619,7 @@ export async function uploadDocument(form: FormData) {
         : {};
     const { trySmallSecureUpload } = await import("@/lib/supabase/file-intake");
     if (
-      await trySmallSecureUpload(db, file, {
+      await trySmallSecureUpload(db, uploadFile, {
         projectId,
         kind: "document",
         stageId: "stage_id" in stage ? (stage.stage_id ?? null) : null,
@@ -634,8 +652,8 @@ export async function uploadDocument(form: FormData) {
     );
     const { error } = await db.storage
       .from("project-files")
-      .upload(path, file, {
-        contentType: file.type,
+      .upload(path, uploadFile, {
+        contentType,
         cacheControl: "0",
         upsert: false,
       });

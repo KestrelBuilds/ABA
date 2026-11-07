@@ -4,6 +4,8 @@
 
 **Owner decision — 6 November 2026:** Alex deferred scanner setup and will revisit external hosting as the business grows. Keep legacy 3 MB PDF/image checks; they are not malware scanning. Do not activate 013, provision a scanner or run background software on Alex's PC from that decision. Temporary local experiments were stopped; their worker was not deployed or retained as an application feature. The existing optional adapter below remains future work requiring its original prerequisites.
 
+**Stage-journey update — 7 November:** independent 014 adds owner-only 3 MB AI/SVG handover support and sequential stage policies without activating scanning. See STAGE-JOURNEY.md. Apply 014 after 012 and skip 013. Do not later apply the older 013 over 014 without a compatible follow-up, because 013 replaces shared access helpers. If 013 was already present, 014 preserves its quarantine and updates the SVG reservation path.
+
 ## What is implemented
 
 With 013 and server configuration, owners and full-access clients can upload PDF, PNG, JPEG, WebP, Illustrator (.ai) and ZIP source files up to 25 MB directly into the existing private Supabase buckets. Large file bytes bypass the 4 MB Next.js server-action request limit. Contract returns remain PDF-only, 3 MB, explicitly bound to the original contract and stage.

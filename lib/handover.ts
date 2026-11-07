@@ -4,9 +4,12 @@ import {
   stageVerification,
   type VerificationField,
 } from "./journey-verification";
-export function stageFileDefaults(stage: Pick<DbStage, "name" | "stream">) {
+export function stageFileDefaults(
+  stage: Pick<DbStage, "name" | "stream" | "client_uploads_allowed">,
+) {
   const n = stage.name.trim().toLowerCase();
   if (
+    stage.client_uploads_allowed === false ||
     n === "goodbye packet" ||
     (n === "launch & handover" && stage.stream === "Website Design")
   )
@@ -23,7 +26,9 @@ export function stageFileDefaults(stage: Pick<DbStage, "name" | "stream">) {
 export function handoverPreparation(data: WorkspaceData, project: DbProject) {
   const stages = data.stages.filter((s) => s.project_id === project.id);
   const goodbye = stages.filter(
-    (s) => s.name.trim().toLowerCase() === "goodbye packet",
+    (s) =>
+      s.client_uploads_allowed === false ||
+      s.name.trim().toLowerCase() === "goodbye packet",
   );
   const documents = data.documents.filter((d) => d.project_id === project.id);
   const finals = documents.filter((d) => d.category === "final");

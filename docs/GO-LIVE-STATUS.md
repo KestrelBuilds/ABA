@@ -1,8 +1,10 @@
 # ABA Studio: remaining go-live work
 
-Status: 6 November 2026. The core portal workflows and the archive/history/combined-approval code are implemented. Readiness is tracked by concrete gates; local tests are separate from live acceptance.
+Status: updated 7 November 2026. The core portal workflows and the archive/history/combined-approval code are implemented. Readiness is tracked by concrete gates; local tests are separate from live acceptance.
 
 Alex confirmed sole-trader status and a seven-year policy for invoices/supporting tax records (longer if required). The public notice records that policy separately from other project data; it is not an automatic retention system. The owner Overview totals bar shows Predicted tax and one combined 20% estimate of active project values. On 7 November Alex requested removal of the per-project tax copy and explanation banner; this remains a planning estimate, not a statutory tax calculation. Alex deferred live malware scanning and chose existing 3 MB controls for now, with external hosting to be revisited as the business grows. 013 remains withheld; no scanner or PC software is running from this work.
+
+The latest stage-journey simplification and AI/SVG handover support are documented in STAGE-JOURNEY.md. Independent 014 needs applying after 012; optional scanner migration 013 remains deferred. Until 014 activation, existing database access rules remain in force. No live SQL was applied here.
 
 The latest development includes the visual owner chart dashboard, editable presentation review dates and preservation of unsaved entries after rejected/interrupted form actions. Pending forms lock their controls; confirmed successful saves retain normal reset/refresh behaviour. Client asset-upload guidance reflects legacy 3 MB, configured 25 MB or unavailable security checks. These changes introduce no new SQL, real scanner or service. Local validation and exact changes are in CHANGELOG.md; they do not close the operational gates below.
 

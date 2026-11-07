@@ -161,15 +161,21 @@ export default function SecureUpload({
           <input
             name="file"
             type="file"
-            accept={uploadAccept}
+            accept={
+              kind === "document" && data.stageAccessReady
+                ? uploadAccept
+                : uploadAccept.replace(",.svg", "")
+            }
             required
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
         </label>
         <p>
-          PDF, PNG, JPEG, WebP, Illustrator or ZIP · up to 25 MB. Files stay
-          unavailable until security checks pass. Sharing, contract and
-          final-release checks still apply.
+          {kind === "document" && data.stageAccessReady
+            ? "PDF, PNG, JPEG, WebP, Illustrator, SVG or ZIP"
+            : "PDF, PNG, JPEG, WebP, Illustrator or ZIP"}{" "}
+          · up to 25 MB. Files stay unavailable until security checks pass.
+          Sharing, contract and final-release checks still apply.
         </p>
         <button type="submit" className="primary" disabled={busy || !file}>
           {busy ? "Uploading / checking…" : "Upload file securely"}

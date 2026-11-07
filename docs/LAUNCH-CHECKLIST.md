@@ -62,6 +62,8 @@ Earlier hosted passes are retained as evidence; these steps cover the newer work
 - [x] Initial upload-security decision recorded 6 November: Alex deferred malware scanning and chose current 3 MB PDF/image format/signature checks for now, with external hosting to be revisited as the business grows. These checks do not establish malware-free files. Keep optional 013/larger-source uploads disabled until a real approved scanner is configured and validated; see SECURE-UPLOADS.md. No PC installation, service or purchase was authorised/activated.
 - [ ] Review production logs for sensitive data/link redaction and retention, and define how to respond to an incident.
 
+- [ ] Apply independent migration 014 after confirmed 012 (skip deferred 013) and check sequential stage locks, hidden predecessors, Goodbye upload restrictions and owner AI/SVG handover upload/download with a fictional hosted client. See STAGE-JOURNEY.md. No live SQL was applied from the coding workspace.
+
 ### 4. Make backups and privacy arrangements real
 
 - [ ] Confirm what Supabase, Storage and Vercel actually back up, how often and how recovery works. Check current plan/capabilities before proposing purchases.

@@ -2,6 +2,10 @@
 
 Current scope and remaining external launch gates: [development handover](docs/DEVELOPMENT-HANDOVER.md). Dated entries below retain the implementation history; later owner decisions and confirmations supersede older pending notes.
 
+## 7 November — a single sequential project journey
+
+Grouped questionnaires, stage files, feedback and permitted client returns within each journey stage. Added owner completion buttons, collapsed supporting panels and removed Goodbye Packet client uploads. Prepared independent migration 014 for server/Storage-enforced sequential release and owner AI/SVG handover types at the existing 3 MB cap; 013 remains deferred. No live migration, real records or new services. See docs/STAGE-JOURNEY.md.
+
 ## 7 November — tax amount in the Overview bar
 
 Replaced project-list tax lines and their explanation banner with just Predicted tax and one combined 20% estimate in the existing owner totals bar, as Alex requested. Preserved existing totals, excluded archived project values and kept the number owner-only. No new inputs, records, SQL or services. This supersedes the earlier per-project display.

@@ -4,6 +4,7 @@ import type {
   DbStage,
   WorkspaceData,
 } from "./workspace";
+import { stageUnlocked } from "./stage-access";
 import { discoveryBookingUrl } from "./stage-links";
 export const enquiryLabels = {
   new: "New enquiry",
@@ -105,7 +106,14 @@ export function previewProspect(
     contract_signed: p.contract_signed,
     deposit_paid: p.deposit_paid,
     documents: data.documents
-      .filter((d) => prospectDocumentVisible(d, p, data.stages, space))
+      .filter(
+        (d) =>
+          prospectDocumentVisible(d, p, data.stages, space) &&
+          (!data.stageAccessReady ||
+            data.stages.some(
+              (s) => s.id === d.stage_id && stageUnlocked(data, s),
+            )),
+      )
       .map((d) => ({
         id: d.id,
         name: d.name,

@@ -29,6 +29,8 @@ export type DbProject = {
   final_approved: boolean;
 };
 export type DbStage = {
+  client_unlocked?: boolean;
+  client_uploads_allowed?: boolean;
   purpose?: StagePurpose | null;
   id: string;
   project_id: string;
@@ -120,6 +122,7 @@ export type VerificationEvent = {
   source: string;
 };
 export type WorkspaceData = {
+  stageAccessReady?: boolean;
   readOnly?: boolean;
   fileSecurityReady?: boolean;
   secureUploadsConfigured?: boolean;
@@ -252,6 +255,18 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
   )
     throw Error("Stage purposes could not be checked. Please retry.");
   const stagePurposesReady = purposeCapability.data === true;
+  const journeyCapability = await db.rpc("stage_access_ready");
+  if (
+    journeyCapability.error &&
+    !["PGRST202", "42883"].includes(journeyCapability.error.code)
+  )
+    throw Error("Stage access could not be checked. Please retry.");
+  const stageAccessReady = journeyCapability.data === true;
+  const stageAccess = stageAccessReady
+    ? await db.rpc("client_stage_access")
+    : null;
+  if (stageAccess?.error) throw Error("Stage access could not be loaded.");
+
   const capability = await db.rpc("project_management_ready");
   if (
     capability.error &&
@@ -373,11 +388,13 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
     db
       .from("stages")
       .select(
-        stagePurposesReady
+        (stagePurposesReady
           ? "id,project_id,name,stream,position,status,visible,purpose"
-          : "id,project_id,name,stream,position,status,visible",
+          : "id,project_id,name,stream,position,status,visible") +
+          (stageAccessReady ? ",client_uploads_allowed" : ""),
       )
       .order("position")
+      .order("id")
       .overrideTypes<DbStage[], { merge: false }>(),
     db
       .from("documents")
@@ -416,6 +433,7 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       "Workspace data could not be loaded. Check the database migrations and access policies.",
     );
   return {
+    stageAccessReady,
     fileSecurityReady,
     secureUploadsConfigured: secureUploadsConfigured(),
     pendingUploads: pendingUploads?.data ?? [],
@@ -446,7 +464,17 @@ export async function loadWorkspace(): Promise<WorkspaceData> {
       process.env.SUPABASE_INVITE_EMAIL_READY === "true",
     clients: results[0].data ?? [],
     projects: results[1].data ?? [],
-    stages: results[2].data ?? [],
+    stages: (results[2].data ?? []).map((stage) => ({
+      ...stage,
+      ...(stageAccessReady
+        ? {
+            client_unlocked:
+              (
+                stageAccess?.data as { id: string; unlocked: boolean }[] | null
+              )?.find((a) => a.id === stage.id)?.unlocked === true,
+          }
+        : {}),
+    })),
     documents: results[3].data ?? [],
     feedback: results[4].data ?? [],
     questionnaires: results[5].data ?? [],

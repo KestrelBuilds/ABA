@@ -58,7 +58,6 @@ import {
   addProject,
   saveStage,
   saveProjectNotes,
-  submitQuestionnaire,
   moveStage,
   addStage,
   saveStagePurpose,
@@ -67,6 +66,7 @@ import {
   type Result,
 } from "@/app/actions";
 import JourneyVerification from "./journey-verification";
+import { stageUnlocked } from "@/lib/stage-access";
 import { stagePurposes } from "@/lib/stage-purpose";
 import {
   stageVerification,
@@ -158,7 +158,6 @@ function ActionForm({
     </form>
   );
 }
-import { questionnairePrompts, optionalQuestion } from "@/lib/questionnaires";
 import PortalGuide from "./portal-guide";
 import { clientPreview } from "@/lib/client-preview";
 export default function ConnectedStudio({
@@ -838,32 +837,6 @@ export default function ConnectedStudio({
                             Form={ActionForm}
                           />
                         )}
-                        {!admin && (
-                          <PortalGuide
-                            project={project}
-                            stages={data.stages}
-                            assetsReady={data.managementReady}
-                            clientActions={data.clientActions}
-                          />
-                        )}
-                        {admin && (
-                          <ProspectManagement
-                            data={data}
-                            project={project}
-                            Form={ActionForm}
-                          />
-                        )}
-                        <ProjectManagement
-                          key={"management-" + project.id}
-                          data={data}
-                          project={project}
-                          Form={ActionForm}
-                        />
-                        <ExistingBusinessRecords
-                          data={data}
-                          project={project}
-                          Form={ActionForm}
-                        />
                         <div className="project-summary">
                           <div>
                             <div className="eyebrow">{project.type}</div>
@@ -880,65 +853,19 @@ export default function ConnectedStudio({
                             <span>visible milestones complete</span>
                           </div>
                         </div>
-                        {admin && (
-                          <ProjectFocus
-                            data={data}
-                            project={project}
-                            onManageClient={() => {
-                              setView("Clients");
-                              setQuery(clientFor(project)?.name ?? "");
-                              setAccessClientId(project.client_id);
-                            }}
-                          />
-                        )}
-                        {admin && (
-                          <HandoverPreparation
-                            key={"handover-" + project.id}
-                            data={data}
-                            project={project}
-                          />
-                        )}
                         <div className="progress">
                           <i style={{ width: complete(project) + "%" }} />
                         </div>
-                        <div className="stream-progress">
-                          {[
-                            ...new Set(
-                              data.stages
-                                .filter((s) => s.project_id === project.id)
-                                .map((s) => s.stream),
-                            ),
-                          ].map((stream) => {
-                            const stages = data.stages.filter(
-                              (s) =>
-                                s.project_id === project.id &&
-                                s.stream === stream,
-                            );
-                            const percent = Math.round(
-                              (stages.filter((s) => s.status === "Completed")
-                                .length /
-                                stages.length) *
-                                100,
-                            );
-                            return (
-                              <div key={stream}>
-                                <span>{stream}</span>
-                                <b>{percent}%</b>
-                                <div className="progress">
-                                  <i style={{ width: percent + "%" }} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div className="project-jumps">
-                          <a href="#journey">Milestones</a>
-                          <a href="#questionnaires">Questionnaires</a>
-                          <a href="#documents">Documents & feedback</a>
-                          {admin && <a href="#controls">Project settings</a>}
-                        </div>
+                        {admin && !data.stageAccessReady && (
+                          <p className="helper-note">
+                            Apply database update 014 to enable sequential
+                            client-stage access and Illustrator/SVG handover
+                            uploads. Existing access rules remain in force until
+                            then.
+                          </p>
+                        )}
                         <div
-                          className="two-col detail"
+                          className="journey-layout"
                           key={"journey-" + project.id}
                         >
                           <div>
@@ -1194,7 +1121,23 @@ export default function ConnectedStudio({
                                     </details>
                                   ) : (
                                     <details
-                                      className="portal-stage-detail"
+                                      className={
+                                        "portal-stage-detail" +
+                                        (!stageUnlocked(data, s)
+                                          ? " stage-locked"
+                                          : "")
+                                      }
+                                      open={
+                                        stageUnlocked(data, s) &&
+                                        s.id ===
+                                          data.stages.find(
+                                            (candidate) =>
+                                              candidate.project_id ===
+                                                project.id &&
+                                              candidate.visible &&
+                                              candidate.status !== "Completed",
+                                          )?.id
+                                      }
                                       id={"stage-" + s.id}
                                       key={s.id}
                                     >
@@ -1206,7 +1149,9 @@ export default function ConnectedStudio({
                                               : "stage-check"
                                           }
                                         >
-                                          {s.status === "Completed" ? (
+                                          {!stageUnlocked(data, s) ? (
+                                            <Lock size={14} />
+                                          ) : s.status === "Completed" ? (
                                             <Check size={14} />
                                           ) : (
                                             "·"
@@ -1216,7 +1161,11 @@ export default function ConnectedStudio({
                                           <b>{s.name}</b>
                                           <small>{s.stream}</small>
                                         </div>
-                                        <span className="pill">{s.status}</span>
+                                        <span className="pill">
+                                          {stageUnlocked(data, s)
+                                            ? s.status
+                                            : "Locked"}
+                                        </span>
                                       </summary>
                                       <StageWorkspace
                                         data={data}
@@ -1250,150 +1199,13 @@ export default function ConnectedStudio({
                                 </details>
                               )}
                             </section>
-                            <section className="panel">
-                              <h2 id="questionnaires">
-                                Project brief & onboarding
-                              </h2>
-                              <p>
-                                This brief builds on your enquiry and initial
-                                chat. Short answers are welcome. For combined
-                                work, complete the shared essentials once in
-                                Brand discovery. Please arrange account
-                                invitations separately rather than sharing
-                                passwords.
-                              </p>
-                              {(["brand", "website", "goodbye"] as const)
-                                .filter((kind) =>
-                                  kind === "brand"
-                                    ? project.type !== "Website Design"
-                                    : kind === "website"
-                                      ? project.type !== "Brand Identity"
-                                      : project.final_paid &&
-                                        project.final_approved,
-                                )
-                                .map((kind) => {
-                                  const response = data.questionnaires.find(
-                                    (q) =>
-                                      q.project_id === project.id &&
-                                      q.kind === kind,
-                                  );
-                                  return (
-                                    <details
-                                      className="questionnaire"
-                                      id={
-                                        "questionnaire-" +
-                                        project.id +
-                                        "-" +
-                                        kind
-                                      }
-                                      key={project.id + kind}
-                                    >
-                                      <summary>
-                                        {kind === "brand"
-                                          ? "Brand discovery"
-                                          : kind === "website"
-                                            ? "Website discovery"
-                                            : "Goodbye & feedback"}{" "}
-                                        {response ? "· Submitted" : ""}
-                                      </summary>
-                                      {response ? (
-                                        <>
-                                          <p>
-                                            Submitted{" "}
-                                            {new Date(
-                                              response.submitted_at,
-                                            ).toLocaleDateString("en-GB")}
-                                            . Contact Alex if you need to change
-                                            an answer.
-                                          </p>
-                                          {Object.entries(response.answers).map(
-                                            ([key, value]) => (
-                                              <div className="answer" key={key}>
-                                                <b>
-                                                  {questionnairePrompts(
-                                                    kind,
-                                                    project.type,
-                                                  ).find(
-                                                    ([id]) => id === key,
-                                                  )?.[1] ?? key}
-                                                </b>
-                                                <p>{value}</p>
-                                              </div>
-                                            ),
-                                          )}
-                                        </>
-                                      ) : admin ? (
-                                        <p>
-                                          Your client can complete this
-                                          questionnaire in their portal.
-                                        </p>
-                                      ) : (
-                                        <ActionForm
-                                          action={submitQuestionnaire}
-                                          label="Send my answers"
-                                        >
-                                          <input
-                                            type="hidden"
-                                            name="projectId"
-                                            value={project.id}
-                                          />
-                                          <input
-                                            type="hidden"
-                                            name="kind"
-                                            value={kind}
-                                          />
-                                          {questionnairePrompts(
-                                            kind,
-                                            project.type,
-                                          ).map(([key, prompt]) => (
-                                            <label key={key}>
-                                              {prompt}
-                                              <textarea
-                                                name={"answer_" + key}
-                                                required={
-                                                  !optionalQuestion(kind, key)
-                                                }
-                                                maxLength={4000}
-                                              />
-                                            </label>
-                                          ))}
-                                          <p>
-                                            Answers are saved once submitted.
-                                            Please check them before sending.
-                                          </p>
-                                        </ActionForm>
-                                      )}
-                                      {kind === "brand" && (
-                                        <a
-                                          className="resource"
-                                          href="https://tally.so/r/mRAXk9"
-                                          target="_blank"
-                                          rel="noreferrer"
-                                        >
-                                          Logo Direction & Inspiration{" "}
-                                          <ArrowUpRight size={14} />
-                                        </a>
-                                      )}
-                                      {kind === "goodbye" && (
-                                        <a
-                                          className="resource"
-                                          href="https://tally.so/r/Z9jk9o"
-                                          target="_blank"
-                                          rel="noreferrer"
-                                        >
-                                          Existing goodbye form{" "}
-                                          <ArrowUpRight size={14} />
-                                        </a>
-                                      )}
-                                    </details>
-                                  );
-                                })}
-                            </section>
                           </div>
                           <div>
                             {admin && (
-                              <section className="panel">
-                                <h2 id="controls">Project controls</h2>
+                              <details className="panel project-settings-disclosure">
+                                <summary id="controls">
+                                  Project settings & internal notes
+                                </summary>
                                 <details>
                                   <summary>Edit project details</summary>
                                   <ActionForm
@@ -1492,33 +1304,88 @@ export default function ConnectedStudio({
                                     never returned to client accounts.
                                   </p>
                                 </ActionForm>
-                              </section>
+                              </details>
                             )}
-                            <ProjectFiles
-                              key={"files-" + project.id}
-                              data={data}
-                              project={project}
-                              Form={ActionForm}
-                            />
-                            {!admin && (
-                              <section className="panel">
-                                <h2>Payment overview</h2>
-                                <p>Project value: {money(project.budget)}</p>
-                                <p>
-                                  Deposit:{" "}
-                                  {project.deposit_paid
-                                    ? "Received"
-                                    : "Awaiting"}
-                                  <br />
-                                  Final balance:{" "}
-                                  {project.final_paid ? "Received" : "Awaiting"}
-                                </p>
-                                <p>
-                                  Online payment is not connected. I’ll share
-                                  payment instructions separately.
-                                </p>
-                              </section>
-                            )}
+                            <details className="project-library-disclosure">
+                              <summary>All project files</summary>
+                              <ProjectFiles
+                                key={"files-" + project.id}
+                                data={data}
+                                project={project}
+                                Form={ActionForm}
+                              />
+                            </details>
+                            <details className="panel project-support-disclosure">
+                              <summary>
+                                Project details & supporting information
+                              </summary>
+                              {!admin && (
+                                <PortalGuide
+                                  project={project}
+                                  stages={data.stages}
+                                  assetsReady={data.managementReady}
+                                  clientActions={data.clientActions}
+                                />
+                              )}
+                              {admin && (
+                                <ProspectManagement
+                                  data={data}
+                                  project={project}
+                                  Form={ActionForm}
+                                />
+                              )}
+                              <ProjectManagement
+                                key={"management-" + project.id}
+                                data={data}
+                                project={project}
+                                Form={ActionForm}
+                              />
+                              <ExistingBusinessRecords
+                                data={data}
+                                project={project}
+                                Form={ActionForm}
+                              />
+                              {admin && (
+                                <ProjectFocus
+                                  data={data}
+                                  project={project}
+                                  onManageClient={() => {
+                                    setView("Clients");
+                                    setQuery(clientFor(project)?.name ?? "");
+                                    setAccessClientId(project.client_id);
+                                  }}
+                                />
+                              )}
+                              {admin && (
+                                <HandoverPreparation
+                                  key={"handover-" + project.id}
+                                  data={data}
+                                  project={project}
+                                />
+                              )}
+
+                              {!admin && (
+                                <section className="panel">
+                                  <h2>Payment overview</h2>
+                                  <p>Project value: {money(project.budget)}</p>
+                                  <p>
+                                    Deposit:{" "}
+                                    {project.deposit_paid
+                                      ? "Received"
+                                      : "Awaiting"}
+                                    <br />
+                                    Final balance:{" "}
+                                    {project.final_paid
+                                      ? "Received"
+                                      : "Awaiting"}
+                                  </p>
+                                  <p>
+                                    Online payment is not connected. I’ll share
+                                    payment instructions separately.
+                                  </p>
+                                </section>
+                              )}
+                            </details>
                           </div>
                         </div>
                       </>
@@ -1543,15 +1410,18 @@ export default function ConnectedStudio({
               </>
             )}
             {!admin && project && (
-              <PortalGuide
-                project={project}
-                stages={data.stages}
-                part="reference"
-              />
+              <details className="panel">
+                <summary>Help & working together</summary>
+                <PortalGuide
+                  project={project}
+                  stages={data.stages}
+                  part="reference"
+                />
+              </details>
             )}
             {!preview && (
-              <section className="panel account-panel">
-                <h2>My account</h2>
+              <details className="panel account-panel">
+                <summary>My account</summary>
                 {admin && (
                   <Link className="resource" href="/account-security">
                     Protect my account with an authenticator →
@@ -1562,7 +1432,7 @@ export default function ConnectedStudio({
                 </a>
                 <PasswordForm />
                 {admin && <PortalCheck />}
-              </section>
+              </details>
             )}
             <BrandSignature />
           </main>

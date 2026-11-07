@@ -1,5 +1,5 @@
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
-export const uploadAccept = ".pdf,.png,.jpg,.jpeg,.webp,.ai,.zip";
+export const uploadAccept = ".pdf,.png,.jpg,.jpeg,.webp,.ai,.svg,.zip";
 export function uploadMime(name: string) {
   const ext = name.split(".").pop()?.toLowerCase();
   const types: Record<string, string> = {
@@ -9,6 +9,7 @@ export function uploadMime(name: string) {
     jpeg: "image/jpeg",
     webp: "image/webp",
     ai: "application/postscript",
+    svg: "image/svg+xml",
     zip: "application/zip",
   };
   if (
@@ -18,7 +19,7 @@ export function uploadMime(name: string) {
     name.length > 180
   )
     throw Error(
-      "Choose a PDF, PNG, JPEG, WebP, Illustrator or ZIP file with a normal file name.",
+      "Choose a PDF, PNG, JPEG, WebP, Illustrator, SVG or ZIP file with a normal file name.",
     );
   return types[ext];
 }

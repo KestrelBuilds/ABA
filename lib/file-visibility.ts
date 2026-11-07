@@ -1,3 +1,4 @@
+import { verifiedStageStatus } from "./journey-verification";
 import { prospectDocumentVisible, type ProspectSpace } from "./prospects";
 import type { DbDocument, DbProject, DbStage } from "./workspace";
 
@@ -21,6 +22,23 @@ export function fileVisibility(
     return {
       available: false,
       message: "Client access is suspended for this archived project.",
+    };
+  const assignedStage = stages.find(
+    (s) => s.id === document.stage_id && s.project_id === project.id,
+  );
+  if (
+    assignedStage?.client_unlocked !== undefined &&
+    stages.some(
+      (s) =>
+        s.project_id === project.id &&
+        (s.position < assignedStage.position ||
+          (s.position === assignedStage.position && s.id < assignedStage.id)) &&
+        verifiedStageStatus(s, project) !== "Completed",
+    )
+  )
+    return {
+      available: false,
+      message: "Client access locked: complete the earlier journey stages.",
     };
   const prospect = prospects.find((x) => x.project_id === project.id);
   if (

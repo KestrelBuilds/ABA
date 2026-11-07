@@ -1,4 +1,5 @@
 import yauzl from "yauzl";
+import { inspectSvg } from "./handover-file";
 import { MAX_UPLOAD_BYTES, uploadMime } from "./upload-policy";
 import { validateFile } from "./validation";
 
@@ -21,6 +22,10 @@ export async function inspectFile(bytes: Buffer, name: string) {
   // Latin-1 preserves every byte. ASCII decoding masks high bits and can make
   // a non-PDF header look like "%PDF-" (and similarly for PostScript/WebP).
   const header = bytes.subarray(0, 16).toString("latin1");
+  if (mime === "image/svg+xml") {
+    inspectSvg(bytes);
+    return mime;
+  }
   const valid =
     mime === "application/pdf"
       ? header.startsWith("%PDF-")
