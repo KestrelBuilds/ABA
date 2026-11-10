@@ -2,6 +2,10 @@
 
 Current scope and remaining external launch gates: [development handover](docs/DEVELOPMENT-HANDOVER.md). Dated entries below retain the implementation history; later owner decisions and confirmations supersede older pending notes.
 
+## 10 November — replacement database preparation
+
+Following persistent provider-side PAM authentication failures and Alex's confirmation that the old database contains only test data, prepared a fresh-project-only bootstrap combining 001–012 and 014. Local transaction, duplicate-application guard and owner workflow checks pass. A new free project must first pass SELECT 1; owner/Auth setup, secure Vercel connection switch and hosted acceptance are still pending. Old project remains untouched; 013 remains excluded. See docs/FRESH-SUPABASE.md.
+
 ## 7 November — a single sequential project journey
 
 Grouped questionnaires, stage files, feedback and permitted client returns within each journey stage. Added owner completion buttons, collapsed supporting panels and removed Goodbye Packet client uploads. Prepared independent migration 014 for server/Storage-enforced sequential release and owner AI/SVG handover types at the existing 3 MB cap; 013 remains deferred. No live migration, real records or new services. See docs/STAGE-JOURNEY.md.

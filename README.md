@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts, with a connected owner dashboard and private invited-client portal. `/demo` is a separate browser-only example using **fictional data**. The agreed core features are implemented; [the development handover](docs/DEVELOPMENT-HANDOVER.md) separates completed code from the remaining real-client launch requirements.
 
+### 10 November — fresh database setup prepared
+
+Alex confirmed the current database has only test data. A [fresh-project setup](docs/FRESH-SUPABASE.md) and guarded [single SQL file](supabase/bootstrap/ABA-new-project.sql) prepare a separate replacement using 001–012 and 014, with 013 excluded. Local schema/owner-workflow checks pass. No hosted project has been created or Vercel connection switched; test the new project's SQL connection first and keep the old project intact.
+
 ### 7 November — one project journey
 
 The project screen now follows a single vertical journey with stage files, questionnaires and feedback together. Supporting details, file library, settings and account tools are collapsed. Goodbye Packet has no client upload form. Owner handover uploads add AI/SVG alongside PNG/JPEG after **database update 014**, which also enforces stage-by-stage release. Apply 014 after confirmed 012; **skip deferred 013**. See [stage journey setup](docs/STAGE-JOURNEY.md).

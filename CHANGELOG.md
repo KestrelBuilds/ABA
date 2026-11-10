@@ -1,5 +1,11 @@
 # Changelog
 
+## 10 November 2026 — fresh Supabase setup prepared
+
+- Added a guarded one-transaction bootstrap for a new empty project, combining canonical 001–012 and 014 and excluding deferred 013. The user confirmed only test data in the old project. No existing project is reset, copied or deleted.
+- Documented the prerequisite SELECT 1 connection check, owner/Auth recreation, exact portal redirects, secure Vercel connection settings and rollback/hosted checks. No hosting configuration or live project was changed.
+- Validation: applied the complete bundle to an empty simulated Supabase PostgreSQL schema; verified 013 absent and fictional owner creation of the 16-stage combined journey with correct onboarding order and owner-only Goodbye uploads. Reapplying is blocked and preserves records. This does not establish that a fresh hosted project will avoid the PAM failure.
+
 ## 7 November 2026 — sequential project journey and owner handover files
 
 - Simplified owner/client projects into one vertical journey. Questionnaires, file feedback and permitted returns live inside their stages; the file library, supporting details/tasks, settings and account tools are collapsed. Existing project/document associations and private owner tools remain available.
