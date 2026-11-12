@@ -77,11 +77,19 @@ export default function ExistingBusinessRecords({
                 </label>
                 <label className="check-row">
                   <input type="checkbox" name="confirmed" required />I have
-                  verified receipt of the full amount.
+                  verified receipt of the amount described above.
                 </label>
+                {i.kind === "Deposit" && (
+                  <label className="check-row">
+                    <input type="checkbox" name="full_upfront" />
+                    This payment covers the full agreed project amount (100%),
+                    including the later final invoice.
+                  </label>
+                )}
                 <p>
-                  This updates the corresponding payment record without moving
-                  money.
+                  This records the payment after you verify receipt; it does not
+                  move money. The 100% upfront option also satisfies the later
+                  final-payment check. Final creative approval remains separate.
                 </p>
               </Form>
             )}

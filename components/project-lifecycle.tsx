@@ -75,11 +75,13 @@ export default function ProjectLifecycle({
                     ·{" "}
                     {e.source === "native_invoice"
                       ? "Existing invoice payment"
-                      : e.source === "stream_approval"
-                        ? "Workstream check"
-                        : e.source === "owner_check"
-                          ? "Explicit owner check"
-                          : "Project record changed"}
+                      : e.source === "full_upfront"
+                        ? "Full upfront payment"
+                        : e.source === "stream_approval"
+                          ? "Workstream check"
+                          : e.source === "owner_check"
+                            ? "Explicit owner check"
+                            : "Project record changed"}
                   </small>
                   {e.reference && <p>{e.reference}</p>}
                   {e.occurred_on && (

@@ -16,9 +16,9 @@ Continue only if it returns `1`. A new project is an alternative to try, not a p
 
 ## 2. Install the clean database
 
-Copy all of [ABA-new-project.sql](../supabase/bootstrap/ABA-new-project.sql) into the **new project's** SQL Editor and run it once. This combines canonical migrations 001–012, 014 and 015 in one transaction. **013 is excluded; do not apply it.** There are no copied test clients, real records, files, account credentials or fabricated verification dates.
+Copy all of [ABA-new-project.sql](../supabase/bootstrap/ABA-new-project.sql) into the **new project's** SQL Editor and run it once. This combines canonical migrations 001–012 and 014–017 in one transaction. **013 is excluded; do not apply it.** There are no copied test clients, real records, files, account credentials or fabricated verification dates.
 
-The script refuses to proceed if ABA tables already exist. A failed transaction is rolled back rather than leaving a partially installed ABA schema. It creates the existing owner/client access rules, private file buckets, owner MFA enforcement, manual invitations, Tally intake, project lifecycle and stage locks, including owner AI/SVG handovers at the existing 3 MB cap and the Word document MIME permission from 015. It does not create an owner Auth account.
+The script refuses to proceed if ABA tables already exist. A failed transaction is rolled back rather than leaving a partially installed ABA schema. It creates the existing owner/client access rules, private file buckets, owner MFA enforcement, manual invitations, Tally intake, project lifecycle and stage locks, including owner AI/SVG handovers at the existing 3 MB cap, Word document MIME permission from 015 and full upfront payment recording and grants from 016–017. It does not create an owner Auth account.
 
 This is a manual bootstrap of a new database, not a Supabase CLI migration-history repair. Do not run `supabase db push` blindly afterward: canonical 013 remains deferred and the CLI history must be reconciled deliberately before adopting that workflow.
 

@@ -23,6 +23,14 @@ function check(error: { message: string } | null) {
       "Paid or void",
       "Update payment",
       "Content too long",
+      "Owner confirmation is required",
+      "Payment date must be today or earlier",
+      "Payment reference is too long",
+      "Project not found",
+      "Use the separate payment checks",
+      "Issue the deposit invoice",
+      "The generated invoice pair needs reconciliation",
+      "Choose a document from this project",
     ];
     throw Error(
       known.some((s) => error.message.startsWith(s))
@@ -61,11 +69,33 @@ export async function markInvoicePaid(form: FormData) {
       throw Error(
         "Confirm that the full payment was received before recording it.",
       );
+    const invoiceId = id.parse(form.get("id"));
+    const paymentDate = z.iso.date().parse(form.get("paid_on"));
+    if (form.get("full_upfront") === "on") {
+      const invoice = await db
+        .from("invoices")
+        .select("project_id,kind")
+        .eq("id", invoiceId)
+        .single();
+      check(invoice.error);
+      if (invoice.data!.kind !== "Deposit")
+        throw Error("Choose the deposit invoice for a full upfront payment.");
+      check(
+        (
+          await db.rpc("verify_full_upfront_payment", {
+            target: invoice.data!.project_id,
+            payment_date: paymentDate,
+            acknowledged: true,
+          })
+        ).error,
+      );
+      return;
+    }
     check(
       (
         await db.rpc("record_invoice_payment", {
-          target: id.parse(form.get("id")),
-          payment_date: z.iso.date().parse(form.get("paid_on")),
+          target: invoiceId,
+          payment_date: paymentDate,
         })
       ).error,
     );
