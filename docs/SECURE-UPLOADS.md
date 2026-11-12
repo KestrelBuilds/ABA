@@ -8,7 +8,7 @@
 
 ## What is implemented
 
-With 013 and server configuration, owners and full-access clients can upload PDF, PNG, JPEG, WebP, Illustrator (.ai) and ZIP source files up to 25 MB directly into the existing private Supabase buckets. Large file bytes bypass the 4 MB Next.js server-action request limit. Contract returns remain PDF-only, 3 MB, explicitly bound to the original contract and stage.
+With 013 and server configuration, owners and full-access clients can upload PDF, Word (.docx), PNG, JPEG, WebP, Illustrator (.ai) and ZIP source files up to 25 MB directly into the existing private Supabase buckets. Large file bytes bypass the 4 MB Next.js server-action request limit. Contract returns accept PDF or Word files up to 3 MB and remain explicitly bound to the original contract and stage.
 
 Every new file starts quarantined: no client metadata, ordinary download, signed download or publication while pending/rejected. A narrowly scoped server worker downloads only the caller's reserved UUID path, checks size/SHA-256/signature, safely reads bounded ZIP entries and requests a matching malware verdict. Passing security checks does not publish the file or bypass stage, onboarding, final approval/payment gates. Neither uploads nor checks verify signatures/payments.
 

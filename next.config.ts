@@ -3,6 +3,9 @@ const config: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   agentRules: false,
   outputFileTracingIncludes: {
+    "/workbook/**": [
+      "./private-assets/ABA Visual Identity Client Workbook.pdf",
+    ],
     "/business-pdf/**": [
       "./public/fonts/DejaVuSans.ttf",
       "./public/brand/aba-mark.png",

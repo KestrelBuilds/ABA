@@ -2,6 +2,13 @@
 
 Current scope and remaining external launch gates: [development handover](docs/DEVELOPMENT-HANDOVER.md). Dated entries below retain the implementation history; later owner decisions and confirmations supersede older pending notes.
 
+## 12 November — visual identity workbook in onboarding
+
+The original fillable ABA Visual Identity Client Workbook PDF is available in the private Onboarding stage for every project type, including Website Design and Brand Identity. Clients download it and return the completed PDF through the existing private client asset upload. The original is served by an authenticated, project-scoped route from outside the public directory; no schema change was added.
+
+Contract uploads and client returns accept Word (.docx) and PDF. Returned copies stay linked to the original contract for owner review, with the existing 3 MB return cap and verification rules.
+Existing Supabase installations need additive migration 015 to allow DOCX in the private Storage buckets; fresh setup includes 015. No application of this migration or public deployment is implied by the local change.
+
 ## 10 November — replacement database preparation
 
 Following persistent provider-side PAM authentication failures and Alex's confirmation that the old database contains only test data, prepared a fresh-project-only bootstrap combining 001–012 and 014. Local transaction, duplicate-application guard and owner workflow checks pass. A new free project must first pass SELECT 1; owner/Auth setup, secure Vercel connection switch and hosted acceptance are still pending. Old project remains untouched; 013 remains excluded. See docs/FRESH-SUPABASE.md.
@@ -94,16 +101,18 @@ Email notifications, invoice reminders, automatic onboarding, native forms, clie
 Implemented: Supabase Auth adapters and protected routes, persistent owner/client workspace, role/ownership policies, separate internal notes, configurable workflows with workstream progress, gated client invitations and revocation, native discovery/goodbye submissions, private document upload/publication/download, creative feedback/revision/approval records and database audit triggers. PostgreSQL policies are locally tested with two clients and an owner.
 Required next: connect a Supabase development project, provision owner, configure email/redirects and run hosted isolation/auth/storage checks. Then address owner MFA enforcement, account recovery, invite resend for existing accounts, client file attachments, larger deliverable formats/malware scanning, production retention/export/deletion, and final privacy/deployment review. Native enquiry ingestion/Tally webhook sync is not implemented.
 
-
 ### Hosted checks confirmed — 27 October 2026
+
 Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: client isolation, actual PDF/signed downloads, protected/final files and access revocation all passed; temporary records/accounts/files were removed. Owner separately confirmed test-email receipt and successful dashboard return after correcting Supabase Auth URL settings. These checks ran on the deployed Vercel app, not from this credential-free coding workspace. Earlier pending/failure notes are superseded for these specific checks. Full production security/privacy review remains outstanding; automatic client-invitation emails remain unimplemented. The original generic revoked-file failure's cause is not independently proven.
 
 ## Everyday workspace update
+
 Implemented compact editable workflows, mobile project-section navigation, client/project edits, shared questionnaire completeness validation and expanded hosted creative-journey tests. Supabase invitation-email API support is gated on explicit email-template setup; delivery testing is pending. Remaining launch work is tracked in docs/LAUNCH-CHECKLIST.md, including owner MFA enforcement, recovery, backups/restore, privacy/retention and full client browser acceptance.
 
 Owner MFA enrollment/challenge and database assurance enforcement are implemented, pending the additional SQL upgrade and owner authenticator setup. Permission-filtered JSON data export is implemented. Provider backups/restore, email-template configuration, MFA recovery rehearsal and privacy/retention decisions remain required launch prerequisites.
 
 ## Project management and supplied branding
+
 Implemented dated client actions, editable scope/support, gated handover records, presentation versions/review deadlines, account-name/version approval snapshots and private PDF/image client assets. These await migration 202610280004 and hosted acceptance; existing projects remain usable beforehand. Applied the supplied Alex Bell Arts logo/favicons and four-colour palette; owner/client areas are named ABA Owner Dashboard and ABA Client Portal. Exact fonts remain pending font names/files. Expanded design/ZIP uploads, malware scanning, individual stage deadlines and provider backup/privacy completion remain follow-up work.
 
 Phase 3 foundation implemented: PDF-first stage workspaces, public Calendly link, per-stage documents/returns, reusable native proposals, 50/50 invoice lifecycle, invoice ledger and private PDF downloads. Apply migration 202610280005 and perform hosted acceptance before real use. Remaining: full signing-provider integration, pre-booking client document access, larger/source uploads, VAT/tax handling, partial payments/credit notes/refunds and live payment integration. External PDF invoices do not automatically populate the native invoice ledger.

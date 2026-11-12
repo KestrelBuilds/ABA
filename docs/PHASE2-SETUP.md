@@ -51,7 +51,7 @@ Configure verified email delivery/SMTP before sending to clients; Supabase's def
 4. In Clients, create a private invitation. New matching accounts receive a sensitive, single-use provider link; existing matching accounts receive an ordinary sign-in route and authenticate themselves. No invitation email is sent automatically. Share privately into a separate test browser/session; never screenshot or publish a token. Expired/revoked permissions can be renewed through the current owner invitation controls; never reset/delete an account to make an invitation work. See CLIENT-INVITATIONS.md for 010 compatibility and expiry rules.
 5. Accept the invitation. Client role and ownership come from the database's pending invitation, never from a URL client ID or editable user metadata.
 6. Complete the appropriate discovery questionnaire. Website-only projects must not show the logo exercise. Responses are immutable after submission; ask Alex for corrections. Structured editing/versioning is a follow-up.
-7. As owner, upload a fictional PDF/image; publish it. Check the client can download it, comment, request revisions and record a creative approval. Client asset/stage uploads are implemented behind the existing project-management upgrade. Legacy uploads allow PDF/PNG/JPEG/WebP up to 3 MB with binary-signature validation. Optional 013 permits larger/source files only with approved, configured security checks; do not apply it before the scanner prerequisites in SECURE-UPLOADS.md. Contract returns remain PDF-only up to 3 MB.
+7. As owner, upload a fictional PDF/image; publish it. Check the client can download it, comment, request revisions and record a creative approval. Client asset/stage uploads are implemented behind the existing project-management upgrade. Legacy uploads allow PDF/DOCX/PNG/JPEG/WebP up to 3 MB with content validation. Optional 013 permits larger/source files only with approved, configured security checks; do not apply it before the scanner prerequisites in SECURE-UPLOADS.md. Contract returns accept PDF or DOCX up to 3 MB.
 8. A published final file must stay inaccessible until both final payment and final approval are verified in owner controls. Creative feedback does not automatically mark the project approved. The owner explicitly confirms final approval after checking all workstreams.
 9. Revoke the client's portal access from Clients. Open sessions must lose data access. Previously issued signed download URLs expire within 60 seconds. This feature revokes all accounts attached to that client.
 
@@ -76,18 +76,23 @@ Configure verified email delivery/SMTP before sending to clients; Supabase's def
 Run `npm run dev`, then `node tests/browser.cjs` for the fictional demo and `node tests/phase2-browser.cjs` for missing-connection/fail-closed screens (the latter assumes no Supabase environment settings). Production server: `npm run build && npm start`. Local HTTP development should use `npm run dev`; production authentication cookies require HTTPS.
 
 ### Vercel integration variable names
+
 The application also accepts `NEXT_PUBLIC_SUPABASE_ANON_KEY` (legacy anonymous key) instead of `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_URL` as a URL fallback. The newer publishable key takes precedence when both exist. Connection variables must be assigned to the ABA Vercel project and the Production environment. After adding them, redeploy; earlier deployments do not receive new build settings automatically. Never use a service-role key as either public key.
 
 ### Automatic account-isolation check
+
 As the owner, open **My account → Check client portal access → Run automatic portal checks**. This requires `SUPABASE_SERVICE_ROLE_KEY` in Vercel's server environment. It creates two temporary confirmed Supabase users directly (no email), signs them in using the regular public client, accepts pending invitations and exercises hosted row-level permissions. Test records are scoped to random IDs and cleaned up in a finally block; audit history is retained with temporary actor references cleared. A failure or interrupted server execution may leave records prefixed **Automatic portal check**; inspect these and the reported run ID before retrying. A successful result does not replace email, real Storage API, browser-session and launch security checks. The owner session remains separate from test sessions.
 
 ### Live file and email verification
+
 The automatic portal check now uploads small fictional PDFs to the real private bucket. It verifies exact downloaded bytes and signed URLs, denies other-client/anonymous/unpublished access, checks final approval/payment gates and access after revocation, then removes the files before metadata cleanup. It does not use service-role credentials for the client permission checks. A provider/network failure is not a successful denial.
 
 Separately, **My account → Check client portal access → Send test sign-in email to me** requests a real Supabase sign-in email only for the verified owner. No recipient is accepted from the browser. It never creates new users or emails clients. A successful API response means the provider accepted the request, not that it arrived. Check the owner's inbox/spam and open the link in the same browser to validate PKCE callback/session handling. Configure Supabase Auth Site URL and redirect allowlist to your application's origin and `/auth/callback`. The app accepts an explicit `APP_ORIGIN` or Vercel's trusted `VERCEL_PROJECT_PRODUCTION_URL`; request headers never determine this destination. Default Supabase email limits and SMTP recipient restrictions can require configuration. Existing client invitations are still private links shared manually; automatic invitation emails are not implemented or verified by this test.
 
 ### Optional client invitation emails
+
 Private invitation links remain the default. To enable owner-requested invitation emails:
+
 1. In Supabase Authentication → Email Templates → Invite user, set the invitation link to `<a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}">Accept my ABA Studio invitation</a>`. Keep any desired branding/text around it. This lets the app verify the one-time token on its invitation screen rather than relying on unsupported URL fragments.
 2. Add `https://aba-iota.vercel.app/auth/confirm` to Supabase's allowed Redirect URLs. Use your own application origin if different.
 3. Ensure Auth email delivery/SMTP supports your intended recipients. A successful owner sign-in email alone does not establish external client delivery.
@@ -97,6 +102,7 @@ Private invitation links remain the default. To enable owner-requested invitatio
 Without that flag the email option is disabled, and server requests are refused before sending anything. Private links remain usable. On rare failures between provider acceptance and database setup, an email may arrive whose access cannot be completed; the app removes the newly created auth account and reports the error.
 
 ### Owner authenticator protection
+
 Apply `supabase/migrations/202610270003_owner_mfa.sql` once in the SQL Editor. Unlike the first-time setup files, this is an additional upgrade: it does not recreate or delete client/project records. It updates database admin permission checks to require `aal2` when the owner has a verified MFA factor. Low-assurance owner sessions then cannot bypass the website by calling the database or Storage directly. Client ownership rules are unchanged.
 
 In ABA Studio, open **My account → Protect my account with an authenticator**. Scan the QR with an authenticator you control and enter the current code. QR data is sensitive: never send it in chat or store it in screenshots. Back up your authenticator/recovery method before enabling it. Setup is blocked until the SQL upgrade is present. Merely starting an unverified enrollment does not activate the extra restriction; completing verification does. Future sign-ins prompt for a six-digit code. There is no email-only bypass.
@@ -104,16 +110,21 @@ In ABA Studio, open **My account → Protect my account with an authenticator**.
 If the authenticator is lost, recover it through its backup method. If necessary, use your separately secured Supabase project administrator account and the provider-supported MFA administration tools to remove the lost factor after verifying ownership, then reenrol immediately. Test recovery before real clients. The app does not provide homemade recovery codes or silently disable MFA. Hosted enrollment, challenge, new-session rejection and recovery testing remain pending owner setup.
 
 ### Workspace data export
+
 My account includes **Download my workspace data**. It exports only data visible to the current verified account, with no auth credentials, file bytes or service keys. Client exports exclude private notes/admin activity. Owner export requires MFA if enabled. This is a portable JSON export with a limited recent activity log, not a full/restorable database backup. Provider backups, retention and a restore rehearsal still need to be configured separately.
 
 ### Initial contract area upgrade
+
 After migrations through 202610280005, apply only 202610280006_contract_area.sql once to enable the optional restricted pre-onboarding contract area. No existing projects are opted in. Follow CONTRACT-AREA.md for explicit stage setup, invitations, PDF returns and hosted acceptance. No new secrets or signing-service account are required.
 
 ### Client deletion upgrade
+
 After migration 202610280006, apply only 202610280007_client_deletion.sql once. It adds the confirmed client/project/file cleanup workflow without new credentials. Follow CLIENT-DELETION.md and verify it on fictional hosted data before real client use.
 
 ### Potential-client / Tally setup
+
 Use supabase/updates/20261029_potential_clients_and_tally.sql after 006. It safely installs only missing 007/008/009, or apply canonical migrations in order through your usual runner. Configure the Tally form ID/signing secret in Vercel and the webhook in Tally as documented in POTENTIAL-CLIENTS-AND-TALLY.md. No live webhook connection has been confirmed from the coding workspace.
 
 ### Guided invitation/account update (supersedes the earlier email picker instructions)
+
 After 009, apply 202610290010_client_invitations.sql. Use Projects → Invite / manage client access or Clients → Client portal to create/copy an invitation and send it yourself. Existing accounts sign themselves in; no passwords/accounts are reset or removed. The optional SUPABASE_INVITE_EMAIL_READY picker is superseded. Keep the existing callback URL allowed and verify provider email settings as described in CLIENT-INVITATIONS.md. No additional credentials or paid service are required. Hosted acceptance remains pending.

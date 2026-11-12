@@ -44,6 +44,7 @@ export const credentials = z.object({
 export const uuid = z.uuid();
 export const allowedFiles = [
   "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "image/png",
   "image/jpeg",
   "image/webp",
@@ -54,5 +55,7 @@ export function validateFile(file: File) {
     file.size > 3 * 1024 * 1024 ||
     !allowedFiles.includes(file.type)
   )
-    throw Error("Choose a PDF, PNG, JPEG or WebP file up to 3 MB.");
+    throw Error(
+      "Choose a PDF, Word document, PNG, JPEG or WebP file up to 3 MB.",
+    );
 }

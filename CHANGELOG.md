@@ -1,5 +1,11 @@
 # Changelog
 
+## 12 November 2026 — downloadable visual identity workbook in onboarding
+
+- Added the original fillable ABA Visual Identity Client Workbook PDF to the private Onboarding stage for Website Design, Brand Identity and combined projects.
+- Clients download the source PDF and return the saved completed copy through the existing private client asset flow. The download requires sign-in and access to that project; returned PDFs keep existing validation, scan and private storage rules. The source is kept outside the public directory; the workbook itself needs no database change.
+- Added Word (.docx) contract uploads and client returns, with a 3 MB return cap, original-contract binding and owner verification. DOCX files must pass package-structure and bounded ZIP checks. Additive update 015 allows the Word MIME type in private Storage buckets; it is included in fresh-project bootstrap. Optional scanner support follows deferred 013.
+
 ## 10 November 2026 — fresh Supabase setup prepared
 
 - Added a guarded one-transaction bootstrap for a new empty project, combining canonical 001–012 and 014 and excluding deferred 013. The user confirmed only test data in the old project. No existing project is reset, copied or deleted.
@@ -128,7 +134,6 @@
 - Successful project creation resets finder filters so the new record is visible.
 - Kept the finder owner-only and retained the existing client/preview project selectors and access rules. No SQL or new service required.
 
-
 ## Expanded owner portal diagnostic
 
 - Added live-check coverage for retained read-only archives, suspended raw/signed file access, restoration, private verification history and both combined-project approvals plus final payment/revocation.
@@ -136,7 +141,6 @@
 - Ambiguous Auth creation errors report an unknown cleanup outcome and run ID, without inventing an account ID or deleting existing accounts.
 - Temporary-file deletion is verified before removing fixture metadata; cleanup failure retains scoped records and revokes disposable client access, with the run ID reported for review.
 - Recorded Alex’s successful owner archive/filter/restore test after 012. The expanded hosted diagnostic, email recovery and operational acceptance remain pending. No SQL or new service required.
-
 
 ## 30 October 2026 — project lifecycle and upload quarantine
 
@@ -146,7 +150,6 @@
 - Added optional 25 MB direct private PDF/image/AI/ZIP uploads, pending/rejected quarantine, bounded ZIP inspection, trusted hash-bound scanner adapter and retry/discard. No real scanner service is configured; migration 013 must wait for approved configuration/acceptance.
 - Hardened client cleanup around still-live upload tokens, retained intake tombstones, frozen reserved paths and delayed final cleanup with a retry time.
 - Added migration 012/013 activation guidance and a concrete go-live checklist. These are additive/capability-gated; no live SQL or real records changed by this release.
-
 
 ## 0.1.0 — 27 October 2026
 
@@ -172,32 +175,37 @@
 - Hosted Supabase Auth/email/Storage operation remains unverified until a development project is connected. No public deployment or real client use is approved.
 
 ### Connection compatibility fix
+
 - Accept Vercel's `NEXT_PUBLIC_SUPABASE_ANON_KEY` alongside the newer publishable key name, and `SUPABASE_URL` as a server-side URL fallback.
 - Share connection resolution between authentication and session refresh; service-role keys remain excluded from user-session configuration.
 
 ### Owner-run hosted portal checks
+
 - Added My account → Check client portal access, which creates two temporary confirmed test accounts without sending email.
 - Checks real hosted client sessions, invitation acceptance, separate projects, hidden notes/milestones, protected payment writes, document metadata visibility and access revocation.
 - Automatically removes this run's temporary records/accounts and retains audit history; reports cleanup failures explicitly. Requires the existing server-only service key. Does not claim to test email delivery or actual file downloads.
 
 ### Live storage and owner email checks
+
 - Extended owner diagnostics with actual temporary PDF uploads, byte-checked downloads and signed-link requests under regular client sessions.
 - Checks anonymous/other-client/unpublished/final-delivery restrictions and file access after revocation; removes temporary files before metadata cleanup.
 - Added a separate owner-only email test using the verified owner's account address, with provider rejection/rate-limit feedback. Accepted email requests are explicitly distinguished from confirmed delivery.
 - Use the platform's production hostname as an email/invitation origin fallback when APP_ORIGIN is absent; reject insecure or credential-bearing redirect configuration.
 
 ### File revocation investigation
+
 - Hosted owner diagnostics reported an unresolved revoked-client file check; no readiness claim is made from that failure.
 - Added no-store transport with explicit abort signals for all server Supabase clients, avoiding Next.js request memoization for permission-sensitive reads.
 - Storage probes use fresh cache nonces; new private uploads use zero-second cache lifetime and generated download links include a nonce.
 - Denial checks distinguish unexpected file bytes, unexpected signed-link issuance and network/provider failures, and recognise nonnumeric Storage error codes using the actual HTTP status.
 - Owner confirmed test-email delivery; its destination was localhost. The required Supabase Site URL/redirect allowlist correction is documented; successful callback remains pending.
 
-
 ### Hosted checks confirmed — 27 October 2026
+
 Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: client isolation, actual PDF/signed downloads, protected/final files and access revocation all passed; temporary records/accounts/files were removed. Owner separately confirmed test-email receipt and successful dashboard return after correcting Supabase Auth URL settings. These checks ran on the deployed Vercel app, not from this credential-free coding workspace. Earlier pending/failure notes are superseded for these specific checks. Full production security/privacy review remains outstanding; automatic client-invitation emails remain unimplemented. The original generic revoked-file failure's cause is not independently proven.
 
 ## 0.3.0 — Everyday workspace improvements
+
 - Compact expandable milestone editors and mobile shortcuts to project sections.
 - Added validated owner editing for client contact details and project name, budget and deadline. Client email changes are blocked after invitation/account creation to avoid mismatched identity.
 - Shared questionnaire prompts between UI and required-answer validation.
@@ -206,6 +214,7 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Validation: 23 local tests, strict type checks and production build passed. Browser regression checks passed for demo interactions, mobile overflow and unauthenticated route/file protection. Newly expanded hosted questionnaire/approval checks await an owner-run result; invitation-email delivery awaits template configuration.
 
 ### Owner account protection and data portability
+
 - Added provider-backed authenticator enrollment and challenge screens, session assurance checks and the owner MFA database upgrade.
 - Added database tests for low-assurance owner denial, high-assurance owner access and unchanged client access.
 - Added permission-filtered JSON workspace export with no credentials/file bytes; it is explicitly not a full backup.
@@ -213,10 +222,12 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Final validation: 26 local tests passed, including PostgreSQL MFA enforcement and QR rendering; strict types and production build passed. Browser checks confirmed signed-out security/export denial. Hosted MFA enrollment/recovery remains pending the owner's SQL upgrade and device setup.
 
 ### Client journey browser verification
+
 - Automated Chromium test passed actual app screens/actions for client sign-in, questionnaire submission, revision request, creative approval, payment-only delivery lock and final release/download at mobile size, using a fictional HTTP service fixture.
 - Notion questionnaire/template fidelity remains pending the owner's client-free source content; starter prompts are not represented as copied Notion content.
 
 ### Notion master export alignment
+
 - Read the supplied master portal and subpages; excluded Alex-only setup material from client-facing content.
 - Replaced discovery starter questions with the shared and service-specific questions from the export, avoiding duplicate shared questions in combined projects.
 - Added the six-section client home, content/handover/support guidance and relevant review checklists.
@@ -224,12 +235,14 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Validation: 28 local tests, strict type checks and production build passed. The real client screens/actions passed the automated fictional-service browser journey with the expanded Notion brief and mobile layout. No new database migration is required. Remaining feature gaps are explicitly mapped rather than represented as complete.
 
 ### Owner access to Notion-style preview
+
 - Added Preview client portal to the owner workspace so reviewing the Notion updates does not require a client account.
 - Reuses the client layout with read-only forms, no account actions and filtered project data; planned layout remains previewable before onboarding without granting access or releasing documents.
 - Added projection/access-gate tests and a browser owner-preview flow.
 - Validation: 31 local tests, strict types and production build passed, plus browser checks for owner preview and the real client journey against fictional services. No database upgrade required.
 
 ### Notion project management and Alex Bell Arts branding
+
 - Added capability-gated dated client actions, editable agreed briefs/support, protected handover records and private client PDF/image assets.
 - Added presentation version/deadline fields and database-bound named creative approval snapshots; existing historical reviews are preserved.
 - Added transactional database upgrade 202610280004 and PostgreSQL tests for permissions, asset isolation, immutable versions and final-handover gates.
@@ -238,14 +251,17 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Validation: 31 local tests, strict TypeScript and production build passed. Chromium tests covered dated action completion, private asset upload, protected handover visibility, branded logo rendering, the creative journey and owner preview using fictional services. Hosted activation/acceptance of the added project tools awaits the SQL upgrade.
 
 ### Higher-resolution brand artwork
+
 - Replaced the deployed wordmark, primary mark and favicon sources with the matching original PNGs from the owner's 4x.zip.
 - Kept displayed logo dimensions and colour tokens unchanged; versioned image URLs refresh previously cached artwork.
 
 ### Standalone A branding
+
 - Changed the shared interface logo to the supplied black standalone A mark and removed the adjacent STUDIO text, following Alex's preference.
 - Adjusted responsive logo dimensions for the square artwork; original high-resolution image is unchanged.
 
 ## 0.5.0 — PDF-first stage work and optional Phase 3 finance
+
 - Added expandable stage workspaces with instructions, supplied Calendly booking link, per-stage PDF roles, sharing controls and returned client files.
 - Kept Illustrator-authored proposal/contract/invoice PDFs as the primary supported workflow; built-in generation is optional.
 - Added reusable proposal templates, immutable shared revisions and manual decision recording.
@@ -254,6 +270,7 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Added transactional upgrade 202610280005, local database/PDF tests and browser finance/stage journeys. Hosted activation/acceptance remains pending the upgrade.
 
 ## Journey verification and file clarity — 28 October 2026
+
 - Put explicit contract, deposit, final approval and final payment verification inside standard journey stages; show verified status instead of contradictory ordinary progress.
 - Added journey verification access for renamed/custom stages without guessing their meaning; existing progress records and payment evidence are preserved.
 - Changed Project controls to read-only access/verification summaries with independent note saving. Built-in invoice payment protections remain authoritative.
@@ -261,18 +278,21 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - No database migration required. Validation: 42 automated tests, strict types and production build passed. Chromium checks passed for explicit journey verification/revocation, client journey, owner preview, stage files and finance using fictional services. Hosted acceptance remains unverified.
 
 ### Consistent file-access explanations
+
 - Stage files and All project files now show the same list of outstanding access requirements, including publication, contract/deposit, stage visibility and final approval/payment. Published no longer implies accessible.
 - Verification confirmations reset after each change, requiring fresh acknowledgement before removal. Empty custom-workflow verification panels are hidden; renamed-stage behaviour is explained.
 - Added 128 publication/stage/onboarding/delivery combinations checked against owner-preview filtering, and browser assertions for matching file notices before/after verification and revocation.
 - Validation: 45 automated tests, strict type checking and production build passed; Chromium verification/revocation, stage files, client journey and owner preview passed with fictional services. Hosted acceptance remains pending.
 
 ### Database and workspace usability review
+
 - Reviewed the 20-table schema and documented retained permission/lifecycle boundaries and prioritised improvements in docs/DATABASE-UX-REVIEW.md. No live database inspection or changes.
 - Added an owner-only project-at-a-glance panel with next-milestone navigation, onboarding/delivery requirements and invitation-management shortcut. Stage/invoice links expand their collapsed sections and move keyboard focus.
 - Dashboard project rows show the next milestone; clarified the budget-based balance as Unreceived project value. No new migration required.
 - Validation: 49 automated tests, production build and strict type check passed. Fictional-service Chromium checks passed verification/revocation with next-stage navigation, client journey, owner-preview exclusion, mobile layouts and finance shortcut expansion/keyboard focus. Hosted acceptance remains pending.
 
 ### Remove unused document-generation tools
+
 - Removed Finance navigation, optional generator panels, proposal/invoice creation, issuing/replacement actions, templates and seller/billing forms. Stopped fetching unused finance settings/templates for the workspace.
 - Kept Illustrator PDF uploads/sharing/returns and journey verification as the intended workflow.
 - Preserve previous generated documents in a collapsed history section only where records exist; downloads, verified invoice payments and voiding unused unpaid invoices remain protected. No records or migrations deleted.
@@ -280,6 +300,7 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Validation: 49 automated tests, type checking and production build passed. Browser checks passed removal of generation controls, previous-invoice downloads/payment/voiding, journey verification, stage PDF returns, client journey and owner preview using fictional services.
 
 ### Restricted initial contract area
+
 - Added explicit owner opt-in for one visible contract stage per project, early invitation eligibility, private contract downloads and PDF returns linked to their exact source document/stage. No automatic opt-ins, signatures or payment verification.
 - Added `/contracts`, safe portal routing for restricted/mixed client projects, client password setup, read-only owner preview and stage/library access notices. Returned files reuse the existing private client-assets records and bucket.
 - Added transaction-wrapped migration 202610280006; full project, brief, questionnaire, finance, feedback and final-delivery policies remain gated. Tightened feedback permissions so early contract downloads cannot open creative approval.
@@ -287,18 +308,21 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Validation: 51 automated tests, strict types and production build passed. Chromium passed client byte-identical PDF return and two-verification unlocking, owner opt-in/read-only preview, existing verification, stage files, client journey, invoice history and full owner preview using fictional services. New migration has not been applied to hosted Supabase.
 
 ### Folder-aligned branding and Framer website templates
+
 - New live Brand Identity projects follow Alex’s supplied folder order, plus Goodbye Packet. Website Design uses the same shared opening and a shorter design/Framer-focused workflow. Combined projects share acquisition and one goodbye stage.
 - Preserved existing projects and the separate older fictional demo. Added relevant enquiry booking/onboarding questionnaire links, stage instructions, distinct contract/deposit confirmations and explicit final verification checks. Actual goodbye-packet content is pending Alex’s supplied file.
 - Added exact external folder lists and scope/access explanations in docs/PROJECT-TEMPLATES.md. No extra SQL migration needed for templates.
 - Validation: 55 automated tests, strict types and production build passed. Chromium verified branding/website/combined layouts, relevant questionnaires/booking links, separate contract/deposit controls, gated goodbye links, mobile overflow and the existing restricted contract return. Hosted application acceptance remains pending.
 
 ### Confirmed client/project/file deletion
+
 - Added owner-only Delete client permanently with exact-name/acknowledgement confirmation, scope explanation, financial-history protection and a retry state. Pending cards disable normal editing/invitation actions.
 - Added transaction-wrapped migration 202610280007: freeze metadata/uploads, revoke client access, snapshot UUID-scoped Storage paths and verify API cleanup before deleting dependent records. Preserve audit history, Auth accounts and all native proposal/invoice records; protect other clients.
 - No hosted client data was deleted during development. Activation and hosted Storage acceptance require the new migration and a fictional test.
 - Validation: 59 automated tests, strict type checking and production build passed. Chromium checks passed exact-name confirmation, removal of linked files/records, simulated Storage failure with successful retry, and the existing restricted-contract/combined-template flows using fictional services. Hosted activation/acceptance remains pending.
 
 ### Prospective clients, phased documents and Tally enquiries
+
 - Replaced the locked full-journey preview with the actual limited prospective layout. Added owner opt-in/released steps and enquiry tracking, including Not proceeding; early invites can now begin at discovery before any proposal/contract exists.
 - Shared proposal, contract and deposit invoice PDFs are restricted to explicit selected stages/types and release phase. Legacy early-contract access cannot bypass prospective restrictions. Full creative work still requires verified contract+deposit; proposal responses are intent only.
 - Added private Enquiries inbox with manual records, explicit atomic conversion and a signed/size-limited, form-scoped Tally webhook. Transactional minimal receipts deduplicate retries even after source content deletion. No automatic invitation/email/access changes.
@@ -343,6 +367,7 @@ Owner supplied a Passed screenshot for the expanded account/Storage diagnostic: 
 - Validation: all 80 automated tests, strict TypeScript, formatting and production build passed. Fictional-service Chromium checked owner/client filtering, private/final-file exclusion from client choices, journey navigation, preview restrictions, 320/390/1440 px layouts, independent contract/deposit verification and the full client questionnaire/revision/approval/final-release/download journey. Hosted deployment acceptance remains unverified; no real records or emails were changed.
 
 ### Stable stage purposes — 30 October 2026
+
 - Added an independent owner-selected purpose so stage renames retain contract, deposit, final approval and final payment checks.
 - Added migration 011 with conservative exact-name mapping; custom and duplicate/overlapping stages require explicit owner choice. New templates retain their purposes through atomic project/enquiry creation.
 - Kept older installations usable before migration, with unexpected capability failures surfaced. Preserved progress and verification records, client access rules, publication and native invoice payment guards.

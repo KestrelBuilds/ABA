@@ -16,9 +16,9 @@ Continue only if it returns `1`. A new project is an alternative to try, not a p
 
 ## 2. Install the clean database
 
-Copy all of [ABA-new-project.sql](../supabase/bootstrap/ABA-new-project.sql) into the **new project's** SQL Editor and run it once. This combines the canonical migrations 001–012 and 014 in one transaction. **013 is excluded; do not apply it.** There are no copied test clients, real records, files, account credentials or fabricated verification dates.
+Copy all of [ABA-new-project.sql](../supabase/bootstrap/ABA-new-project.sql) into the **new project's** SQL Editor and run it once. This combines canonical migrations 001–012, 014 and 015 in one transaction. **013 is excluded; do not apply it.** There are no copied test clients, real records, files, account credentials or fabricated verification dates.
 
-The script refuses to proceed if ABA tables already exist. A failed transaction is rolled back rather than leaving a partially installed ABA schema. It creates the existing owner/client access rules, private file buckets, owner MFA enforcement, manual invitations, Tally intake, project lifecycle and stage locks, including owner AI/SVG handovers at the existing 3 MB cap. It does not create an owner Auth account.
+The script refuses to proceed if ABA tables already exist. A failed transaction is rolled back rather than leaving a partially installed ABA schema. It creates the existing owner/client access rules, private file buckets, owner MFA enforcement, manual invitations, Tally intake, project lifecycle and stage locks, including owner AI/SVG handovers at the existing 3 MB cap and the Word document MIME permission from 015. It does not create an owner Auth account.
 
 This is a manual bootstrap of a new database, not a Supabase CLI migration-history repair. Do not run `supabase db push` blindly afterward: canonical 013 remains deferred and the CLI history must be reconciled deliberately before adopting that workflow.
 
@@ -45,12 +45,12 @@ Copy any still-required exact recovery/preview URLs from the working configurati
 
 Save the current Vercel values securely for rollback, then update its **Production** connection settings to the **same new project**:
 
-| Setting | New value |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | New project's HTTPS URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | New project's publishable key |
-| `SUPABASE_SERVICE_ROLE_KEY` | New project's server-only legacy service_role key |
-| `APP_ORIGIN` | Keep `https://portal.alexbellarts.com` |
+| Setting                                | New value                                         |
+| -------------------------------------- | ------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | New project's HTTPS URL                           |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | New project's publishable key                     |
+| `SUPABASE_SERVICE_ROLE_KEY`            | New project's server-only legacy service_role key |
+| `APP_ORIGIN`                           | Keep `https://portal.alexbellarts.com`            |
 
 If using `NEXT_PUBLIC_SUPABASE_ANON_KEY` instead of the publishable key, set the new project's anon key and ensure an older publishable key is not still taking precedence. Likewise `SUPABASE_URL` is only a fallback to `NEXT_PUBLIC_SUPABASE_URL`. Integration-managed values must be updated through their integration connection where necessary; never combine an old URL with new keys or leave higher-priority values pointing at the old project. Enter keys only in secure hosting/environment fields, never chat, Git or public variables for the service_role key.
 

@@ -39,16 +39,27 @@ export async function inspectFile(bytes: Buffer, name: string) {
             ? bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255
             : mime === "image/webp"
               ? header.startsWith("RIFF") && header.slice(8, 12) === "WEBP"
-              : mime === "application/zip"
+              : mime === "application/zip" ||
+                  mime ===
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 ? bytes.length >= 4 &&
                   (bytes.readUInt32LE(0) === 0x04034b50 ||
                     bytes.readUInt32LE(0) === 0x06054b50)
                 : false;
   if (!valid) throw Error("The file contents do not match its file type.");
-  if (mime === "application/zip") await inspectZip(bytes);
+  if (
+    mime === "application/zip" ||
+    mime ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  )
+    await inspectZip(
+      bytes,
+      mime ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    );
   return mime;
 }
-function inspectZip(bytes: Buffer) {
+function inspectZip(bytes: Buffer, requireDocx = false) {
   return new Promise<void>((resolve, reject) => {
     yauzl.fromBuffer(
       bytes,
@@ -59,6 +70,7 @@ function inspectZip(bytes: Buffer) {
         let count = 0,
           total = 0,
           done = false;
+        const entries = new Set<string>();
         const fail = (message: string) => {
           if (done) return;
           done = true;
@@ -68,6 +80,12 @@ function inspectZip(bytes: Buffer) {
         zip.on("error", () => fail("This ZIP is damaged or unsupported."));
         zip.on("end", () => {
           if (!done) {
+            if (
+              requireDocx &&
+              (!entries.has("[Content_Types].xml") ||
+                !entries.has("word/document.xml"))
+            )
+              return fail("This file is not a valid Word document.");
             done = true;
             resolve();
           }
@@ -76,6 +94,7 @@ function inspectZip(bytes: Buffer) {
           count++;
           total += entry.uncompressedSize;
           const path = entry.fileName;
+          entries.add(path);
           const ext = path.split(".").pop()?.toLowerCase() ?? "";
           if (
             count > 2000 ||

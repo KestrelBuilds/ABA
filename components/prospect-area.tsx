@@ -83,15 +83,16 @@ function ProspectForm({
           <>
             <h4>Return your signed contract</h4>
             <p>
-              Download the contract, complete/sign it in Acrobat or our agreed
-              tool, then save and return the PDF here. PDF only, up to 3 MB.
+              Download the contract, complete/sign it in the format provided or
+              our agreed tool, then return a PDF or Word document (.docx), up to
+              3 MB.
             </p>
             <label>
-              Signed or completed PDF
+              Signed or completed contract file
               <input
                 name="file"
                 type="file"
-                accept="application/pdf"
+                accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 required
               />
             </label>
@@ -102,7 +103,7 @@ function ProspectForm({
             ? "Sending…"
             : kind === "proposal"
               ? "Send my proposal response"
-              : "Send signed PDF for review"}
+              : "Send contract file for review"}
         </button>
         {result && !pending && (
           <p

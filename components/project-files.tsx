@@ -103,12 +103,12 @@ export default function ProjectFiles({
                 <input
                   type="file"
                   name="file"
-                  accept="application/pdf,image/png,image/jpeg,image/webp"
+                  accept="application/pdf,.docx,image/png,image/jpeg,image/webp"
                   required
                 />
               </label>
               <p>
-                PDF, PNG, JPEG or WebP · 3 MB maximum. Uploads start
+                PDF, Word, PNG, JPEG or WebP · 3 MB maximum. Uploads start
                 unpublished.
               </p>
             </Form>

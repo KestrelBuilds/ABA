@@ -97,7 +97,7 @@ create policy reserved_storage_upload on storage.objects for insert to authentic
  and u.user_id=auth.uid() and u.status='pending' and u.expires_at>now() and public.client_storage_writable(u.project_id))
 );
 update storage.buckets set file_size_limit=26214400,
- allowed_mime_types=array['application/pdf','image/png','image/jpeg','image/webp','application/postscript','application/illustrator','application/zip','application/x-zip-compressed','application/octet-stream']
+ allowed_mime_types=array['application/pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document','image/png','image/jpeg','image/webp','application/postscript','application/illustrator','application/zip','application/x-zip-compressed','application/octet-stream']
  where id in ('project-files','client-assets');
 
 create function public.reserve_file_upload(target uuid,upload_id uuid,upload_kind text,file_name text,file_size bigint,file_hash text,mime text,stage uuid default null,category_name text default 'document',role_name text default 'General',version text default 'v1',review_date date default null,original_contract uuid default null)
@@ -115,9 +115,9 @@ begin
  if stage is not null and not exists(select 1 from public.stages where id=stage and project_id=target and (visible or public.is_admin())) then raise exception 'Choose an available stage in this project';end if;
  if upload_kind='contract' then
   if public.is_admin() or not public.can_return_contract_document(original_contract,target,stage) then raise exception 'Use a client account and the original contract reference';end if;
-  if file_size>3145728 or mime<>'application/pdf' then raise exception 'Contract returns must be PDFs up to 3 MB';end if;
+  if file_size>3145728 or mime not in ('application/pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document') then raise exception 'Contract returns must be PDFs or Word documents up to 3 MB';end if;
  end if;
- if mime is null or mime not in ('application/pdf','image/png','image/jpeg','image/webp','application/postscript','application/zip') then raise exception 'Choose a supported file type';end if;
+ if mime is null or mime not in ('application/pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document','image/png','image/jpeg','image/webp','application/postscript','application/zip') then raise exception 'Choose a supported file type';end if;
  bucket_name:=case when upload_kind='document' then 'project-files' else 'client-assets' end;
  insert into public.upload_intakes(id,project_id,stage_id,user_id,kind,bucket,object_path,name,expected_size,expected_sha256,content_type)
  values(upload_id,target,stage,auth.uid(),upload_kind,bucket_name,target::text||'/'||upload_id::text,file_name,file_size,file_hash,mime);
