@@ -1,9 +1,10 @@
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
-export const uploadAccept = ".pdf,.png,.jpg,.jpeg,.webp,.ai,.svg,.zip";
+export const uploadAccept = ".pdf,.docx,.png,.jpg,.jpeg,.webp,.ai,.svg,.zip";
 export function uploadMime(name: string) {
   const ext = name.split(".").pop()?.toLowerCase();
   const types: Record<string, string> = {
     pdf: "application/pdf",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     png: "image/png",
     jpg: "image/jpeg",
     jpeg: "image/jpeg",

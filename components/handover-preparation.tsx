@@ -202,11 +202,11 @@ export default function HandoverPreparation({
       <p className="helper-note">
         {data.fileSecurityReady
           ? data.secureUploadsConfigured
-            ? "The portal accepts PDF, PNG, JPEG, WebP, Illustrator and ZIP files up to 25 MB, with security checks before download or sharing. Contract returns remain PDF-only, up to 3 MB."
+            ? "The portal accepts PDF, Word, PNG, JPEG, WebP, Illustrator and ZIP files up to 25 MB, with security checks before download or sharing. Contract returns remain PDF or Word, up to 3 MB."
             : "New uploads are unavailable until file security checks are connected. Existing files keep their current sharing and release rules."
           : data.stageAccessReady
-            ? "Upload PDF, AI, SVG, PNG and JPEG handover files up to 3 MB in their journey stage. ZIP and font files still need your agreed sharing method."
-            : "The portal accepts PDFs and supported images up to 3 MB. Use your agreed sharing method for ZIP, source and font files."}{" "}
+            ? "Upload PDF, Word, AI, SVG, PNG and JPEG handover files up to 3 MB in their journey stage. ZIP and font files still need your agreed sharing method."
+            : "The portal accepts PDFs, Word documents and supported images up to 3 MB. Use your agreed sharing method for ZIP, source and font files."}{" "}
         Include only licences and support covered by the agreement.
       </p>
     </details>

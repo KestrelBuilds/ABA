@@ -38,21 +38,22 @@ function ReturnContract({ id }: { id: string }) {
     >
       <input type="hidden" name="documentId" value={id} />
       <label>
-        Signed or completed PDF
+        Signed or completed contract file
         <input
           name="file"
           type="file"
-          accept="application/pdf"
+          accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           required
           disabled={pending}
         />
       </label>
       <p>
-        Save your completed copy from Acrobat, then upload it here. PDF only, up
-        to 3 MB. Please do not upload passwords or bank-card details.
+        Upload your completed PDF or Word document (.docx), up to 3 MB. A
+        returned file is for review and does not verify a signature or payment.
+        Please do not upload passwords or bank-card details.
       </p>
       <button className="primary" disabled={pending}>
-        {pending ? "Uploading…" : "Send signed PDF for review"}
+        {pending ? "Uploading…" : "Send contract file for review"}
       </button>
       {result && !pending && (
         <p role={result.ok ? "status" : "alert"}>{result.message}</p>
@@ -136,12 +137,13 @@ export default function ContractArea({
                     {doc.name} · {doc.version_label}
                   </h3>
                   <a className="resource" href={"/files/" + doc.id}>
-                    Download contract PDF ↗
+                    Download contract ↗
                   </a>
                   <p>
-                    Download the PDF, complete and sign it in Adobe Acrobat or
-                    the signing tool we agreed on, then save and return that PDF
-                    here. Signing takes place outside ABA.
+                    Download the contract, complete and sign it in the format
+                    provided or the signing tool we agreed on, then return the
+                    completed PDF or Word document (.docx) here. Signing takes
+                    place outside ABA.
                   </p>
                   {entry.returns
                     .filter((a) => a.contract_document_id === doc.id)

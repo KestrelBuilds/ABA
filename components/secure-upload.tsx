@@ -172,8 +172,8 @@ export default function SecureUpload({
         </label>
         <p>
           {kind === "document" && data.stageAccessReady
-            ? "PDF, PNG, JPEG, WebP, Illustrator, SVG or ZIP"
-            : "PDF, PNG, JPEG, WebP, Illustrator or ZIP"}{" "}
+            ? "PDF, Word, PNG, JPEG, WebP, Illustrator, SVG or ZIP"
+            : "PDF, Word, PNG, JPEG, WebP, Illustrator or ZIP"}{" "}
           · up to 25 MB. Files stay unavailable until security checks pass.
           Sharing, contract and final-release checks still apply.
         </p>

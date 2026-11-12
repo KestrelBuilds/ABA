@@ -21,6 +21,7 @@ import { fileVisibility } from "@/lib/file-visibility";
 import { stageVerification } from "@/lib/journey-verification";
 import { stageGuidance } from "@/lib/stage-copy";
 import StageQuestionnaires from "./stage-questionnaires";
+import VisualIdentityWorkbook from "./visual-identity-workbook";
 import DocumentFeedback from "./document-feedback";
 import { clientUploadsAllowed, stageUnlocked } from "@/lib/stage-access";
 import { stageFileDefaults } from "@/lib/handover";
@@ -43,7 +44,11 @@ export default function StageWorkspace({
   const admin = data.role === "admin",
     resource = data.stageResources?.find((r) => r.stage_id === stage.id),
     documents = data.documents.filter((d) => d.stage_id === stage.id),
-    assets = (data.assets ?? []).filter((a) => a.stage_id === stage.id);
+    assets = (data.assets ?? []).filter(
+      (a) =>
+        a.stage_id === stage.id &&
+        a.name !== "Completed Visual Identity Workbook.pdf",
+    );
   const booking = resource
     ? resource.booking_url
     : /^(discovery call|enquiry stage)$/i.test(stage.name.trim())
@@ -197,6 +202,11 @@ export default function StageWorkspace({
           Form={Form}
         />
       )}
+      {project &&
+        stage.stream === "Onboarding" &&
+        stage.name.trim().toLowerCase() === "onboarding" && (
+          <VisualIdentityWorkbook data={data} stage={stage} Form={Form} />
+        )}
       <h3 className="files-heading">Files for this stage</h3>
       <UploadQueue
         data={data}
@@ -378,16 +388,16 @@ export default function StageWorkspace({
                         type="file"
                         accept={
                           data.stageAccessReady
-                            ? ".pdf,.ai,.svg,.png,.jpg,.jpeg,.webp"
-                            : "application/pdf,image/png,image/jpeg,image/webp"
+                            ? ".pdf,.docx,.ai,.svg,.png,.jpg,.jpeg,.webp"
+                            : "application/pdf,.docx,image/png,image/jpeg,image/webp"
                         }
                         required
                       />
                     </label>
                     <p>
                       {data.stageAccessReady
-                        ? "PDF, AI, SVG, PNG and JPEG files up to 3 MB. Use Handover or Final deliverable for AI/SVG files."
-                        : "PDFs and supported images up to 3 MB."}{" "}
+                        ? "PDF, Word, AI, SVG, PNG and JPEG files up to 3 MB. Use Handover or Final deliverable for AI/SVG files."
+                        : "PDFs, Word documents and supported images up to 3 MB."}{" "}
                       Files start private until you share them.
                     </p>
                     {defaults.category === "final" && (
@@ -421,14 +431,14 @@ export default function StageWorkspace({
                   <input
                     name="file"
                     type="file"
-                    accept="application/pdf,image/png,image/jpeg,image/webp"
+                    accept="application/pdf,.docx,image/png,image/jpeg,image/webp"
                     required
                   />
                 </label>
                 <p>
-                  PDFs and supported images up to 3 MB. A returned signed copy
-                  will be checked by Alex; uploading it does not automatically
-                  sign a contract or confirm payment.
+                  PDFs, Word documents and supported images up to 3 MB. A
+                  returned signed copy will be checked by Alex; uploading it
+                  does not automatically sign a contract or confirm payment.
                 </p>
               </Form>
             </details>

@@ -4341,6 +4341,37 @@ h2,
 .stage-questionnaires {
   margin: 20px 0;
 }
+.visual-identity-workbook {
+  display: grid;
+  gap: 12px;
+  margin: 22px 0;
+  padding: 18px;
+  border: 1px solid #d8c3e7;
+  border-left: 4px solid #7e00e5;
+  border-radius: 8px;
+  background: #fbf8fd;
+}
+.visual-identity-workbook > header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.visual-identity-workbook > header svg {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: #7e00e5;
+}
+.visual-identity-workbook h3,
+.visual-identity-workbook p {
+  margin: 0;
+}
+.visual-identity-workbook .helper-note {
+  margin: 0;
+}
+.workbook-return-status {
+  display: grid;
+  gap: 4px;
+}
 .document-feedback {
   margin-top: 16px;
 }

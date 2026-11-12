@@ -87,9 +87,13 @@ export async function reserveUpload(db: SupabaseClient, input: UploadInput) {
     mime = uploadMime(v.name);
   if (
     v.kind === "contract" &&
-    (mime !== "application/pdf" || v.size > 3 * 1024 * 1024)
+    (![
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ].includes(mime) ||
+      v.size > 3 * 1024 * 1024)
   )
-    throw Error("Contract returns must be PDFs up to 3 MB.");
+    throw Error("Contract returns must be PDFs or Word documents up to 3 MB.");
   const reserved = await db.rpc("reserve_file_upload", {
     target: v.projectId,
     upload_id: id,

@@ -1037,11 +1037,49 @@ export async function removeClientAction(form: FormData) {
 }
 export async function uploadClientAsset(form: FormData) {
   return run(async () => {
-    const { db, user } = await managementDb();
+    const { db, user, profile } = await managementDb();
     const project_id = uuid.parse(form.get("projectId"));
     const file = form.get("file");
     if (!(file instanceof File)) throw Error("Choose a file.");
-    await validateUploadContents(file);
+    const visualIdentityWorkbook =
+      form.get("returnVisualIdentityWorkbook") === "yes";
+    let uploadFile = file;
+    if (visualIdentityWorkbook) {
+      if (profile.role !== "client")
+        throw Error("Only the invited client can return this workbook.");
+      if (
+        file.type !== "application/pdf" ||
+        !file.name.toLowerCase().endsWith(".pdf")
+      )
+        throw Error("Choose the completed visual identity workbook as a PDF.");
+      const journey = await db.rpc("stage_access_ready");
+      if (journey.error || journey.data !== true)
+        throw Error("The onboarding file return is not available yet.");
+      const stageId = uuid.parse(form.get("stageId"));
+      const [stage, project] = await Promise.all([
+        db
+          .from("stages")
+          .select("project_id,stream,name,visible,client_uploads_allowed")
+          .eq("id", stageId)
+          .single(),
+        db.from("projects").select("id").eq("id", project_id).single(),
+      ]);
+      checked(stage.error);
+      checked(project.error);
+      if (
+        stage.data!.project_id !== project_id ||
+        stage.data!.stream !== "Onboarding" ||
+        stage.data!.name.trim().toLowerCase() !== "onboarding" ||
+        !stage.data!.visible ||
+        !stage.data!.client_uploads_allowed
+      )
+        throw Error("Return the workbook through the open Onboarding stage.");
+      uploadFile = new File([file], "Completed Visual Identity Workbook.pdf", {
+        type: "application/pdf",
+        lastModified: file.lastModified,
+      });
+    }
+    await validateUploadContents(uploadFile);
     const business = await db.rpc("business_documents_ready");
     const stage =
       business.data === true
@@ -1053,7 +1091,7 @@ export async function uploadClientAsset(form: FormData) {
         : {};
     const { trySmallSecureUpload } = await import("@/lib/supabase/file-intake");
     if (
-      await trySmallSecureUpload(db, file, {
+      await trySmallSecureUpload(db, uploadFile, {
         projectId: project_id,
         kind: "asset",
         stageId: "stage_id" in stage ? (stage.stage_id ?? null) : null,
@@ -1064,7 +1102,9 @@ export async function uploadClientAsset(form: FormData) {
         originalContract: null,
       })
     )
-      return "Your file passed its security checks and was uploaded privately.";
+      return visualIdentityWorkbook
+        ? "Your completed workbook was uploaded privately."
+        : "Your file passed its security checks and was uploaded privately.";
     const id = crypto.randomUUID(),
       object_path = project_id + "/" + id;
     checked(
@@ -1074,15 +1114,15 @@ export async function uploadClientAsset(form: FormData) {
           project_id,
           uploader_id: user.id,
           ...stage,
-          name: file.name.slice(0, 180),
+          name: uploadFile.name.slice(0, 180),
           object_path,
         })
       ).error,
     );
     const uploaded = await db.storage
       .from("client-assets")
-      .upload(object_path, file, {
-        contentType: file.type,
+      .upload(object_path, uploadFile, {
+        contentType: uploadFile.type,
         cacheControl: "0",
         upsert: false,
       });
@@ -1092,7 +1132,9 @@ export async function uploadClientAsset(form: FormData) {
         "Asset upload failed. Check the private client-assets bucket and try again.",
       );
     }
-    return "Your asset was uploaded privately.";
+    return visualIdentityWorkbook
+      ? "Your completed workbook was uploaded privately."
+      : "Your asset was uploaded privately.";
   });
 }
 
@@ -1197,13 +1239,21 @@ export async function uploadSignedContract(form: FormData) {
     checked(original.error);
     if (!original.data?.stage_id) throw Error("Contract not found.");
     const file = form.get("file");
-    if (!(file instanceof File)) throw Error("Choose your completed PDF.");
-    if (file.type !== "application/pdf")
-      throw Error("Choose a completed PDF up to 3 MB.");
+    if (!(file instanceof File))
+      throw Error("Choose your completed contract file.");
+    const wordDocumentType =
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    const isWordDocument =
+      file.type === wordDocumentType &&
+      file.name.toLowerCase().endsWith(".docx");
+    if (file.type !== "application/pdf" && !isWordDocument)
+      throw Error(
+        "Choose a completed PDF or Word document (.docx) up to 3 MB.",
+      );
     try {
       await validateUploadContents(file);
     } catch {
-      throw Error("Choose a completed PDF up to 3 MB.");
+      throw Error("Choose a valid completed PDF or Word document up to 3 MB.");
     }
     const { trySmallSecureUpload } = await import("@/lib/supabase/file-intake");
     if (
@@ -1218,7 +1268,7 @@ export async function uploadSignedContract(form: FormData) {
         originalContract: documentId,
       })
     )
-      return "Returned PDF checked and uploaded for my review. It does not verify a signature or payment.";
+      return "Returned contract file checked and uploaded for my review. It does not verify a signature or payment.";
     const id = crypto.randomUUID(),
       project_id = original.data.project_id,
       object_path = project_id + "/" + id;
@@ -1238,15 +1288,17 @@ export async function uploadSignedContract(form: FormData) {
     const upload = await db.storage
       .from("client-assets")
       .upload(object_path, file, {
-        contentType: "application/pdf",
+        contentType: file.type,
         cacheControl: "0",
         upsert: false,
       });
     if (upload.error) {
       await db.from("client_assets").delete().eq("id", id);
-      throw Error("Your signed PDF could not be uploaded. Please try again.");
+      throw Error(
+        "Your contract file could not be uploaded. Please try again.",
+      );
     }
-    return "Your completed PDF has been sent for my review. Uploading it does not verify the contract or payment; I’ll unlock the full portal after both checks.";
+    return "Your completed contract file has been sent for my review. Uploading it does not verify the contract or payment; I’ll unlock the full portal after both checks.";
   });
 }
 

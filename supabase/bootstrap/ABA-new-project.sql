@@ -1,6 +1,6 @@
 -- ABA fresh-project setup, prepared 10 November 2026.
 -- ONLY for a NEW, EMPTY Supabase project whose SELECT 1 already succeeds.
--- Combines migrations 001-012 and 014. Optional scanner migration 013 is excluded.
+-- Combines migrations 001-012, 014 and 015. Optional scanner migration 013 is excluded.
 -- Does not copy old clients, files, accounts, credentials or test data.
 -- Does not create the owner Auth account; follow the separate owner setup instructions.
 -- Never run this on the existing ABA project.
@@ -1374,6 +1374,21 @@ revoke all on function public.guard_goodbye_uploads(),public.stage_client_unlock
 grant execute on function public.stage_client_unlocked(uuid),public.client_stage_access(),public.stage_access_ready(),public.journey_storage_open(text,text),public.questionnaire_stage(uuid,text) to authenticated;
 notify pgrst,'reload schema';
 -- END 202611070014_stage_journey.sql
+
+-- BEGIN 202611120015_word_contract_files.sql
+update storage.buckets
+set allowed_mime_types = case
+  when allowed_mime_types is null then null
+  else array(
+    select distinct unnest(
+      allowed_mime_types || array[
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ]
+    )
+  )
+end
+where id in ('project-files', 'client-assets');
+-- END 202611120015_word_contract_files.sql
 
 
 commit;
