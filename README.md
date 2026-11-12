@@ -8,6 +8,8 @@ Every project type now includes the original fillable ABA Visual Identity Client
 
 Contract documents can be uploaded and returned as Word (.docx) or PDF. Client contract copies remain capped at 3 MB, linked to the original contract and awaiting Alex’s verification; Word files pass OpenXML package checks. Apply additive SQL update 015 before enabling Word storage on an existing Supabase project. Fresh setup already includes it.
 
+Potential-client previews show all documents allowed by the early release settings, including the invoice, and the discovery booking link disappears once the release step advances.
+
 ### 10 November — fresh database setup prepared
 
 Alex confirmed the current database has only test data. A [fresh-project setup](docs/FRESH-SUPABASE.md) and guarded [single SQL file](supabase/bootstrap/ABA-new-project.sql) prepare a separate replacement using 001–012, 014 and 015, with 013 excluded. Local schema/owner-workflow checks pass. No hosted project has been created or Vercel connection switched; test the new project's SQL connection first and keep the old project intact.

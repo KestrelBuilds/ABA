@@ -213,20 +213,18 @@ export default function ProspectArea({
                             ? "Take a look at the proposal below, then let me know if you’d like to go ahead or have any questions."
                             : "Download your contract and invoice below. Return your signed PDF and arrange the 50% deposit using the details in the invoice."}
                       </p>
-                      <a
-                        className={
-                          p.release_step === "discovery"
-                            ? "primary action-link"
-                            : "secondary action-link"
-                        }
-                        href={p.booking_url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <CalendarDays size={18} aria-hidden="true" /> Book a
-                        discovery call{" "}
-                        <ArrowUpRight size={16} aria-hidden="true" />
-                      </a>
+                      {p.release_step === "discovery" && (
+                        <a
+                          className="primary action-link"
+                          href={p.booking_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <CalendarDays size={18} aria-hidden="true" /> Book a
+                          discovery call{" "}
+                          <ArrowUpRight size={16} aria-hidden="true" />
+                        </a>
+                      )}
                     </div>
                     {p.release_step === "agreement" && (
                       <div
