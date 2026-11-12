@@ -9,6 +9,8 @@ The original fillable ABA Visual Identity Client Workbook PDF is available in th
 Contract uploads and client returns accept Word (.docx) and PDF. Returned copies stay linked to the original contract for owner review, with the existing 3 MB return cap and verification rules.
 Existing Supabase installations need additive migration 015 to allow DOCX in the private Storage buckets; fresh setup includes 015. No application of this migration or public deployment is implied by the local change.
 
+The read-only potential-client preview now mirrors early document release for invoices as well as contracts, without applying later journey-stage locks. Discovery booking is shown only while discovery remains the released step.
+
 ## 10 November — replacement database preparation
 
 Following persistent provider-side PAM authentication failures and Alex's confirmation that the old database contains only test data, prepared a fresh-project-only bootstrap combining 001–012 and 014. Local transaction, duplicate-application guard and owner workflow checks pass. A new free project must first pass SELECT 1; owner/Auth setup, secure Vercel connection switch and hosted acceptance are still pending. Old project remains untouched; 013 remains excluded. See docs/FRESH-SUPABASE.md.

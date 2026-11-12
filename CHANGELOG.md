@@ -5,6 +5,7 @@
 - Added the original fillable ABA Visual Identity Client Workbook PDF to the private Onboarding stage for Website Design, Brand Identity and combined projects.
 - Clients download the source PDF and return the saved completed copy through the existing private client asset flow. The download requires sign-in and access to that project; returned PDFs keep existing validation, scan and private storage rules. The source is kept outside the public directory; the workbook itself needs no database change.
 - Added Word (.docx) contract uploads and client returns, with a 3 MB return cap, original-contract binding and owner verification. DOCX files must pass package-structure and bounded ZIP checks. Additive update 015 allows the Word MIME type in private Storage buckets; it is included in fresh-project bootstrap. Optional scanner support follows deferred 013.
+- Fixed the read-only potential-client preview so it shows released contract and invoice documents even when their workflow stages are later-locked. The discovery booking link now appears only while the discovery release step is open.
 
 ## 10 November 2026 — fresh Supabase setup prepared
 
