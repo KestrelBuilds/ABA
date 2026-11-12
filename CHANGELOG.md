@@ -1,5 +1,11 @@
 # Changelog
 
+## 12 November 2026 — record full upfront payments
+
+- Added an owner confirmation on the deposit check to record a verified 100% upfront payment against both the initial deposit and later final-payment milestone. The separate final creative-approval check remains in place.
+- Added the same option for generated invoice pairs. An already-issued final invoice is marked paid with the deposit; a draft final invoice is automatically marked paid when it is issued after final approval. Verification history records the full upfront payment once with its date and evidence reference.
+- Added additive database updates 016–017 and included them in the fresh-project bootstrap, with explicit anon-role revocation for the new functions.
+
 ## 12 November 2026 — downloadable visual identity workbook in onboarding
 
 - Added the original fillable ABA Visual Identity Client Workbook PDF to the private Onboarding stage for Website Design, Brand Identity and combined projects.

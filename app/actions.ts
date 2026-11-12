@@ -60,6 +60,25 @@ function checked(error: { message: string } | null) {
       "The change could not be saved. Check your access and try again.",
     );
 }
+function checkedFullUpfront(error: { message: string } | null) {
+  if (!error) return;
+  const known = [
+    "Owner access required",
+    "Owner confirmation is required",
+    "Payment date must be today or earlier",
+    "Payment reference is too long",
+    "Project not found",
+    "Use the separate payment checks",
+    "Issue the deposit invoice",
+    "The generated invoice pair needs reconciliation",
+    "Choose a document from this project",
+  ];
+  throw Error(
+    known.some((message) => error.message.startsWith(message))
+      ? error.message
+      : "The full upfront payment could not be recorded. Check the project and try again.",
+  );
+}
 export async function signIn(_: Result, form: FormData): Promise<Result> {
   const v = credentials.safeParse(Object.fromEntries(form));
   if (!v.success)
@@ -293,6 +312,35 @@ export async function verifyJourneyRecord(form: FormData) {
     const ready = await db.rpc("project_lifecycle_ready");
     if (ready.error && !["PGRST202", "42883"].includes(ready.error.code))
       throw Error("Verification history could not be checked.");
+    if (form.get("full_upfront") === "on") {
+      if (field !== "deposit_paid" || !confirmed)
+        throw Error(
+          "Choose the deposit verification for a full upfront payment.",
+        );
+      if (ready.data !== true)
+        throw Error("Apply the project lifecycle database upgrade first.");
+      const paymentDate = z.iso.date().safeParse(form.get("full_upfront_date"));
+      if (!paymentDate.success)
+        throw Error("Choose the date the full project amount was received.");
+      checkedFullUpfront(
+        (
+          await db.rpc("verify_full_upfront_payment", {
+            target: id,
+            payment_date: paymentDate.data,
+            reference: z
+              .string()
+              .trim()
+              .max(500)
+              .parse(form.get("reference") ?? ""),
+            linked_document: form.get("documentId")
+              ? uuid.parse(form.get("documentId"))
+              : null,
+            acknowledged: true,
+          })
+        ).error,
+      );
+      return "Full upfront payment recorded. Both deposit and final payment are verified; final creative approval remains separate.";
+    }
     if (ready.data === true) {
       checked(
         (

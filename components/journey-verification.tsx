@@ -189,11 +189,35 @@ export default function JourneyVerification({
                     dated={!project[field]}
                   />
                 )}
+                {field === "deposit_paid" &&
+                  data.lifecycleReady &&
+                  !project.deposit_paid &&
+                  !project.final_paid && (
+                    <>
+                      <label className="check-row">
+                        <input type="checkbox" name="full_upfront" />
+                        The client paid the full agreed amount (100%) upfront.
+                        Verify both the deposit and final payment.
+                      </label>
+                      <p>Final creative approval remains a separate check.</p>
+                      <label>
+                        Full payment received on (if selected)
+                        <input
+                          type="date"
+                          name="full_upfront_date"
+                          max={new Intl.DateTimeFormat("en-CA", {
+                            timeZone: "Europe/London",
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                          }).format(new Date())}
+                        />
+                      </label>
+                    </>
+                  )}
                 <label className="check-row">
                   <input name="acknowledged" type="checkbox" required />
-                  {project[field]
-                    ? "I intend to remove this verification and restore the relevant access restrictions."
-                    : verificationLabels[field]}
+                  {formAcknowledgement(project, field)}
                 </label>
               </Form>
             )}
@@ -202,4 +226,12 @@ export default function JourneyVerification({
       })}
     </div>
   );
+}
+
+function formAcknowledgement(project: DbProject, field: VerificationField) {
+  if (project[field])
+    return "I intend to remove this verification and restore the relevant access restrictions.";
+  if (field === "deposit_paid")
+    return "I have checked the payment received and confirm the selected payment record is accurate.";
+  return verificationLabels[field];
 }

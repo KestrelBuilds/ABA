@@ -6,13 +6,15 @@ A considered workspace for Alex Bell Arts, with a connected owner dashboard and 
 
 Every project type now includes the original fillable ABA Visual Identity Client Workbook PDF in its private Onboarding stage, including Website Design projects. Clients download the PDF, complete it in a PDF reader, then return the saved copy through the existing private client-file upload. The source PDF is served only after sign-in and project-access checks; returned files keep the current private storage and scan/release rules.
 
-Contract documents can be uploaded and returned as Word (.docx) or PDF. Client contract copies remain capped at 3 MB, linked to the original contract and awaiting Alex’s verification; Word files pass OpenXML package checks. Apply additive SQL update 015 before enabling Word storage on an existing Supabase project. Fresh setup already includes it.
+Contract documents can be uploaded and returned as Word (.docx) or PDF. Client contract copies remain capped at 3 MB, linked to the original contract and awaiting Alex’s verification; Word files pass OpenXML package checks. Existing Supabase projects need additive update 015 for Word storage and updates 016–017 for the full upfront payment option; fresh setup includes them.
 
 Potential-client previews show all documents allowed by the early release settings, including the invoice, and the discovery booking link disappears once the release step advances.
 
+On the owner’s deposit check, select **The client paid the full agreed amount (100%) upfront** to verify both the deposit and final-payment milestones together. Generated invoice pairs record the same payment against both halves; a draft final invoice is marked paid when issued after final approval. Creative approval stays separate. Existing Supabase projects need additive updates 016–017; fresh-project bootstrap includes them.
+
 ### 10 November — fresh database setup prepared
 
-Alex confirmed the current database has only test data. A [fresh-project setup](docs/FRESH-SUPABASE.md) and guarded [single SQL file](supabase/bootstrap/ABA-new-project.sql) prepare a separate replacement using 001–012, 014 and 015, with 013 excluded. Local schema/owner-workflow checks pass. No hosted project has been created or Vercel connection switched; test the new project's SQL connection first and keep the old project intact.
+Alex confirmed the current database has only test data. A [fresh-project setup](docs/FRESH-SUPABASE.md) and guarded [single SQL file](supabase/bootstrap/ABA-new-project.sql) prepare a separate replacement using 001–012 and 014–017, with 013 excluded. Local schema/owner-workflow checks pass. No hosted project has been created or Vercel connection switched; test the new project's SQL connection first and keep the old project intact.
 
 ### 7 November — one project journey
 
