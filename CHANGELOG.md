@@ -1,5 +1,11 @@
 # Changelog
 
+## 27 November 2026 — clear oversized-upload feedback
+
+- Check the existing 3 MB limit in legacy upload forms before sending file bytes, so oversized uploads show a useful message instead of a generic request failure. Preserve the selected file after rejection and allow a replacement to be uploaded normally.
+- Client asset, stage, workbook and contract forms include Alex's requested clickable email fallback, alexbellarts@outlook.com, for larger files. The oversized-file warning includes the same link.
+- Added a fictional browser regression covering files just above the limit, a 5 MB JPG and a successful JPG at the limit. No database update is required.
+
 ## 12 November 2026 — record full upfront payments
 
 - Added an owner confirmation on the deposit check to record a verified 100% upfront payment against both the initial deposit and later final-payment milestone. The separate final creative-approval check remains in place.

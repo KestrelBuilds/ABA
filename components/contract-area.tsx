@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { PasswordForm } from "./auth-forms";
 import BrandMark from "./brand-mark";
 import BrandSignature from "./brand-signature";
+import LargeFileHelp from "./large-file-help";
 import type { ContractEntry } from "@/lib/contracts";
 import { uploadSignedContract, signOut, type Result } from "@/app/actions";
 function ReturnContract({ id }: { id: string }) {
@@ -51,6 +52,9 @@ function ReturnContract({ id }: { id: string }) {
         Upload your completed PDF or Word document (.docx), up to 3 MB. A
         returned file is for review and does not verify a signature or payment.
         Please do not upload passwords or bank-card details.
+      </p>
+      <p>
+        <LargeFileHelp />
       </p>
       <button className="primary" disabled={pending}>
         {pending ? "Uploading…" : "Send contract file for review"}

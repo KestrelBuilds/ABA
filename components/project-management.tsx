@@ -1,5 +1,6 @@
 "use client";
 import SecureUpload from "./secure-upload";
+import LargeFileHelp from "./large-file-help";
 import { FileScanStatus } from "./upload-status";
 import { fileAvailable } from "@/lib/upload-policy";
 import type { ComponentType, ReactNode } from "react";
@@ -228,6 +229,11 @@ export default function ProjectManagement({
                 accept="application/pdf,image/png,image/jpeg,image/webp"
               />
             </label>
+            {!admin && (
+              <p>
+                <LargeFileHelp />
+              </p>
+            )}
           </Form>
         )}
         {(data.assets ?? [])

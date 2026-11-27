@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_LEGACY_UPLOAD_BYTES } from "./upload-policy";
 export const clientInput = z.object({
   name: z.string().trim().min(1).max(120),
   contact: z.string().trim().min(1).max(120),
@@ -52,7 +53,7 @@ export const allowedFiles = [
 export function validateFile(file: File) {
   if (
     !file.size ||
-    file.size > 3 * 1024 * 1024 ||
+    file.size > MAX_LEGACY_UPLOAD_BYTES ||
     !allowedFiles.includes(file.type)
   )
     throw Error(
