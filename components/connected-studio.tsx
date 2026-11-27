@@ -1,6 +1,8 @@
 "use client";
 import ProjectFinder from "./project-finder";
 import { useSavedFormReset } from "./use-saved-form-reset";
+import { MAX_LEGACY_UPLOAD_BYTES } from "@/lib/upload-policy";
+import LargeFileHelp from "./large-file-help";
 import {
   defaultProjectFilters,
   findProjects,
@@ -100,7 +102,9 @@ function ActionForm({
 }) {
   const preview = useContext(PreviewContext);
   const [pending, start] = useTransition();
-  const [result, setResult] = useState<Result | null>(null);
+  const [result, setResult] = useState<
+    (Result & { oversizedFile?: boolean }) | null
+  >(null);
   const { formRef, onReset, resetAfterSave } = useSavedFormReset();
   const router = useRouter();
   return (
@@ -112,6 +116,16 @@ function ActionForm({
       action={(data) => {
         if (preview || pending) return;
         setResult(null);
+        for (const value of data.values()) {
+          if (value instanceof File && value.size > MAX_LEGACY_UPLOAD_BYTES) {
+            setResult({
+              ok: false,
+              message: "This file is larger than 3 MB.",
+              oversizedFile: true,
+            });
+            return;
+          }
+        }
         start(async () => {
           try {
             const r = await action(data);
@@ -142,6 +156,12 @@ function ActionForm({
           role="status"
         >
           {result.message}
+          {result.oversizedFile && (
+            <>
+              {" "}
+              <LargeFileHelp oversized />
+            </>
+          )}
           {result.link && (
             <label>
               Private invitation link

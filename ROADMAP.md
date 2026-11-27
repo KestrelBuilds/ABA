@@ -2,6 +2,10 @@
 
 Current scope and remaining external launch gates: [development handover](docs/DEVELOPMENT-HANDOVER.md). Dated entries below retain the implementation history; later owner decisions and confirmations supersede older pending notes.
 
+## 27 November — oversized-upload feedback
+
+Reproduced the generic request failure with a 5 MB client JPG and verified a JPG at the existing 3 MB limit succeeds against fictional services. Added a browser-side size check, regression coverage and Alex's requested email fallback to alexbellarts@outlook.com in client upload forms and the size warning. The live storage limits and permissions stay unchanged. Shannon's reported failure still needs her actual file size or a fresh reproduction to establish its cause. Local verification does not imply production deployment.
+
 ## 12 November — visual identity workbook in onboarding
 
 The original fillable ABA Visual Identity Client Workbook PDF is available in the private Onboarding stage for every project type, including Website Design and Brand Identity. Clients download it and return the completed PDF through the existing private client asset upload. The original is served by an authenticated, project-scoped route from outside the public directory; no schema change was added.

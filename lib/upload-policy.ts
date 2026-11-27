@@ -1,4 +1,5 @@
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+export const MAX_LEGACY_UPLOAD_BYTES = 3 * 1024 * 1024;
 export const uploadAccept = ".pdf,.docx,.png,.jpg,.jpeg,.webp,.ai,.svg,.zip";
 export function uploadMime(name: string) {
   const ext = name.split(".").pop()?.toLowerCase();

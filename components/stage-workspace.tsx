@@ -1,5 +1,6 @@
 "use client";
 import SecureUpload from "./secure-upload";
+import LargeFileHelp from "./large-file-help";
 import PresentationReviewDate from "./presentation-review-date";
 import { FileScanStatus, UploadQueue } from "./upload-status";
 import { fileAvailable } from "@/lib/upload-policy";
@@ -439,6 +440,9 @@ export default function StageWorkspace({
                   PDFs, Word documents and supported images up to 3 MB. A
                   returned signed copy will be checked by Alex; uploading it
                   does not automatically sign a contract or confirm payment.
+                </p>
+                <p>
+                  <LargeFileHelp />
                 </p>
               </Form>
             </details>

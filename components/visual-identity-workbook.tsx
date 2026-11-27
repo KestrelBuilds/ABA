@@ -1,4 +1,5 @@
 import { ArrowDownToLine, FileText } from "lucide-react";
+import LargeFileHelp from "./large-file-help";
 import { uploadClientAsset, type Result } from "@/app/actions";
 import { clientUploadsAllowed } from "@/lib/stage-access";
 import { fileAvailable } from "@/lib/upload-policy";
@@ -100,6 +101,9 @@ export default function VisualIdentityWorkbook({
             />
           </label>
           <p>PDF files up to 3 MB. You can upload a revised copy later.</p>
+          <p>
+            <LargeFileHelp />
+          </p>
         </Form>
       )}
       {!admin && !data.stageAccessReady && (

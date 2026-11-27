@@ -83,7 +83,9 @@ const verificationMode =
   process.argv.includes("--verification") || purposesMode;
 let stageName = "Contract and Deposit",
   stagePurpose = "contract_deposit";
-const managementMode = process.argv.includes("--management");
+const uploadLimitsMode = process.argv.includes("--upload-limits");
+const managementMode =
+  process.argv.includes("--management") || uploadLimitsMode;
 const stageMode = process.argv.includes("--stages");
 const journeyMode = process.argv.includes("--journey");
 const fixtureStageId = randomUUID();
@@ -4633,6 +4635,68 @@ const server = createServer(async (req, res) => {
     }
     if (managementMode) {
       await page.locator(".project-support-disclosure > summary").click();
+      if (uploadLimitsMode) {
+        const section = page.locator("#client-assets");
+        const file = section.getByLabel("File", { exact: true });
+        await expect(
+          section.getByRole("link", {
+            name: "alexbellarts@outlook.com",
+            exact: true,
+          }),
+        ).toHaveAttribute("href", "mailto:alexbellarts@outlook.com");
+        const button = section.getByRole("button", {
+          name: "Upload asset privately",
+          exact: true,
+        });
+        let uploadRequests = 0;
+        page.on("request", (request) => {
+          if (
+            request.method() === "POST" &&
+            new URL(request.url()).pathname === "/portal"
+          )
+            uploadRequests++;
+        });
+        for (const size of [3 * 1024 * 1024 + 1, 5 * 1024 * 1024]) {
+          await file.setInputFiles({
+            name: "Too large.jpg",
+            mimeType: "image/jpeg",
+            buffer: Buffer.alloc(size),
+          });
+          await button.click();
+          await expect(section.getByRole("status")).toHaveText(
+            "This file is larger than 3 MB. Please email it to alexbellarts@outlook.com.",
+          );
+          await expect(
+            section.getByRole("status").getByRole("link"),
+          ).toHaveAttribute("href", "mailto:alexbellarts@outlook.com");
+          assert.equal(uploadRequests, 0, "oversized bytes must not be sent");
+          assert.equal(assets.length, 0);
+          assert.equal(
+            await file.evaluate((input) => input.files[0].name),
+            "Too large.jpg",
+            "the rejected selection remains available for replacement",
+          );
+        }
+        await file.setInputFiles({
+          name: "Fictional limit.jpg",
+          mimeType: "image/jpeg",
+          buffer: Buffer.concat([
+            Buffer.from([255, 216, 255]),
+            Buffer.alloc(3 * 1024 * 1024 - 3),
+          ]),
+        });
+        await button.click();
+        await section
+          .getByRole("link", { name: /Fictional limit.jpg/ })
+          .waitFor();
+        assert.equal(uploadRequests, 1);
+        assert.equal(assets.length, 1);
+        assert.equal(await file.inputValue(), "");
+        console.log(
+          "PASS: oversized client JPGs show the 3 MB warning without sending a request; replacing the selection with a JPG at the limit uploads successfully. Fictional services only.",
+        );
+        return;
+      }
       await page
         .getByRole("button", { name: "Mark done", exact: true })
         .click();

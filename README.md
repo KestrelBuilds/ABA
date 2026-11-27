@@ -2,6 +2,10 @@
 
 A considered workspace for Alex Bell Arts, with a connected owner dashboard and private invited-client portal. `/demo` is a separate browser-only example using **fictional data**. The agreed core features are implemented; [the development handover](docs/DEVELOPMENT-HANDOVER.md) separates completed code from the remaining real-client launch requirements.
 
+### 27 November — oversized-upload feedback
+
+Legacy file forms check the existing 3 MB limit before sending a request and show a clear size warning. Client upload forms direct larger files to alexbellarts@outlook.com with a clickable email link; clients can also choose a smaller file and retry. This needs no database migration; publishing the application update is required. Run `node tests/client-journey-browser.cjs --upload-limits` for the fictional client regression.
+
 ### 12 November — visual identity workbook in onboarding
 
 Every project type now includes the original fillable ABA Visual Identity Client Workbook PDF in its private Onboarding stage, including Website Design projects. Clients download the PDF, complete it in a PDF reader, then return the saved copy through the existing private client-file upload. The source PDF is served only after sign-in and project-access checks; returned files keep the current private storage and scan/release rules.
